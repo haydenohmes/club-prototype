@@ -17,8 +17,9 @@ interface AthleteCardProps {
   draggable?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
   onDragEnd?: (e: React.DragEvent) => void;
-  status?: 'unassigned' | 'assigned' | 'invited' | 'accepted' | 'declined';
+  status?: 'unassigned' | 'assigned' | 'invited' | 'accepted' | 'declined' | 'deposit' | 'paid' | 'pending';
   showStatusPill?: boolean;
+  onStatusClick?: (e: React.MouseEvent) => void;
   showCheckbox?: boolean;
   onRemove?: () => void;
   teams?: TeamInfo[];
@@ -35,6 +36,7 @@ export default function AthleteCard({
   onDragEnd,
   status,
   showStatusPill = false,
+  onStatusClick,
   showCheckbox = true,
   onRemove,
   teams = [],
@@ -109,9 +111,22 @@ export default function AthleteCard({
         </div>
       </div>
       {status && (status !== 'assigned' || showStatusPill) && (
-        <span className={`athlete-card-status athlete-card-status--${status}`}>
-          {status.charAt(0).toUpperCase() + status.slice(1)}
-        </span>
+        onStatusClick ? (
+          <button
+            type="button"
+            className={`athlete-card-status athlete-card-status--${status} athlete-card-status--btn`}
+            onClick={(e) => { e.stopPropagation(); onStatusClick(e); }}
+          >
+            {status === 'deposit' ? 'Paid Deposit' : status === 'paid' ? 'Paid in Full' : status === 'pending' ? 'Pending Payment' : status.charAt(0).toUpperCase() + status.slice(1)}
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ marginLeft: 3, flexShrink: 0 }}>
+              <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        ) : (
+          <span className={`athlete-card-status athlete-card-status--${status}`}>
+            {status === 'deposit' ? 'Paid Deposit' : status === 'paid' ? 'Paid in Full' : status === 'pending' ? 'Pending Payment' : status.charAt(0).toUpperCase() + status.slice(1)}
+          </span>
+        )
       )}
       {showCheckbox && (
         <button
@@ -265,6 +280,15 @@ export default function AthleteCard({
           flex-shrink: 0;
         }
 
+        .athlete-card-status--btn {
+          border: none;
+          cursor: pointer;
+          font-family: var(--u-font-body);
+          font-weight: 600;
+          transition: filter 0.1s ease;
+        }
+        .athlete-card-status--btn:hover { filter: brightness(0.92); }
+
         .athlete-card-status--assigned {
           background: #e8f3fe;
           color: #0273e3;
@@ -297,6 +321,18 @@ export default function AthleteCard({
         .athlete-card-status--unassigned {
           background: var(--u-color-background-default, #e8eaec);
           color: var(--u-color-base-foreground-subtle, #607081);
+        }
+        .athlete-card-status--deposit {
+          background: #fef3c7;
+          color: #92400e;
+        }
+        .athlete-card-status--paid {
+          background: rgba(23, 129, 67, 0.12);
+          color: #178143;
+        }
+        .athlete-card-status--pending {
+          background: #ede9fe;
+          color: #5b21b6;
         }
 
         .athlete-card-date {

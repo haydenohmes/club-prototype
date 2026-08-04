@@ -9,7 +9,7 @@ interface AssignedAthlete {
   name: string;
   birthdate: string;
   avatar?: string | null;
-  status?: 'assigned' | 'invited' | 'accepted' | 'declined';
+  status?: 'assigned' | 'invited' | 'accepted' | 'declined' | 'deposit' | 'paid' | 'pending';
 }
 
 interface TeamCardProps {
@@ -26,6 +26,7 @@ interface TeamCardProps {
   onAddAthletes?: () => void;
   onDrop?: (teamId: string) => void;
   onRemoveAthlete?: (athleteId: string) => void;
+  onAthleteStatusClick?: (athleteId: string, e: React.MouseEvent) => void;
   onEditRegistration?: (teamId: string) => void;
   isDragActive?: boolean;
 }
@@ -44,6 +45,7 @@ export default function TeamCard({
   onAddAthletes,
   onDrop,
   onRemoveAthlete,
+  onAthleteStatusClick,
   onEditRegistration,
   isDragActive = false,
 }: TeamCardProps) {
@@ -161,6 +163,7 @@ export default function TeamCard({
                   avatar={athlete.avatar}
                   status={status === 'archived' ? undefined : (athlete.status ?? 'assigned')}
                   showStatusPill={status !== 'archived'}
+                  onStatusClick={onAthleteStatusClick ? (e) => onAthleteStatusClick(athlete.id, e) : undefined}
                   showCheckbox={false}
                   draggable={false}
                   onRemove={onRemoveAthlete ? () => onRemoveAthlete(athlete.id) : undefined}

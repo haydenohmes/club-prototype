@@ -253,6 +253,8 @@ export default function AssignmentsPageClient({
   const [lastClickedAthleteIndex, setLastClickedAthleteIndex] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [draggedAthleteIds, setDraggedAthleteIds] = useState<string[]>([]);
+  const [athleteStatuses, setAthleteStatuses] = useState<Record<string, 'assigned' | 'invited' | 'accepted' | 'declined' | 'deposit' | 'paid' | 'pending'>>({});
+  const [statusDropdown, setStatusDropdown] = useState<{ athleteId: string; x: number; y: number } | null>(null);
   
   // Compute initial team assignments based on the selected season
   const getSeasonAssignments = (seasonId: string): Record<string, string[]> => {
@@ -548,9 +550,14 @@ export default function AssignmentsPageClient({
                     } : undefined}
                     assignedAthletes={(teamAssignments[team.id] || []).map((athleteId, athleteIdx) => {
                       const athlete = allAthletes.find(a => a.submissionId === athleteId);
-                      let athleteStatus: 'accepted' | 'invited' | 'assigned' = 'assigned';
-                      if (athleteIdx < mockStats.accepted) athleteStatus = 'accepted';
-                      else if (athleteIdx < mockStats.invited) athleteStatus = 'invited';
+                      let athleteStatus: 'assigned' | 'invited' | 'accepted' | 'declined' | 'deposit' | 'paid' | 'pending' = 'assigned';
+                      if (athleteStatuses[athleteId]) {
+                        athleteStatus = athleteStatuses[athleteId];
+                      } else if (athleteIdx < mockStats.accepted) {
+                        athleteStatus = 'accepted';
+                      } else if (athleteIdx < mockStats.invited) {
+                        athleteStatus = 'invited';
+                      }
                       return athlete ? {
                         id: athlete.submissionId,
                         name: `${athlete.firstName} ${athlete.lastName}`,
@@ -559,6 +566,11 @@ export default function AssignmentsPageClient({
                         status: athleteStatus,
                       } : null;
                     }).filter((a): a is NonNullable<typeof a> => a !== null)}
+                    onAthleteStatusClick={(athleteId, e) => {
+                      if (statusDropdown?.athleteId === athleteId) { setStatusDropdown(null); return; }
+                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                      setStatusDropdown({ athleteId, x: rect.right, y: rect.bottom + 4 });
+                    }}
                     isDragActive={isDragging}
                     onDrop={async (teamId) => {
                       const idsToAssign = [...draggedAthleteIds];
@@ -1301,6 +1313,65 @@ export default function AssignmentsPageClient({
             </div>
           </div>
         </div>,
+        document.body
+      )}
+
+      {statusDropdown && createPortal(
+        <>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 1100 }} onClick={() => setStatusDropdown(null)} />
+          <div
+            style={{
+              position: 'fixed',
+              top: statusDropdown.y,
+              right: `calc(100vw - ${statusDropdown.x}px)`,
+              zIndex: 1101,
+              background: 'var(--u-color-background-container, #fefefe)',
+              border: '1px solid var(--u-color-line-subtle, #c4c6c8)',
+              borderRadius: 6,
+              boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+              minWidth: 130,
+              padding: '4px 0',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {([
+              { value: 'assigned',  label: 'Assigned' },
+              { value: 'invited',   label: 'Invited' },
+              { value: 'accepted',  label: 'Accepted' },
+              { value: 'declined',  label: 'Declined' },
+              { value: 'deposit',   label: 'Paid Deposit' },
+              { value: 'paid',      label: 'Paid in Full' },
+              { value: 'pending',   label: 'Pending Payment' },
+            ] as const).map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                style={{
+                  padding: '7px 14px',
+                  textAlign: 'left',
+                  background: 'none',
+                  border: 'none',
+                  fontFamily: 'var(--u-font-body)',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: 'var(--u-color-base-foreground, #36485c)',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--u-color-background-canvas, #eff0f0)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAthleteStatuses(prev => ({ ...prev, [statusDropdown.athleteId]: opt.value }));
+                  setStatusDropdown(null);
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </>,
         document.body
       )}
     </div>
