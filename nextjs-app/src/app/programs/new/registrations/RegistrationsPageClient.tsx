@@ -114,7 +114,7 @@ function mapTeam(t: TeamWithStats): Team {
 
 // ─── Steps ─────────────────────────────────────────────────────────────────
 
-const STEPS = ['Program Details', 'Questions', 'Registrations', 'Summary', 'Next Steps'];
+const STEPS = ['Program Type', 'Program Details', 'Questions', 'Registrations', 'Summary', 'Next Steps'];
 
 // ─── StepIndicator ─────────────────────────────────────────────────────────
 
@@ -1691,7 +1691,7 @@ function AddRegistrationDrawer({
             </div>
           </SectionCard>
 
-          {/* Card 4: Invite Teams — only for Team Dues program type */}
+          {/* Card 4: Invite Teams — only for Club Dues program type */}
           {showLinkedTeams && (
             <SectionCard
               title="Invite Teams"
@@ -2729,7 +2729,7 @@ export default function RegistrationsPageClient({ initialTeams = [] }: { initial
 
       {/* Stepper — Club Dues has no "Next Steps" stage */}
       <div className="stepper-bar">
-        <StepIndicator currentStep={showNextSteps ? 4 : showSummary ? 3 : 2} steps={steps} />
+        <StepIndicator currentStep={showNextSteps ? 5 : showSummary ? 4 : 3} steps={steps} />
       </div>
 
       {/* Content */}

@@ -37,7 +37,7 @@ interface DuesProgram { id: string; name: string; registrations: DuesRegistratio
 const DUES_PROGRAMS: DuesProgram[] = [
   {
     id: 'dp-1',
-    name: '2026 Fall Team Dues',
+    name: '2026 Fall Club Dues',
     registrations: [
       { id: 'dp1-r1', name: 'U10 Player Dues', price: '$225.00', dates: 'Sep 1 – Nov 30, 2026' },
       { id: 'dp1-r2', name: 'U12 Player Dues', price: '$250.00', dates: 'Sep 1 – Nov 30, 2026' },
@@ -46,7 +46,7 @@ const DUES_PROGRAMS: DuesProgram[] = [
   },
   {
     id: 'dp-2',
-    name: '2026 Spring Team Dues',
+    name: '2026 Spring Club Dues',
     registrations: [
       { id: 'dp2-r1', name: 'U12 Player Dues', price: '$240.00', dates: 'Feb 1 – Apr 30, 2026' },
       { id: 'dp2-r2', name: 'U14 Player Dues', price: '$265.00', dates: 'Feb 1 – Apr 30, 2026' },
@@ -54,7 +54,7 @@ const DUES_PROGRAMS: DuesProgram[] = [
   },
   {
     id: 'dp-3',
-    name: '2025 Fall Team Dues',
+    name: '2025 Fall Club Dues',
     registrations: [
       { id: 'dp3-r1', name: 'U12 Player Dues', price: '$240.00', dates: 'Sep 1 – Nov 30, 2025' },
       { id: 'dp3-r2', name: 'U14 Player Dues', price: '$260.00', dates: 'Sep 1 – Nov 30, 2025' },
@@ -264,7 +264,7 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
       prefillTeams.forEach((_, ti) => { map[`pf-team-${ti}`] = { program: 'Club Dues', registration: attachedRegistrationName }; });
       return map;
     }
-    INITIAL_REGISTRATIONS.forEach(r => r.teams.forEach(t => { map[t.id] = { program: 'Attached in Team Dues', registration: attachedRegistrationName }; }));
+    INITIAL_REGISTRATIONS.forEach(r => r.teams.forEach(t => { map[t.id] = { program: 'Attached in Club Dues', registration: attachedRegistrationName }; }));
     return map;
   });
   // Attach-registration modal

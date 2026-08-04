@@ -526,6 +526,26 @@ function TableContent({
           <span className="header-label">Athletes</span>
           <SortIcon />
         </div>
+        <div className="table-cell cell-stat">
+          <span className="header-label">Assigned</span>
+          <SortIcon />
+        </div>
+        <div className="table-cell cell-stat">
+          <span className="header-label">Invited</span>
+          <SortIcon />
+        </div>
+        <div className="table-cell cell-stat">
+          <span className="header-label">Accepted</span>
+          <SortIcon />
+        </div>
+        <div className="table-cell cell-stat">
+          <span className="header-label">Declined</span>
+          <SortIcon />
+        </div>
+        <div className="table-cell cell-stat">
+          <span className="header-label">Paid</span>
+          <SortIcon />
+        </div>
         {onDeleteTeam && <div className="table-cell cell-actions" />}
       </div>
 
@@ -557,6 +577,11 @@ function TableContent({
             <div className="table-cell cell-sport">{team.sport ? formatSport(team.sport) : '—'}</div>
             <div className="table-cell cell-coaches">{team.coachCount}</div>
             <div className="table-cell cell-athletes">{team.rosterCount}</div>
+            <div className="table-cell cell-stat">{team.assignedCount ?? 0}</div>
+            <div className="table-cell cell-stat">{team.invitedCount ?? 0}</div>
+            <div className="table-cell cell-stat">{team.acceptedCount ?? 0}</div>
+            <div className="table-cell cell-stat">{team.declinedCount ?? 0}</div>
+            <div className="table-cell cell-stat">{team.paidCount ?? 0}</div>
             {onDeleteTeam && (
               <div className="table-cell cell-actions">
                 {team.status === 'draft' && (
@@ -580,6 +605,7 @@ function TableContent({
         .teams-table {
           display: flex;
           flex-direction: column;
+          min-width: 1016px;
           width: 100%;
         }
 
@@ -614,7 +640,7 @@ function TableContent({
           display: flex;
           align-items: center;
           gap: var(--u-space-quarter, 4px);
-          padding: var(--u-space-half, 8px) var(--u-space-one, 16px);
+          padding: 8px 10px;
           font-family: var(--u-font-body);
           font-weight: var(--u-font-weight-medium, 500);
           font-size: var(--u-font-size-200, 14px);
@@ -630,18 +656,16 @@ function TableContent({
           color: var(--u-color-base-foreground-contrast, #071c31);
         }
 
-        /* All data columns equal width, filling the full table */
-        .cell-team-name,
-        .cell-sport,
+        /* All columns fixed — team name grows but has a floor; scroll covers narrow viewports */
+        .cell-team-name { flex: 1 0 200px; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+        .cell-status    { flex: 0 0 76px; }
         .cell-year,
-        .cell-season,
-        .cell-gender,
+        .cell-season    { flex: 0 0 90px; }
+        .cell-gender    { flex: 0 0 72px; }
+        .cell-sport     { flex: 0 0 90px; }
         .cell-coaches,
-        .cell-athletes,
-        .cell-status {
-          flex: 1;
-          min-width: 0;
-        }
+        .cell-athletes  { flex: 0 0 74px; padding: 8px 8px; justify-content: flex-end; }
+        .cell-stat      { flex: 0 0 68px; padding: 8px 8px; justify-content: flex-end; }
 
         .cell-actions {
           width: 48px;
@@ -735,17 +759,19 @@ export default function TeamsTable({
   return (
     <div className="teams-content">
       {teams.length > 0 ? (
-        <TableContent
-          teams={teams}
-          seasons={seasons}
-          copyMode={copyMode}
-          selectedTeamIds={selectedTeamIds}
-          onTeamSelectionChange={onTeamSelectionChange}
-          onSelectAllChange={onSelectAllChange}
-          onSelectAllChangeWithReset={onSelectAllChangeWithReset}
-          onTeamClick={onTeamClick}
-          onDeleteTeam={onDeleteTeam}
-        />
+        <div className="teams-table-scroll">
+          <TableContent
+            teams={teams}
+            seasons={seasons}
+            copyMode={copyMode}
+            selectedTeamIds={selectedTeamIds}
+            onTeamSelectionChange={onTeamSelectionChange}
+            onSelectAllChange={onSelectAllChange}
+            onSelectAllChangeWithReset={onSelectAllChangeWithReset}
+            onTeamClick={onTeamClick}
+            onDeleteTeam={onDeleteTeam}
+          />
+        </div>
       ) : (
         <EmptyState
           variant={emptyStateVariant}
@@ -760,6 +786,10 @@ export default function TeamsTable({
           display: flex;
           flex-direction: column;
           gap: var(--u-space-one, 16px);
+          width: 100%;
+        }
+        .teams-table-scroll {
+          overflow-x: auto;
           width: 100%;
         }
       `}</style>

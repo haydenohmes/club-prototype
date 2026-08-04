@@ -18,7 +18,7 @@ const assignmentDemoTeams: TeamWithStats[] = [
 export const dynamic = 'force-dynamic';
 
 interface AssignmentsPageProps {
-  searchParams: Promise<{ season?: string }>;
+  searchParams: Promise<{ season?: string; returnTo?: string }>;
 }
 
 export default async function AssignmentsPage({ searchParams }: AssignmentsPageProps) {
@@ -40,13 +40,14 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
   const activeSeason = seasonFromUrl || seasons.find(s => s.id === 'season-3') || seasons.find(s => s.isActive) || seasons[0];
 
   return (
-    <AssignmentsPageClient 
-      teams={teams} 
+    <AssignmentsPageClient
+      teams={teams}
       seasons={seasons}
       programs={programs}
       registrations={registrations}
       athletes={athletes}
       initialSeasonId={activeSeason?.id || ''}
+      returnTo={params.returnTo}
     />
   );
 }

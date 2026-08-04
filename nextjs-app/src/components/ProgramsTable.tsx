@@ -42,7 +42,9 @@ function formatDateRange(eventDates: { start?: string; end?: string }) {
 function formatProgramType(type: string): string {
   const typeMap: Record<string, string> = {
     'tryout': 'Tryout',
+    'team-dues': 'Club Dues',
     'season': 'Season',
+    'one-time-registration': 'One-Time Registration',
     'camp': 'Camp',
     'clinic': 'Clinic',
     'other': 'Other'

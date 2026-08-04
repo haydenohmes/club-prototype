@@ -1,10 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import Select from '@/components/Select';
+import Button from '@/components/Button';
+import ConfirmTeamsDrawer from '@/components/ConfirmTeamsDrawer';
 import type { ProgramWithStats } from '@/lib/actions/programs';
+import type { TeamWithStats } from '@/lib/actions/teams';
 
 // ─── Mock roster (prototype) ─────────────────────────────────────────────────
 
@@ -14,20 +17,29 @@ interface Athlete {
   birthDate: string;
   gender: string;
   primaryContact: string;
-  dateAdded: string;
+  regOption: string;
+  regDate: string;
+  paidToDate: string;
+  fees: string;
+  discounts: string;
+  refunded: string;
+  outstanding: string;
+  paymentStatus: 'Completed' | 'Outstanding' | 'Overdue';
+  team: string;
+  rosterStatus: 'Accepted' | 'Invited' | 'Declined';
 }
 
 const MOCK_ROSTER: Athlete[] = [
-  { id: 'a1', name: 'Caroline Murray', birthDate: 'August 19, 2006', gender: 'Female', primaryContact: 'Mary Murray', dateAdded: 'Nov 1, 2025 at 9:15 AM' },
-  { id: 'a2', name: 'Shannon Dohrman', birthDate: 'August 7, 2006', gender: 'Female', primaryContact: 'Julie Dohrman', dateAdded: 'Nov 3, 2025 at 11:30 AM' },
-  { id: 'a3', name: 'Taylor Smith', birthDate: 'August 10, 2006', gender: 'Female', primaryContact: 'Alexis Smith', dateAdded: 'Nov 5, 2025 at 2:20 PM' },
-  { id: 'a4', name: 'Alexis Chen', birthDate: 'August 9, 2006', gender: 'Female', primaryContact: 'Taylor Chen', dateAdded: 'Nov 7, 2025 at 4:10 PM' },
-  { id: 'a5', name: 'Kayla Johnson', birthDate: 'August 23, 2006', gender: 'Female', primaryContact: 'Tammy Johnson', dateAdded: 'Nov 12, 2025 at 10:45 AM' },
-  { id: 'a6', name: 'Jamie Wong', birthDate: 'August 4, 2006', gender: 'Female', primaryContact: 'Chen Wong', dateAdded: 'Nov 15, 2025 at 3:35 PM' },
-  { id: 'a7', name: 'Riley Thompson', birthDate: 'August 10, 2006', gender: 'Female', primaryContact: 'Morgan Thompson', dateAdded: 'Nov 18, 2025 at 1:25 PM' },
-  { id: 'a8', name: 'Morgan Patel', birthDate: 'August 6, 2006', gender: 'Female', primaryContact: 'Jordan Patel', dateAdded: 'Nov 18, 2025 at 1:25 PM' },
-  { id: 'a9', name: 'Sydney Kim', birthDate: 'August 8, 2006', gender: 'Female', primaryContact: 'Pam Kim', dateAdded: 'Nov 18, 2025 at 1:25 PM' },
-  { id: 'a10', name: 'Dakota Rivers', birthDate: 'August 19, 2006', gender: 'Female', primaryContact: 'Jamie Rivers', dateAdded: 'Nov 18, 2025 at 1:25 PM' },
+  { id: 'a1', name: 'Caroline Murray',  birthDate: 'Aug 19, 2006', gender: 'Female', primaryContact: 'Mary Murray',    regOption: 'Fall Tryout 2026', regDate: 'Jul 30, 2026', paidToDate: '$500.00',  fees: '$20.29', discounts: '—', refunded: '—', outstanding: '$3,300.00', paymentStatus: 'Outstanding', team: '16 Alpine', rosterStatus: 'Accepted' },
+  { id: 'a2', name: 'Shannon Dohrman',  birthDate: 'Aug 7, 2006',  gender: 'Female', primaryContact: 'Julie Dohrman',  regOption: 'Fall Tryout 2026', regDate: 'Jul 30, 2026', paidToDate: '$3,800.00', fees: '$20.29', discounts: '—', refunded: '—', outstanding: '$0.00',      paymentStatus: 'Completed',  team: '16 Alpine', rosterStatus: 'Accepted' },
+  { id: 'a3', name: 'Taylor Smith',     birthDate: 'Aug 10, 2006', gender: 'Female', primaryContact: 'Alexis Smith',   regOption: 'Fall Tryout 2026', regDate: 'Aug 1, 2026',  paidToDate: '$3,800.00', fees: '$20.29', discounts: '—', refunded: '—', outstanding: '$0.00',      paymentStatus: 'Completed',  team: '17 Elite',  rosterStatus: 'Accepted' },
+  { id: 'a4', name: 'Alexis Chen',      birthDate: 'Aug 9, 2006',  gender: 'Female', primaryContact: 'Taylor Chen',    regOption: 'Fall Tryout 2026', regDate: 'Aug 1, 2026',  paidToDate: '$500.00',  fees: '$20.29', discounts: '—', refunded: '—', outstanding: '$3,300.00', paymentStatus: 'Outstanding', team: '17 Elite',  rosterStatus: 'Invited' },
+  { id: 'a5', name: 'Kayla Johnson',    birthDate: 'Aug 23, 2006', gender: 'Female', primaryContact: 'Tammy Johnson',  regOption: 'Fall Tryout 2026', regDate: 'Aug 2, 2026',  paidToDate: '$3,800.00', fees: '$20.29', discounts: '—', refunded: '—', outstanding: '$0.00',      paymentStatus: 'Completed',  team: '16 Blue',   rosterStatus: 'Invited' },
+  { id: 'a6', name: 'Jamie Wong',       birthDate: 'Aug 4, 2006',  gender: 'Female', primaryContact: 'Chen Wong',      regOption: 'Fall Tryout 2026', regDate: 'Aug 2, 2026',  paidToDate: '$3,800.00', fees: '$20.29', discounts: '—', refunded: '—', outstanding: '$0.00',      paymentStatus: 'Completed',  team: '16 Blue',   rosterStatus: 'Accepted' },
+  { id: 'a7', name: 'Riley Thompson',   birthDate: 'Aug 10, 2006', gender: 'Female', primaryContact: 'Morgan Thompson',regOption: 'Fall Tryout 2026', regDate: 'Aug 3, 2026',  paidToDate: '$3,800.00', fees: '$20.29', discounts: '—', refunded: '—', outstanding: '$0.00',      paymentStatus: 'Completed',  team: '16 Alpine', rosterStatus: 'Accepted' },
+  { id: 'a8', name: 'Morgan Patel',     birthDate: 'Aug 6, 2006',  gender: 'Female', primaryContact: 'Jordan Patel',   regOption: 'Fall Tryout 2026', regDate: 'Aug 3, 2026',  paidToDate: '$0.00',    fees: '—',      discounts: '—', refunded: '—', outstanding: '$3,800.00', paymentStatus: 'Overdue',    team: '17 Elite',  rosterStatus: 'Declined' },
+  { id: 'a9', name: 'Sydney Kim',       birthDate: 'Aug 8, 2006',  gender: 'Female', primaryContact: 'Pam Kim',        regOption: 'Fall Tryout 2026', regDate: 'Aug 4, 2026',  paidToDate: '$3,800.00', fees: '$20.29', discounts: '—', refunded: '—', outstanding: '$0.00',      paymentStatus: 'Completed',  team: '16 Blue',   rosterStatus: 'Accepted' },
+  { id: 'a10', name: 'Dakota Rivers',   birthDate: 'Aug 19, 2006', gender: 'Female', primaryContact: 'Jamie Rivers',   regOption: 'Fall Tryout 2026', regDate: 'Aug 4, 2026',  paidToDate: '$500.00',  fees: '$20.29', discounts: '—', refunded: '—', outstanding: '$3,300.00', paymentStatus: 'Outstanding', team: '16 Alpine', rosterStatus: 'Invited' },
 ];
 
 const STATUS_OPTIONS = [
@@ -52,9 +64,10 @@ function formatDateRange(eventDates: { start?: string; end?: string }) {
 function formatType(type: string) {
   const map: Record<string, string> = {
     'tryout': 'Tryout',
-    'team-dues': 'Team-Dues',
-    'team dues': 'Team-Dues',
+    'team-dues': 'Club Dues',
+    'team dues': 'Club Dues',
     'season': 'Season',
+    'one-time-registration': 'One-Time Registration',
     'camp': 'Camp',
     'clinic': 'Clinic',
     'tournament': 'Tournament',
@@ -64,6 +77,65 @@ function formatType(type: string) {
 
 function formatCurrency(cents: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
+}
+
+const MOCK_FIRST = ['Jake','Tyler','Marcus','Aiden','Devon','Jordan','Caleb','Noah','Liam','Ethan','Owen','Ryan','Mason','Logan','Carter','Hunter','Chase','Brayden','Nolan','Gavin','Alex','Sam','Chris','Danny','Kyle','Blake','Cole','Dylan','Evan','Finn'];
+const MOCK_LAST = ['Miller','Brown','Wilson','Clark','Lewis','Smith','Taylor','Park','Kim','Reed','Hall','Ford','Adams','Davis','Nash','Vance','Gray','Evans','Ibarra','Owen','Jones','Quinn','Upton','Young','Zhao','Baker','Cruz','Dixon','Ellis','Fox'];
+
+function pickNames(seed: number, count: number): string[] {
+  const names: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const fi = (seed + i * 7) % MOCK_FIRST.length;
+    const li = (seed + i * 11 + 3) % MOCK_LAST.length;
+    names.push(`${MOCK_FIRST[fi]} ${MOCK_LAST[li]}`);
+  }
+  return names;
+}
+
+function NameTooltip({ count, names }: { count: number; names: string[] }) {
+  const wrapRef = useRef<HTMLSpanElement>(null);
+  const [tipPos, setTipPos] = useState<{ top: number; left: number } | null>(null);
+
+  function handleMouseEnter() {
+    if (wrapRef.current) {
+      const r = wrapRef.current.getBoundingClientRect();
+      setTipPos({ top: r.bottom + 8, left: r.left + r.width / 2 });
+    }
+  }
+
+  return (
+    <span ref={wrapRef} className="nt-wrap" onMouseEnter={handleMouseEnter} onMouseLeave={() => setTipPos(null)}>
+      {count}
+      {tipPos && (
+        <div className="nt-tip" style={{ top: tipPos.top, left: tipPos.left }}>
+          {names.map((n, i) => <div key={i} className="nt-row">{n}</div>)}
+        </div>
+      )}
+      <style jsx>{`
+        .nt-wrap { position: relative; display: inline-block; cursor: default; }
+        .nt-tip {
+          position: fixed;
+          transform: translateX(-50%);
+          background: var(--u-color-base-foreground-contrast, #071c31);
+          color: #fff;
+          border-radius: 6px;
+          padding: 8px 12px;
+          min-width: 130px;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+          z-index: 9999;
+          white-space: nowrap;
+          pointer-events: none;
+        }
+        .nt-row {
+          font-family: var(--u-font-body);
+          font-size: 12px;
+          font-weight: 500;
+          line-height: 1.8;
+          text-align: left;
+        }
+      `}</style>
+    </span>
+  );
 }
 
 function InfoIcon() {
@@ -190,8 +262,7 @@ function StatGroup({
           display: flex;
           align-items: baseline;
           gap: 8px;
-          padding: 10px 0;
-          border-bottom: 1px dashed var(--u-color-line-subtle, #c4c6c8);
+          padding: 3px 0;
         }
         .sg-row-label {
           display: inline-flex;
@@ -234,6 +305,7 @@ export default function ProgramDetailPageClient({
   );
   const [openRegistration, setOpenRegistration] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'registrations' | 'teams'>('overview');
+  const [drawerTeam, setDrawerTeam] = useState<TeamWithStats | null>(null);
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
@@ -274,6 +346,7 @@ export default function ProgramDetailPageClient({
   const registrants = program?.registrantCount ?? 0;
   const value = program ? formatCurrency(program.programValue) : '$0.00';
   const isTryout = (program?.type ?? '').toLowerCase() === 'tryout';
+  const isClubDues = ['club dues', 'team-dues', 'team dues'].includes((program?.type ?? '').toLowerCase());
 
   const regOptions = [
     {
@@ -297,11 +370,21 @@ export default function ProgramDetailPageClient({
   ];
 
   const programTeams = [
-    { id: 't1', name: '8U Black', status: 'Draft', athletes: 12, coaches: 2 },
-    { id: 't2', name: '10U Gold', status: 'Draft', athletes: 12, coaches: 3 },
-    { id: 't3', name: '12U Blue', status: 'Draft', athletes: 10, coaches: 2 },
-    { id: 't4', name: '14U Red', status: 'Active', athletes: 11, coaches: 1 },
+    { id: 't1', name: '8U Black',  status: 'Draft',  season: 'Fall 2025–2026', gender: 'Male', sport: 'Football', athletes: 12, coaches: 2, assigned: 12, invited: 14, accepted: 12, declined: 2,  paid: 10,
+      coachNames: pickNames(100, 2), athleteNames: pickNames(0, 12), assignedNames: pickNames(0, 12), invitedNames: pickNames(0, 14), acceptedNames: pickNames(0, 12), declinedNames: pickNames(12, 2), paidNames: pickNames(0, 10) },
+    { id: 't2', name: '10U Gold',  status: 'Draft',  season: 'Fall 2025–2026', gender: 'Male', sport: 'Football', athletes: 12, coaches: 3, assigned: 12, invited: 15, accepted: 12, declined: 3,  paid: 11,
+      coachNames: pickNames(103, 3), athleteNames: pickNames(5, 12), assignedNames: pickNames(5, 12), invitedNames: pickNames(5, 15), acceptedNames: pickNames(5, 12), declinedNames: pickNames(17, 3), paidNames: pickNames(5, 11) },
+    { id: 't3', name: '12U Blue',  status: 'Draft',  season: 'Fall 2025–2026', gender: 'Coed', sport: 'Football', athletes: 10, coaches: 2, assigned: 10, invited: 12, accepted: 10, declined: 2,  paid:  8,
+      coachNames: pickNames(106, 2), athleteNames: pickNames(10, 10), assignedNames: pickNames(10, 10), invitedNames: pickNames(10, 12), acceptedNames: pickNames(10, 10), declinedNames: pickNames(20, 2), paidNames: pickNames(10, 8) },
+    { id: 't4', name: '14U Red',   status: 'Active', season: 'Fall 2025–2026', gender: 'Male', sport: 'Football', athletes: 11, coaches: 1, assigned: 11, invited: 13, accepted: 11, declined: 2,  paid: 11,
+      coachNames: pickNames(108, 1), athleteNames: pickNames(15, 11), assignedNames: pickNames(15, 11), invitedNames: pickNames(15, 13), acceptedNames: pickNames(15, 11), declinedNames: pickNames(26, 2), paidNames: pickNames(15, 11) },
   ];
+
+  const teamStatAthletes = programTeams.reduce((sum, t) => sum + t.athletes, 0);
+  const teamStatInvited = programTeams.reduce((sum, t) => sum + t.invited, 0);
+  const teamStatAccepted = programTeams.reduce((sum, t) => sum + t.accepted, 0);
+  const teamStatDeclined = programTeams.reduce((sum, t) => sum + t.declined, 0);
+  const teamStatPaid = programTeams.reduce((sum, t) => sum + t.paid, 0);
 
   return (
     <div className="pd-page">
@@ -373,7 +456,7 @@ export default function ProgramDetailPageClient({
               All done with tryouts? Create your draft teams now to assign athletes
             </span>
           </div>
-          <button className="pd-banner-btn" onClick={() => router.push('/teams/manage')}>
+          <button className="pd-banner-btn" onClick={() => router.push('/teams/manage?context=tryout')}>
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
               <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
             </svg>
@@ -433,6 +516,7 @@ export default function ProgramDetailPageClient({
       </div>
 
       {/* Table */}
+      <div className="pd-table-scroll">
       <div className="pd-table">
         <div className="pd-row pd-row--head">
           <div className="pd-cell pd-cell--check">
@@ -442,23 +526,58 @@ export default function ProgramDetailPageClient({
           <div className="pd-cell pd-cell--birth">Birth Date <SortArrow /></div>
           <div className="pd-cell pd-cell--gender">Gender <SortArrow /></div>
           <div className="pd-cell pd-cell--contact">Primary Contact <SortArrow /></div>
-          <div className="pd-cell pd-cell--added">Date Added <SortArrow /></div>
+          <div className="pd-cell pd-cell--reg-option">Registration Option <SortArrow /></div>
+          <div className="pd-cell pd-cell--reg-date">Reg. Date <SortArrow /></div>
+          <div className="pd-cell pd-cell--money">Paid to Date <SortArrow /></div>
+          <div className="pd-cell pd-cell--money">Fees <SortArrow /></div>
+          <div className="pd-cell pd-cell--money">Discounts <SortArrow /></div>
+          <div className="pd-cell pd-cell--money">Refunded <SortArrow /></div>
+          <div className="pd-cell pd-cell--money">Outstanding <SortArrow /></div>
+          <div className="pd-cell pd-cell--team">Team <SortArrow /></div>
+          <div className="pd-cell pd-cell--roster-status">Roster Status <SortArrow /></div>
+          <div className="pd-cell pd-cell--pstatus">Status <SortArrow /></div>
         </div>
         {rows.map(a => {
           const isSel = selected.includes(a.id);
           return (
-            <div key={a.id} className={`pd-row${isSel ? ' pd-row--selected' : ''}`}>
-              <div className="pd-cell pd-cell--check">
+            <div
+              key={a.id}
+              className={`pd-row${isSel ? ' pd-row--selected' : ''}`}
+              style={{ cursor: 'pointer' }}
+              onClick={() => router.push(`/programs/${programId}/registrants/${a.id}`)}
+            >
+              <div className="pd-cell pd-cell--check" onClick={(e) => e.stopPropagation()}>
                 <input type="checkbox" checked={isSel} onChange={() => toggleOne(a.id)} aria-label={`Select ${a.name}`} />
               </div>
               <div className="pd-cell pd-cell--name pd-cell--emphasis">{a.name}</div>
               <div className="pd-cell pd-cell--birth">{a.birthDate}</div>
               <div className="pd-cell pd-cell--gender">{a.gender}</div>
               <div className="pd-cell pd-cell--contact">{a.primaryContact}</div>
-              <div className="pd-cell pd-cell--added">{a.dateAdded}</div>
+              <div className="pd-cell pd-cell--reg-option">{a.regOption}</div>
+              <div className="pd-cell pd-cell--reg-date">{a.regDate}</div>
+              <div className="pd-cell pd-cell--money">{a.paidToDate}</div>
+              <div className="pd-cell pd-cell--money">{a.fees}</div>
+              <div className="pd-cell pd-cell--money">{a.discounts}</div>
+              <div className="pd-cell pd-cell--money">{a.refunded}</div>
+              <div className="pd-cell pd-cell--money">{a.outstanding}</div>
+              <div className="pd-cell pd-cell--team">{a.team}</div>
+              <div className="pd-cell pd-cell--roster-status">
+                <span className={`pd-roster-pill pd-roster-pill--${a.rosterStatus.toLowerCase()}`}>{a.rosterStatus}</span>
+              </div>
+              <div className="pd-cell pd-cell--pstatus">
+                <span className={`pd-pstatus pd-pstatus--${a.paymentStatus.toLowerCase()}`}>
+                  {a.paymentStatus === 'Completed' && (
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                      <path d="M3.5 8.5l3 3 6-7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                  {a.paymentStatus}
+                </span>
+              </div>
             </div>
           );
         })}
+      </div>
       </div>
       </>
       )}
@@ -491,38 +610,52 @@ export default function ProgramDetailPageClient({
       {activeTab === 'teams' && (
         <div className="pd-reg-panel">
           <div className="pd-teams-head">
-            <span className="pd-teams-count">{programTeams.length} teams</span>
-            <button className="pd-teams-manage" onClick={() => router.push('/teams/manage')}>
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-              </svg>
+            <Button buttonStyle="standard" buttonType="secondary" size="medium" onClick={() => router.push(`/teams/assignments?returnTo=/programs/${programId}`)}>
+              Assign Athletes
+            </Button>
+            <Button buttonStyle="standard" buttonType="primary" size="medium" onClick={() => router.push(isTryout ? '/teams/manage?context=tryout' : '/teams/manage')}>
               Add Teams
-            </button>
+            </Button>
           </div>
-          <div className="pd-reg-list">
+          <div className="pd-teams-scroll"><div className="pd-teams-table">
+            <div className="pd-tt-row pd-tt-header">
+              <div className="pd-tt-cell pd-tt-name"><span>Team Name</span></div>
+              <div className="pd-tt-cell pd-tt-status"><span>Status</span></div>
+              <div className="pd-tt-cell pd-tt-flex"><span>Season</span></div>
+              <div className="pd-tt-cell pd-tt-flex"><span>Gender</span></div>
+              <div className="pd-tt-cell pd-tt-flex"><span>Sport</span></div>
+              <div className="pd-tt-cell pd-tt-num"><span>Coaches</span></div>
+              <div className="pd-tt-cell pd-tt-num"><span>Athletes</span></div>
+              <div className="pd-tt-cell pd-tt-num-sm"><span>Assigned</span></div>
+              <div className="pd-tt-cell pd-tt-num-sm"><span>Invited</span></div>
+              <div className="pd-tt-cell pd-tt-num-sm"><span>Accepted</span></div>
+              <div className="pd-tt-cell pd-tt-num-sm"><span>Declined</span></div>
+              <div className="pd-tt-cell pd-tt-num-sm"><span>Paid</span></div>
+            </div>
             {programTeams.map(team => (
-              <button
+              <div
                 key={team.id}
-                className="pd-team-card"
-                onClick={() => router.push(team.status === 'Draft' ? '/teams/assignments' : '/teams')}
+                className="pd-tt-row pd-tt-data"
+                role="button"
+                tabIndex={0}
+                onClick={() => setDrawerTeam({ id: team.id, title: team.name, sport: team.sport, gender: team.gender, grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: team.status, tier: null, seasonId: null, rosterCount: team.athletes, maxRosterSize: null, ageMin: null, ageMax: null, coachCount: team.coaches, birthdayFrom: null, birthdayTo: null })}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDrawerTeam({ id: team.id, title: team.name, sport: team.sport, gender: team.gender, grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: team.status, tier: null, seasonId: null, rosterCount: team.athletes, maxRosterSize: null, ageMin: null, ageMax: null, coachCount: team.coaches, birthdayFrom: null, birthdayTo: null }); } }}
               >
-                <div className="pd-reg-card-main">
-                  <div className="pd-reg-card-top">
-                    <span className="pd-reg-name">{team.name}</span>
-                    <span className={`pd-team-pill pd-team-pill--${team.status.toLowerCase()}`}>{team.status}</span>
-                  </div>
-                  <div className="pd-reg-meta">
-                    <span>{team.athletes} {team.athletes === 1 ? 'athlete' : 'athletes'}</span>
-                    <span className="pd-reg-dot" />
-                    <span>{team.coaches} {team.coaches === 1 ? 'coach' : 'coaches'}</span>
-                  </div>
-                </div>
-                <svg className="pd-team-chevron" width="18" height="18" viewBox="0 0 20 20" fill="none">
-                  <path d="M8 5l5 5-5 5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
+                <div className="pd-tt-cell pd-tt-name pd-tt-emph">{team.name}</div>
+                <div className="pd-tt-cell pd-tt-status"><span className={`pd-team-pill pd-team-pill--${team.status.toLowerCase()}`}>{team.status}</span></div>
+                <div className="pd-tt-cell pd-tt-flex">{team.season}</div>
+                <div className="pd-tt-cell pd-tt-flex">{team.gender}</div>
+                <div className="pd-tt-cell pd-tt-flex">{team.sport}</div>
+                <div className="pd-tt-cell pd-tt-num"><NameTooltip count={team.coaches} names={team.coachNames} /></div>
+                <div className="pd-tt-cell pd-tt-num"><NameTooltip count={team.athletes} names={team.athleteNames} /></div>
+                <div className="pd-tt-cell pd-tt-num-sm"><NameTooltip count={team.assigned} names={team.assignedNames} /></div>
+                <div className="pd-tt-cell pd-tt-num-sm"><NameTooltip count={team.invited} names={team.invitedNames} /></div>
+                <div className="pd-tt-cell pd-tt-num-sm"><NameTooltip count={team.accepted} names={team.acceptedNames} /></div>
+                <div className="pd-tt-cell pd-tt-num-sm"><NameTooltip count={team.declined} names={team.declinedNames} /></div>
+                <div className="pd-tt-cell pd-tt-num-sm"><NameTooltip count={team.paid} names={team.paidNames} /></div>
+              </div>
             ))}
-          </div>
+          </div></div>
         </div>
       )}
 
@@ -604,6 +737,24 @@ export default function ProgramDetailPageClient({
           transition: background 0.15s ease;
         }
         .pd-more:hover { background: #e0e1e1; }
+
+        .pd-team-assignments {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          height: 36px;
+          padding: 0 14px;
+          border: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          border-radius: 4px;
+          background: var(--u-color-background-canvas, #eff0f0);
+          color: var(--u-color-base-foreground, #36485c);
+          font-family: var(--u-font-body);
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.15s ease;
+        }
+        .pd-team-assignments:hover { background: #e0e1e1; }
 
         /* Stats */
         .pd-stats {
@@ -733,10 +884,14 @@ export default function ProgramDetailPageClient({
         .pd-row:not(.pd-row--head):hover { background: var(--u-color-background-subtle, #f5f6f7); }
         .pd-row--selected { background: rgba(2, 115, 227, 0.04); }
         .pd-cell {
-          padding: 10px 16px;
+          padding: 8px 5px;
           font-family: var(--u-font-body);
           font-size: 14px;
           color: var(--u-color-base-foreground, #36485c);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          box-sizing: border-box;
         }
         .pd-row--head .pd-cell {
           font-weight: 700;
@@ -748,12 +903,12 @@ export default function ProgramDetailPageClient({
           color: var(--u-color-base-foreground-contrast, #071c31);
         }
         .pd-cell--check {
-          width: 44px;
+          width: 36px;
           flex-shrink: 0;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding-left: 8px;
+          padding-left: 4px;
           padding-right: 0;
         }
         .pd-cell--check input {
@@ -762,11 +917,48 @@ export default function ProgramDetailPageClient({
           accent-color: var(--u-color-emphasis-background-contrast, #0273e3);
           cursor: pointer;
         }
-        .pd-cell--name { flex: 1; min-width: 180px; }
-        .pd-cell--birth { width: 190px; flex-shrink: 0; }
-        .pd-cell--gender { width: 200px; flex-shrink: 0; }
-        .pd-cell--contact { width: 240px; flex-shrink: 0; }
-        .pd-cell--added { width: 220px; flex-shrink: 0; }
+        .pd-table-scroll { width: 100%; }
+        .pd-table { width: 100%; }
+        .pd-cell--name { flex: 1; min-width: 0; }
+        .pd-cell--birth { width: 70px; flex-shrink: 0; }
+        .pd-cell--gender { width: 50px; flex-shrink: 0; }
+        .pd-cell--contact { width: 100px; flex-shrink: 0; }
+        .pd-cell--reg-option { width: 96px; flex-shrink: 0; }
+        .pd-cell--reg-date { width: 62px; flex-shrink: 0; }
+        .pd-cell--money { width: 68px; flex-shrink: 0; }
+        .pd-cell--team { width: 65px; flex-shrink: 0; }
+        .pd-cell--roster-status { width: 84px; flex-shrink: 0; }
+        .pd-cell--pstatus { width: 84px; flex-shrink: 0; }
+        .pd-roster-pill {
+          display: inline-flex;
+          align-items: center;
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-size: 13px;
+          font-weight: 600;
+        }
+        .pd-roster-pill--accepted {
+          background: rgba(23, 129, 67, 0.1);
+          color: var(--u-color-success-foreground, #178143);
+        }
+        .pd-roster-pill--invited {
+          background: rgba(2, 115, 227, 0.1);
+          color: var(--u-color-emphasis-background-contrast, #0273e3);
+        }
+        .pd-roster-pill--declined {
+          background: rgba(187, 23, 0, 0.08);
+          color: var(--u-color-alert-foreground, #bb1700);
+        }
+        .pd-pstatus {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 14px;
+          font-weight: 600;
+        }
+        .pd-pstatus--completed { color: var(--u-color-success-foreground, #178143); }
+        .pd-pstatus--outstanding { color: var(--u-color-base-foreground, #36485c); }
+        .pd-pstatus--overdue { color: var(--u-color-alert-foreground, #bb1700); }
 
         /* Tabs */
         .pd-tabs {
@@ -861,9 +1053,20 @@ export default function ProgramDetailPageClient({
         .pd-teams-head {
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          gap: 16px;
+          justify-content: flex-end;
+          gap: 8px;
           width: 100%;
+        }
+        .pd-teams-confirm-nudge {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex: 1;
+          min-width: 0;
+        }
+        .pd-teams-confirm-nudge .pd-banner-text {
+          font-size: 14px;
+          white-space: nowrap;
         }
         .pd-teams-count {
           font-family: var(--u-font-body);
@@ -888,6 +1091,57 @@ export default function ProgramDetailPageClient({
           transition: background 0.15s ease;
         }
         .pd-teams-manage:hover { background: #005bbf; }
+        .pd-teams-manage--secondary {
+          background: transparent;
+          border: 1.5px solid var(--u-color-emphasis-background-contrast, #0273e3);
+          color: var(--u-color-emphasis-background-contrast, #0273e3);
+        }
+        .pd-teams-manage--secondary:hover { background: rgba(2, 115, 227, 0.06); }
+
+        /* Teams list — styled like the Programs list */
+        .pd-teams-scroll { overflow-x: auto; width: 100%; }
+        .pd-teams-table { display: flex; flex-direction: column; min-width: max-content; }
+        .pd-tt-row { display: flex; align-items: center; width: 100%; }
+        .pd-tt-header { border-bottom: 1px solid var(--u-color-line-subtle, #c4c6c8); }
+        .pd-tt-data {
+          height: 52px;
+          box-sizing: border-box;
+          border-bottom: 1px dashed var(--u-color-line-subtle, #c4c6c8);
+          cursor: pointer;
+          transition: background 0.12s ease;
+        }
+        .pd-tt-data:hover { background: var(--u-color-background-subtle, #f5f6f7); }
+        .pd-tt-cell {
+          display: flex;
+          align-items: center;
+          padding: 8px 16px;
+          font-family: var(--u-font-body);
+          font-weight: 500;
+          font-size: 14px;
+          line-height: 1.4;
+          color: var(--u-color-base-foreground, #36485c);
+        }
+        .pd-tt-header .pd-tt-cell {
+          font-weight: 700;
+          font-size: 13px;
+          white-space: nowrap;
+          color: var(--u-color-base-foreground-contrast, #071c31);
+        }
+        .pd-tt-name { flex: 1; min-width: 160px; }
+        .pd-tt-flex { flex: 1; min-width: 80px; white-space: nowrap; }
+        .pd-tt-emph { font-weight: 700; color: var(--u-color-base-foreground-contrast, #071c31); }
+        .pd-tt-data .pd-tt-emph {
+          text-decoration: underline;
+          text-decoration-color: transparent;
+          text-decoration-style: dashed;
+          text-underline-offset: 4px;
+          transition: text-decoration-color 0.15s ease;
+        }
+        .pd-tt-data:hover .pd-tt-emph { text-decoration-color: var(--u-color-line-subtle, #c4c6c8); }
+        .pd-tt-status { width: 130px; flex-shrink: 0; }
+        .pd-tt-num { width: 100px; flex-shrink: 0; justify-content: flex-end; text-align: right; font-variant-numeric: tabular-nums; }
+        .pd-tt-num-sm { width: 72px; flex-shrink: 0; justify-content: flex-end; text-align: right; font-variant-numeric: tabular-nums; }
+        .pd-tt-chev { width: 44px; flex-shrink: 0; justify-content: center; color: var(--u-color-base-foreground-subtle, #607081); }
         .pd-team-card {
           display: flex;
           align-items: center;
@@ -924,6 +1178,13 @@ export default function ProgramDetailPageClient({
           flex-shrink: 0;
         }
       `}</style>
+
+      <ConfirmTeamsDrawer
+        isOpen={drawerTeam !== null}
+        onClose={() => setDrawerTeam(null)}
+        onConfirm={async () => { setDrawerTeam(null); }}
+        teams={drawerTeam ? [drawerTeam] : []}
+      />
     </div>
   );
 }

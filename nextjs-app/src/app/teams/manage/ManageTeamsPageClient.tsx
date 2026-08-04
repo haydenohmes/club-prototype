@@ -4,6 +4,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { differenceInYears, subYears, format } from 'date-fns';
 import type { TeamWithStats, Season, UpdateTeamInput } from '@/lib/actions/teams';
+import type { ProgramWithStats } from '@/lib/actions/programs';
 import { updateTeam, createTeam, deleteTeams, archiveTeams } from '@/lib/actions/teams';
 import Button from '@/components/Button';
 import Select from '@/components/Select';
@@ -20,7 +21,9 @@ import Checkbox from '@/components/Checkbox';
 interface ManageTeamsPageClientProps {
   teams: TeamWithStats[];
   seasons: Season[];
+  programs: ProgramWithStats[];
   initialSeasonId: string;
+  tryoutContext?: boolean;
 }
 
 // Convert birthdate to age
@@ -724,11 +727,25 @@ function EditableAvatarCell({ avatar, title, teamId, onUpload }: EditableAvatarC
 export default function ManageTeamsPageClient({
   teams,
   seasons,
+  programs,
   initialSeasonId,
+  tryoutContext = false,
 }: ManageTeamsPageClientProps) {
   const router = useRouter();
   const { showToast } = useToast();
   const [selectedSeasonId, setSelectedSeasonId] = useState(initialSeasonId);
+  const [selectedProgramId, setSelectedProgramId] = useState('');
+  // Merge in builder-created programs (prototype: localStorage), matching Programs & Assign Athletes
+  const [allPrograms, setAllPrograms] = useState<ProgramWithStats[]>(programs);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('createdPrograms');
+      const created = raw ? (JSON.parse(raw) as ProgramWithStats[]) : [];
+      setAllPrograms(Array.isArray(created) && created.length ? [...created, ...programs] : programs);
+    } catch {
+      setAllPrograms(programs);
+    }
+  }, [programs]);
   const [searchQuery, setSearchQuery] = useState('');
   const [localTeams, setLocalTeams] = useState<TeamWithStats[]>(teams);
   const [isCreating, setIsCreating] = useState(false);
@@ -922,6 +939,8 @@ const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     };
   });
 
+  const programOptions = allPrograms.map(p => ({ value: p.id, label: p.title, status: p.status }));
+
   // Handle team selection
   const handleTeamSelectionChange = (teamId: string, checked: boolean, index: number, shiftKey: boolean) => {
     if (shiftKey && lastClickedIndex !== null) {
@@ -991,7 +1010,7 @@ const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   return (
     <div className="manage-teams-page-wrapper">
       <ViewHeader
-        title="Manage Teams"
+        title={tryoutContext ? 'New Tryout Program Teams' : 'Manage Teams'}
         actionLabel="Done"
         onBack={() => router.push(`/teams?season=${selectedSeasonId}`)}
         onAction={() => router.push(`/teams?season=${selectedSeasonId}`)}
@@ -1049,12 +1068,24 @@ const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
         {/* Controls */}
         <div className="manage-teams-controls-wrapper">
           <div className="manage-teams-controls">
-        <Select
-          options={seasonOptions}
-          value={selectedSeasonId}
-          onChange={setSelectedSeasonId}
-          placeholder="Select season"
-        />
+        <div className="controls-left">
+          {!tryoutContext && (
+            <>
+              <Select
+                options={seasonOptions}
+                value={selectedSeasonId}
+                onChange={setSelectedSeasonId}
+                placeholder="Select season"
+              />
+              <Select
+                options={programOptions}
+                value={selectedProgramId}
+                onChange={setSelectedProgramId}
+                placeholder="Select program"
+              />
+            </>
+          )}
+        </div>
         <div className="controls-right">
           <div className="search-input">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1240,6 +1271,11 @@ const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
           background: var(--u-color-background-container, #fefefe);
         }
 
+        .controls-left {
+          display: flex;
+          align-items: center;
+          gap: var(--u-space-half, 8px);
+        }
         .controls-right {
           display: flex;
           align-items: center;

@@ -3,11 +3,11 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/Button';
-import Select from '@/components/Select';
+import StartStep from './StartStep';
 
 // ─── Step indicator ────────────────────────────────────────────────────────
 
-const STEPS = ['Program Details', 'Questions', 'Registrations', 'Summary', 'Next Steps'];
+const STEPS = ['Program Type', 'Program Details', 'Questions', 'Registrations', 'Summary', 'Next Steps'];
 
 function StepIndicator({ currentStep, steps = STEPS }: { currentStep: number; steps?: string[] }) {
   return (
@@ -459,9 +459,8 @@ function SectionHeader({
 
 const PROGRAM_TYPE_OPTIONS = [
   { value: 'tryout', label: 'Tryout' },
-  { value: 'team-dues', label: 'Team Dues' },
-  { value: 'camp', label: 'Camp' },
-  { value: 'clinic', label: 'Clinic' },
+  { value: 'team-dues', label: 'Club Dues' },
+  { value: 'one-time-registration', label: 'One-Time Registration' },
 ];
 
 export default function NewProgramPageClient() {
@@ -473,18 +472,43 @@ export default function NewProgramPageClient() {
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [tryoutDate, setTryoutDate] = useState('');
   const [visibility, setVisibility] = useState<'private' | 'public'>('private');
   const [feesCoveredBy, setFeesCoveredBy] = useState<'registrants' | 'organization'>('registrants');
+  const [invitationType, setInvitationType] = useState('');
+  const [phase, setPhase] = useState<'select' | 'details'>('select');
 
   const handleCancel = () => router.push('/programs');
+
+  // First step of the wizard: guided program-type selection
+  if (phase === 'select') {
+    return (
+      <StartStep
+        initialName={title}
+        onCancel={handleCancel}
+        onContinue={(sel) => {
+          setTitle(sel.programName);
+          setProgramType(sel.programType);
+          setInvitationType(sel.invitationType);
+          try {
+            sessionStorage.setItem('programType', sel.programType);
+            sessionStorage.setItem('invitationType', sel.invitationType);
+            sessionStorage.setItem('programSport', sel.sport);
+            sessionStorage.setItem('programSeason', sel.season);
+          } catch {
+            // ignore
+          }
+          setPhase('details');
+        }}
+      />
+    );
+  }
 
   return (
     <div className="new-program-page">
 
       {/* ── Stepper bar ────────────────────────────────────────────── */}
       <div className="stepper-bar">
-        <StepIndicator currentStep={0} />
+        <StepIndicator currentStep={1} />
       </div>
 
       {/* ── Content ────────────────────────────────────────────────── */}
@@ -499,30 +523,6 @@ export default function NewProgramPageClient() {
 
               {/* ── Section 1: Core details ──────────────────────── */}
               <div className="form-section">
-                {/* Title + Type row */}
-                <div className="field-row">
-                  <div className="field-group">
-                    <FormLabel label="Title" required />
-                    <TextInput
-                      id="program-title"
-                      value={title}
-                      onChange={setTitle}
-                      placeholder="Program title"
-                      maxLength={150}
-                    />
-                  </div>
-                  <div className="field-group">
-                    <FormLabel label="Type" required />
-                    <Select
-                      options={PROGRAM_TYPE_OPTIONS}
-                      value={programType}
-                      placeholder="Program type"
-                      onChange={setProgramType}
-                      fullWidth
-                    />
-                  </div>
-                </div>
-
                 {/* Description */}
                 <div className="field-group">
                   <FormLabel label="Description" />
@@ -556,21 +556,6 @@ export default function NewProgramPageClient() {
                   <FieldHint text="Define your program's start and end dates. This is typically the total duration of your program." />
                 </div>
 
-                {/* Tryout Date — only for Tryout programs */}
-                {programType === 'tryout' && (
-                  <div className="field-group">
-                    <div className="field-row">
-                      <DateInput
-                        id="tryout-date"
-                        label="Tryout Date"
-                        required
-                        value={tryoutDate}
-                        onChange={setTryoutDate}
-                      />
-                    </div>
-                    <FieldHint text="The date athletes will attend the tryout." />
-                  </div>
-                )}
               </div>
 
               <SectionDivider />
@@ -661,11 +646,11 @@ export default function NewProgramPageClient() {
             const details = {
               title,
               programType,
+              invitationType,
               typeLabel: PROGRAM_TYPE_OPTIONS.find(o => o.value === programType)?.label ?? '',
               description,
               startDate,
               endDate,
-              tryoutDate,
               visibility,
               feesCoveredBy,
             };

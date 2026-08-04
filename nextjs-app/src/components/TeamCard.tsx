@@ -16,6 +16,7 @@ interface TeamCardProps {
   teamId: string;
   avatar?: string | null;
   status?: string;
+  connectedRegistration?: string;
   assignedCount?: number;
   invitedCount?: number;
   acceptedCount?: number;
@@ -32,6 +33,7 @@ export default function TeamCard({
   teamId,
   avatar,
   status,
+  connectedRegistration,
   assignedCount = 0,
   invitedCount = 0,
   acceptedCount = 0,
@@ -95,6 +97,9 @@ export default function TeamCard({
             <h3 className="team-card-name">{teamName}</h3>
             {status === 'archived' && <span className="team-card-status-badge">Archived</span>}
           </div>
+          {connectedRegistration && (
+            <p className="team-card-connected">Connected to {connectedRegistration}</p>
+          )}
           <div className="team-card-stats">
             <span className="team-card-stat">
               Assigned: <strong>{assignedCount}</strong>
@@ -264,6 +269,15 @@ export default function TeamCard({
           font-weight: var(--u-font-weight-bold, 700);
           color: var(--u-color-base-foreground, #36485c);
           line-height: 1.4;
+        }
+
+        .team-card-connected {
+          margin: 2px 0 0;
+          font-family: var(--u-font-body);
+          font-size: 11px;
+          font-weight: 500;
+          color: var(--u-color-base-foreground-subtle, #607081);
+          line-height: 1.3;
         }
 
         .team-card-stats {

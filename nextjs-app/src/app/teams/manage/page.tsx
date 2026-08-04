@@ -1,4 +1,5 @@
 import { getAllTeams, getOrganizationId, getSeasons } from '@/lib/actions/teams';
+import { getPrograms } from '@/lib/actions/programs';
 import { maryvilleTeams } from '@/lib/mockHighSchoolData';
 import ManageTeamsPageClient from './ManageTeamsPageClient';
 
@@ -6,7 +7,7 @@ import ManageTeamsPageClient from './ManageTeamsPageClient';
 export const dynamic = 'force-dynamic';
 
 interface ManageTeamsPageProps {
-  searchParams: Promise<{ season?: string; workspace?: string }>;
+  searchParams: Promise<{ season?: string; workspace?: string; context?: string }>;
 }
 
 export default async function ManageTeamsPage({ searchParams }: ManageTeamsPageProps) {
@@ -15,6 +16,7 @@ export default async function ManageTeamsPage({ searchParams }: ManageTeamsPageP
   const organizationId = await getOrganizationId();
 
   const seasons = organizationId ? await getSeasons(organizationId) : [];
+  const programs = organizationId ? await getPrograms(organizationId) : [];
 
   // High school uses static mock data; club uses the mock store
   const teams = isHighSchool
@@ -31,7 +33,9 @@ export default async function ManageTeamsPage({ searchParams }: ManageTeamsPageP
     <ManageTeamsPageClient
       teams={teams}
       seasons={seasons}
+      programs={programs}
       initialSeasonId={activeSeason?.id || ''}
+      tryoutContext={params.context === 'tryout'}
     />
   );
 }

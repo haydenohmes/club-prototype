@@ -106,6 +106,7 @@ interface AssignmentsPageClientProps {
   registrations: Registration[];
   athletes: RegisteredAthlete[];
   initialSeasonId: string;
+  returnTo?: string;
 }
 
 export default function AssignmentsPageClient({
@@ -115,6 +116,7 @@ export default function AssignmentsPageClient({
   registrations,
   athletes,
   initialSeasonId,
+  returnTo,
 }: AssignmentsPageClientProps) {
   const router = useRouter();
   const [selectedSeasonId, setSelectedSeasonId] = useState(initialSeasonId);
@@ -269,7 +271,7 @@ export default function AssignmentsPageClient({
   };
 
   const handleBack = () => {
-    router.push(`/teams?season=${selectedSeasonId}`);
+    router.push(returnTo ?? `/teams?season=${selectedSeasonId}`);
   };
 
   // Computed values hoisted so both rails can access them
@@ -432,6 +434,7 @@ export default function AssignmentsPageClient({
                     key={team.id}
                     teamId={team.id}
                     teamName={team.title}
+                    connectedRegistration={teamConnections[team.id]}
                     avatar={team.avatar}
                     status={team.seasonId === 'season-1' ? 'archived' : team.status}
                     assignedCount={teamAssignments[team.id]?.length || 0}

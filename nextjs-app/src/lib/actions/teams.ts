@@ -21,6 +21,11 @@ export interface TeamWithStats {
   coachCount: number;
   birthdayFrom: string | null;
   birthdayTo: string | null;
+  assignedCount?: number;
+  invitedCount?: number;
+  acceptedCount?: number;
+  declinedCount?: number;
+  paidCount?: number;
 }
 
 export interface CreateTeamInput {
@@ -82,26 +87,42 @@ const BASE_TEAMS = [
 // Varied but deterministic roster counts for archived seasons — offset by seed per season
 const ROSTER_VARIANCE = [0, -1, -3, -2, 0, -4, -1, -2, -3, -1];
 
+// Deterministic offsets for athlete-status mock counts
+const ASSIGNED_VARIANCE   = [12, 12, 10, 11, 12, 8,  12, 9,  10, 11];
+const INVITED_VARIANCE    = [14, 15, 13, 14, 16, 11, 15, 12, 14, 13];
+const ACCEPTED_VARIANCE   = [9,  10, 8,  9,  11, 7,  10, 8,  9,  9 ];
+const DECLINED_VARIANCE   = [2,  2,  3,  2,  1,  2,  2,  2,  3,  2 ];
+const PAID_VARIANCE       = [7,  8,  6,  7,  9,  5,  8,  6,  7,  7 ];
+
 function makeTeams(seasonId: string, status: string, prefix: string, seed = 0): TeamWithStats[] {
-  return BASE_TEAMS.map((t, i) => ({
-    id: `${prefix}-${t.n}`,
-    title: t.title,
-    sport: 'volleyball',
-    gender: t.gender,
-    grades: t.grades,
-    avatar: null, primaryColor: null, secondaryColor: null,
-    status,
-    tier: null,
-    seasonId,
-    rosterCount: status === 'archived'
-      ? Math.max(6, t.rosterCount + ROSTER_VARIANCE[(i + seed) % ROSTER_VARIANCE.length])
-      : t.rosterCount,
-    maxRosterSize: 12,
-    ageMin: null, ageMax: null,
-    coachCount: t.coachCount,
-    birthdayFrom: t.birthdayFrom,
-    birthdayTo: t.birthdayTo,
-  }));
+  return BASE_TEAMS.map((t, i) => {
+    const idx = (i + seed) % 10;
+    const roster = status === 'archived'
+      ? Math.max(6, t.rosterCount + ROSTER_VARIANCE[idx])
+      : t.rosterCount;
+    return {
+      id: `${prefix}-${t.n}`,
+      title: t.title,
+      sport: 'volleyball',
+      gender: t.gender,
+      grades: t.grades,
+      avatar: null, primaryColor: null, secondaryColor: null,
+      status,
+      tier: null,
+      seasonId,
+      rosterCount: roster,
+      maxRosterSize: 12,
+      ageMin: null, ageMax: null,
+      coachCount: t.coachCount,
+      birthdayFrom: t.birthdayFrom,
+      birthdayTo: t.birthdayTo,
+      assignedCount: status === 'draft' ? 0 : ASSIGNED_VARIANCE[idx],
+      invitedCount:  status === 'draft' ? 0 : INVITED_VARIANCE[idx],
+      acceptedCount: status === 'draft' ? 0 : ACCEPTED_VARIANCE[idx],
+      declinedCount: status === 'draft' ? 0 : DECLINED_VARIANCE[idx],
+      paidCount:     status === 'draft' ? 0 : PAID_VARIANCE[idx],
+    };
+  });
 }
 
 // Elevation Volleyball Club teams — clean slate. The shared store is empty so the Teams page and
@@ -151,6 +172,11 @@ export async function createTeam(input: CreateTeamInput): Promise<CreateTeamResu
     coachCount: 0,
     birthdayFrom: null,
     birthdayTo: null,
+    assignedCount: 0,
+    invitedCount: 0,
+    acceptedCount: 0,
+    declinedCount: 0,
+    paidCount: 0,
   });
   revalidatePath('/teams');
   revalidatePath('/', 'layout');

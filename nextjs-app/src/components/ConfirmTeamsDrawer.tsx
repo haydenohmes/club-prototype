@@ -51,18 +51,24 @@ function ChevronDownIcon() {
   );
 }
 
-function VolleyballIcon() {
+function TeamAvatar({ title, avatar }: { title: string; avatar: string | null }) {
+  const initials = title.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  if (avatar) {
+    return (
+      <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
+        <img src={avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      </div>
+    );
+  }
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
-      <circle cx="10" cy="10" r="8.5" stroke="#607081" strokeWidth="1.25"/>
-      <path d="M4.2 6.5C5.8 5.5 7.8 5.2 9.7 5.8" stroke="#607081" strokeWidth="1.25" strokeLinecap="round"/>
-      <path d="M15.8 6.5C14.2 5.5 12.2 5.2 10.3 5.8" stroke="#607081" strokeWidth="1.25" strokeLinecap="round"/>
-      <path d="M10 5.8C10 7.8 11.2 9.6 13 10.5" stroke="#607081" strokeWidth="1.25" strokeLinecap="round"/>
-      <path d="M10 5.8C10 7.8 8.8 9.6 7 10.5" stroke="#607081" strokeWidth="1.25" strokeLinecap="round"/>
-      <path d="M4.2 13.5C5.5 12 6 10 5.5 8.2" stroke="#607081" strokeWidth="1.25" strokeLinecap="round"/>
-      <path d="M15.8 13.5C14.5 12 14 10 14.5 8.2" stroke="#607081" strokeWidth="1.25" strokeLinecap="round"/>
-      <path d="M4.2 13.5C6.5 14.8 9.5 14.8 11.5 13.2" stroke="#607081" strokeWidth="1.25" strokeLinecap="round"/>
-    </svg>
+    <div style={{
+      width: 32, height: 32, borderRadius: '50%', background: '#38434f',
+      color: '#fff', fontFamily: 'var(--u-font-body)', fontSize: 11,
+      fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      flexShrink: 0, letterSpacing: '0.3px',
+    }}>
+      {initials}
+    </div>
   );
 }
 
@@ -232,9 +238,12 @@ export default function ConfirmTeamsDrawer({
                         onClick={() => toggleTeam(team.id)}
                         aria-expanded={isExpanded}
                       >
-                        <VolleyballIcon />
+                        <TeamAvatar title={team.title} avatar={team.avatar} />
                         <div className="ctd-team-info">
-                          <span className="ctd-team-name">{team.title}</span>
+                          <div className="ctd-team-name-row">
+                            <span className="ctd-team-name">{team.title}</span>
+                            <span className={`ctd-status-pill ctd-status-pill--${team.status.toLowerCase()}`}>{team.status}</span>
+                          </div>
                           <div className="ctd-team-stats">
                             <span>Assigned: <strong>{assigned}</strong></span>
                             <span>Invited: <strong>{invited}</strong></span>
@@ -435,6 +444,12 @@ export default function ConfirmTeamsDrawer({
           flex-direction: column;
           gap: 2px;
         }
+        .ctd-team-name-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          min-width: 0;
+        }
         .ctd-team-name {
           font-family: var(--u-font-body);
           font-size: 14px;
@@ -445,6 +460,21 @@ export default function ConfirmTeamsDrawer({
           overflow: hidden;
           text-overflow: ellipsis;
         }
+        .ctd-status-pill {
+          display: inline-flex;
+          align-items: center;
+          padding: 2px 8px;
+          border-radius: 9999px;
+          font-family: var(--u-font-body);
+          font-size: 12px;
+          font-weight: 700;
+          flex-shrink: 0;
+          white-space: nowrap;
+        }
+        .ctd-status-pill--draft    { background: #fef3c7; color: #92400e; }
+        .ctd-status-pill--active   { background: #e3f9e5; color: #1a6831; }
+        .ctd-status-pill--pending  { background: #dbeafe; color: #1e40af; }
+        .ctd-status-pill--archived { background: #e8eaec; color: #607081; }
         .ctd-team-stats {
           display: flex;
           flex-wrap: wrap;
