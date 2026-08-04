@@ -546,13 +546,17 @@ export default function AssignmentsPageClient({
                       }));
                       showToast(`${newIds.length} ${newIds.length === 1 ? 'athlete' : 'athletes'} added from ${previousSeason.name} Season`, 'success');
                     } : undefined}
-                    assignedAthletes={(teamAssignments[team.id] || []).map(athleteId => {
+                    assignedAthletes={(teamAssignments[team.id] || []).map((athleteId, athleteIdx) => {
                       const athlete = allAthletes.find(a => a.submissionId === athleteId);
+                      let athleteStatus: 'accepted' | 'invited' | 'assigned' = 'assigned';
+                      if (athleteIdx < mockStats.accepted) athleteStatus = 'accepted';
+                      else if (athleteIdx < mockStats.invited) athleteStatus = 'invited';
                       return athlete ? {
                         id: athlete.submissionId,
                         name: `${athlete.firstName} ${athlete.lastName}`,
                         birthdate: athlete.birthdate,
                         avatar: null,
+                        status: athleteStatus,
                       } : null;
                     }).filter((a): a is NonNullable<typeof a> => a !== null)}
                     isDragActive={isDragging}

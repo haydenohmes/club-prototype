@@ -18,6 +18,7 @@ interface AthleteCardProps {
   onDragStart?: (e: React.DragEvent) => void;
   onDragEnd?: (e: React.DragEvent) => void;
   status?: 'unassigned' | 'assigned' | 'invited' | 'accepted' | 'declined';
+  showStatusPill?: boolean;
   showCheckbox?: boolean;
   onRemove?: () => void;
   teams?: TeamInfo[];
@@ -33,6 +34,7 @@ export default function AthleteCard({
   onDragStart,
   onDragEnd,
   status,
+  showStatusPill = false,
   showCheckbox = true,
   onRemove,
   teams = [],
@@ -106,7 +108,7 @@ export default function AthleteCard({
           )}
         </div>
       </div>
-      {status && status !== 'assigned' && (
+      {status && (status !== 'assigned' || showStatusPill) && (
         <span className={`athlete-card-status athlete-card-status--${status}`}>
           {status.charAt(0).toUpperCase() + status.slice(1)}
         </span>

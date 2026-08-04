@@ -93,7 +93,7 @@ function pickNames(seed: number, count: number): string[] {
   return names;
 }
 
-function NameTooltip({ count, names }: { count: number; names: string[] }) {
+function NameTooltip({ count, names, items }: { count: number; names?: string[]; items?: { name: string; status: string }[] }) {
   const wrapRef = useRef<HTMLSpanElement>(null);
   const [tipPos, setTipPos] = useState<{ top: number; left: number } | null>(null);
 
@@ -104,12 +104,28 @@ function NameTooltip({ count, names }: { count: number; names: string[] }) {
     }
   }
 
+  const STATUS_COLOR: Record<string, string> = {
+    accepted: '#22c55e',
+    declined: '#ef4444',
+    invited:  '#60a5fa',
+    assigned: '#94a3b8',
+    paid:     '#86efac',
+  };
+
   return (
     <span ref={wrapRef} className="nt-wrap" onMouseEnter={handleMouseEnter} onMouseLeave={() => setTipPos(null)}>
       {count}
       {tipPos && (
         <div className="nt-tip" style={{ top: tipPos.top, left: tipPos.left }}>
-          {names.map((n, i) => <div key={i} className="nt-row">{n}</div>)}
+          {items
+            ? items.map((item, i) => (
+                <div key={i} className="nt-row nt-row--status">
+                  <span className="nt-name">{item.name}</span>
+                  <span className="nt-badge" style={{ background: STATUS_COLOR[item.status.toLowerCase()] ?? '#94a3b8' }}>{item.status}</span>
+                </div>
+              ))
+            : (names ?? []).map((n, i) => <div key={i} className="nt-row">{n}</div>)
+          }
         </div>
       )}
       <style jsx>{`
@@ -121,7 +137,7 @@ function NameTooltip({ count, names }: { count: number; names: string[] }) {
           color: #fff;
           border-radius: 6px;
           padding: 8px 12px;
-          min-width: 130px;
+          min-width: 160px;
           box-shadow: 0 4px 16px rgba(0,0,0,0.25);
           z-index: 9999;
           white-space: nowrap;
@@ -133,6 +149,23 @@ function NameTooltip({ count, names }: { count: number; names: string[] }) {
           font-weight: 500;
           line-height: 1.8;
           text-align: left;
+        }
+        .nt-row--status {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+        }
+        .nt-name { flex: 1; }
+        .nt-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 1px 6px;
+          border-radius: 4px;
+          font-size: 10px;
+          font-weight: 700;
+          color: #071c31;
+          flex-shrink: 0;
         }
       `}</style>
     </span>
@@ -672,7 +705,7 @@ export default function ProgramDetailPageClient({
                   <div className="pd-tt-cell pd-tt-flex">{team.gender}</div>
                   <div className="pd-tt-cell pd-tt-flex">{team.sport}</div>
                   <div className="pd-tt-cell pd-tt-num"><NameTooltip count={team.coaches} names={team.coachNames} /></div>
-                  <div className="pd-tt-cell pd-tt-num"><NameTooltip count={team.athletes} names={team.athleteNames} /></div>
+                  <div className="pd-tt-cell pd-tt-num"><NameTooltip count={team.athletes} items={[...team.acceptedNames.map((n: string) => ({ name: n, status: 'Accepted' })), ...team.declinedNames.map((n: string) => ({ name: n, status: 'Declined' }))]} /></div>
                 </div>
               ))}
             </div></div>

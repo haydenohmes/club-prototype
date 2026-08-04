@@ -9,6 +9,7 @@ interface AssignedAthlete {
   name: string;
   birthdate: string;
   avatar?: string | null;
+  status?: 'assigned' | 'invited' | 'accepted' | 'declined';
 }
 
 interface TeamCardProps {
@@ -158,7 +159,8 @@ export default function TeamCard({
                   name={athlete.name}
                   date={athlete.birthdate}
                   avatar={athlete.avatar}
-                  status={status === 'archived' ? undefined : 'assigned'}
+                  status={status === 'archived' ? undefined : (athlete.status ?? 'assigned')}
+                  showStatusPill={status !== 'archived'}
                   showCheckbox={false}
                   draggable={false}
                   onRemove={onRemoveAthlete ? () => onRemoveAthlete(athlete.id) : undefined}
