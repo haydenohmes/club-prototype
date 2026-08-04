@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import type { TeamWithStats, Season } from '@/lib/actions/teams';
 import { assignAthletesToTeam, unassignAthleteFromTeam } from '@/lib/actions/teams';
@@ -21,26 +22,21 @@ function AssignmentsBackIcon() {
 // Filter item component matching Figma design
 interface FilterItemProps {
   label: string;
-  subtitle?: string;
+  registration?: string;
+  stats?: { assigned: number; invited: number; accepted: number; declined: number };
   avatar?: string | null;
   isSelected: boolean;
   onClick: (e: React.MouseEvent) => void;
   count?: number;
 }
 
-function FilterItem({ label, subtitle, avatar, isSelected, onClick, count }: FilterItemProps) {
-  // Generate initials from label for fallback
-  const initials = label
-    .split(' ')
-    .map((word) => word[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
+function FilterItem({ label, registration, stats, avatar, isSelected, onClick, count }: FilterItemProps) {
+  const initials = label.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 
   return (
     <button
       type="button"
-      className={`filter-item ${isSelected ? 'filter-item--selected' : ''} ${subtitle ? 'filter-item--has-subtitle' : ''}`}
+      className={`filter-item ${isSelected ? 'filter-item--selected' : ''} ${(registration || stats) ? 'filter-item--has-subtitle' : ''}`}
       onClick={onClick}
     >
       <div className="filter-item-avatar">
@@ -53,8 +49,27 @@ function FilterItem({ label, subtitle, avatar, isSelected, onClick, count }: Fil
         </div>
       </div>
       <div className="filter-item-text">
-        <span className={`filter-item-label ${count === 0 ? 'filter-item-label--subtle' : ''}`}>{label}</span>
-        {subtitle && <span className="filter-item-subtitle">{subtitle}</span>}
+        <div className="filter-item-top-row">
+          <span className={`filter-item-label ${count === 0 ? 'filter-item-label--subtle' : ''}`}>{label}</span>
+          {registration && (
+            <span className="filter-item-reg-pill">{registration}</span>
+          )}
+        </div>
+        {stats && (
+          <span className="filter-item-stats">
+            <span className="filter-item-stat">Assigned {stats.assigned}</span>
+            <span className="filter-item-stat-dot">·</span>
+            <span className="filter-item-stat">Invited {stats.invited}</span>
+            <span className="filter-item-stat-dot">·</span>
+            <span className="filter-item-stat">Accepted {stats.accepted}</span>
+            {stats.declined > 0 && (
+              <>
+                <span className="filter-item-stat-dot">·</span>
+                <span className="filter-item-stat filter-item-stat--declined">Declined {stats.declined}</span>
+              </>
+            )}
+          </span>
+        )}
       </div>
       {count !== undefined && (
         <span className="filter-item-count">{count}</span>
@@ -65,6 +80,58 @@ function FilterItem({ label, subtitle, avatar, isSelected, onClick, count }: Fil
     </button>
   );
 }
+
+// ─── Attach-registration modal data ──────────────────────────────────────────
+interface DuesRegistration { id: string; name: string; price: string; dates: string; }
+interface DuesProgram { id: string; name: string; registrations: DuesRegistration[]; }
+
+const DUES_PROGRAMS: DuesProgram[] = [
+  {
+    id: 'dp-1',
+    name: '2026 Fall Club Dues',
+    registrations: [
+      { id: 'dp1-r1', name: 'U10 Player Dues', price: '$225.00', dates: 'Sep 1 – Nov 30, 2026' },
+      { id: 'dp1-r2', name: 'U12 Player Dues', price: '$250.00', dates: 'Sep 1 – Nov 30, 2026' },
+      { id: 'dp1-r3', name: 'U14 Player Dues', price: '$275.00', dates: 'Sep 1 – Nov 30, 2026' },
+    ],
+  },
+  {
+    id: 'dp-2',
+    name: '2026 Spring Club Dues',
+    registrations: [
+      { id: 'dp2-r1', name: 'U12 Player Dues', price: '$240.00', dates: 'Feb 1 – Apr 30, 2026' },
+      { id: 'dp2-r2', name: 'U14 Player Dues', price: '$265.00', dates: 'Feb 1 – Apr 30, 2026' },
+    ],
+  },
+  {
+    id: 'dp-3',
+    name: '2025 Fall Club Dues',
+    registrations: [
+      { id: 'dp3-r1', name: 'U12 Player Dues', price: '$240.00', dates: 'Sep 1 – Nov 30, 2025' },
+      { id: 'dp3-r2', name: 'U14 Player Dues', price: '$260.00', dates: 'Sep 1 – Nov 30, 2025' },
+    ],
+  },
+];
+
+function ChevronDownIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+// Mock registration names and status breakdowns for prototype teams
+const MOCK_REG_NAMES = ['U10 Player Dues', 'U12 Player Dues', 'U10 Player Dues', 'U14 Player Dues', 'U12 Player Dues', 'U10 Player Dues', 'U14 Player Dues'];
+const MOCK_STATS = [
+  { assigned: 4, invited: 3, accepted: 2, declined: 0 },
+  { assigned: 6, invited: 4, accepted: 3, declined: 1 },
+  { assigned: 3, invited: 2, accepted: 1, declined: 0 },
+  { assigned: 5, invited: 3, accepted: 2, declined: 1 },
+  { assigned: 4, invited: 4, accepted: 4, declined: 0 },
+  { assigned: 7, invited: 5, accepted: 3, declined: 1 },
+  { assigned: 3, invited: 2, accepted: 0, declined: 0 },
+];
 
 // Generate a demo roster for a builder-created registration so its athletes can be assigned to teams
 const GEN_FIRST_NAMES = ['Ava', 'Mia', 'Sofia', 'Emma', 'Olivia', 'Isabella', 'Riley', 'Zoe', 'Layla', 'Chloe', 'Harper', 'Nora'];
@@ -138,7 +205,7 @@ export default function AssignmentsPageClient({
   // Merge builder-created registrations and generate athletes for them (prototype: localStorage)
   const [allRegistrations, setAllRegistrations] = useState<Registration[]>(registrations);
   const [generatedAthletes, setGeneratedAthletes] = useState<RegisteredAthlete[]>([]);
-  const [teamConnections, setTeamConnections] = useState<Record<string, string>>({});
+  const [teamConnections, setTeamConnections] = useState<Record<string, { program: string; registration: string }>>({});
   useEffect(() => {
     try {
       const raw = localStorage.getItem('createdRegistrations');
@@ -154,6 +221,33 @@ export default function AssignmentsPageClient({
     }
   }, [registrations]);
   const allAthletes = generatedAthletes.length ? [...athletes, ...generatedAthletes] : athletes;
+
+  // Attach-registration modal
+  const [attachModalTeamId, setAttachModalTeamId] = useState<string | null>(null);
+  const [modalProgramId, setModalProgramId] = useState<string>('');
+  const [modalRegistrationId, setModalRegistrationId] = useState<string>('');
+  const modalProgram = DUES_PROGRAMS.find(p => p.id === modalProgramId) ?? null;
+
+  const openAttachModal = (teamId: string) => {
+    const current = teamConnections[teamId];
+    const prog = current ? DUES_PROGRAMS.find(p => p.name === current.program) : null;
+    const reg = prog && current ? prog.registrations.find(r => r.name === current.registration) : null;
+    setModalProgramId(prog?.id ?? '');
+    setModalRegistrationId(reg?.id ?? '');
+    setAttachModalTeamId(teamId);
+  };
+
+  const confirmAttach = () => {
+    if (!attachModalTeamId || !modalProgram || !modalRegistrationId) return;
+    const regObj = modalProgram.registrations.find(r => r.id === modalRegistrationId);
+    if (!regObj) return;
+    const teamId = attachModalTeamId;
+    const updated = { ...teamConnections, [teamId]: { program: modalProgram.name, registration: regObj.name } };
+    setTeamConnections(updated);
+    try { localStorage.setItem('teamRegistrationConnections', JSON.stringify(updated)); } catch { /* ignore */ }
+    setAttachModalTeamId(null);
+  };
+
   const [athleteSearch, setAthleteSearch] = useState<string>('');
   const [selectedAthleteIds, setSelectedAthleteIds] = useState<string[]>([]);
   const [lastClickedAthleteIndex, setLastClickedAthleteIndex] = useState<number | null>(null);
@@ -426,6 +520,8 @@ export default function AssignmentsPageClient({
               {selectedTeamIds.map(teamId => {
                 const team = filteredTeams.find(t => t.id === teamId);
                 if (!team) return null;
+                const teamIndex = filteredTeams.findIndex(t => t.id === teamId);
+                const mockStats = MOCK_STATS[teamIndex % MOCK_STATS.length];
                 const isTeamEmpty = (teamAssignments[team.id]?.length || 0) === 0;
                 const carryoverAthletes = getPreviousSeasonAthletes(team.title);
                 const canPopulate = isTeamEmpty && previousSeason && carryoverAthletes.length > 0;
@@ -434,13 +530,13 @@ export default function AssignmentsPageClient({
                     key={team.id}
                     teamId={team.id}
                     teamName={team.title}
-                    connectedRegistration={teamConnections[team.id]}
+                    connectedRegistration={teamConnections[team.id]?.registration || MOCK_REG_NAMES[teamIndex % MOCK_REG_NAMES.length]}
                     avatar={team.avatar}
-                    status={team.seasonId === 'season-1' ? 'archived' : team.status}
-                    assignedCount={teamAssignments[team.id]?.length || 0}
-                    invitedCount={0}
-                    acceptedCount={0}
-                    declinedCount={0}
+                    status={team.seasonId === 'season-1' ? 'archived' : 'draft'}
+                    assignedCount={teamAssignments[team.id]?.length || mockStats.assigned}
+                    invitedCount={mockStats.invited}
+                    acceptedCount={mockStats.accepted}
+                    declinedCount={mockStats.declined}
                     populateFromSeasonName={canPopulate ? `${previousSeason.name} Season` : undefined}
                     onPopulateFromPreviousSeason={canPopulate ? () => {
                       const newIds = carryoverAthletes.map(a => a.submissionId);
@@ -499,6 +595,7 @@ export default function AssignmentsPageClient({
                     onAddAthletes={() => {
                       // TODO: Implement add athletes functionality
                     }}
+                    onEditRegistration={openAttachModal}
                   />
                 );
               })}
@@ -520,17 +617,20 @@ export default function AssignmentsPageClient({
           </div>
           <div className="filter-section">
             <div className="filter-list">
-              {filteredTeams.map((team, index) => (
-                <FilterItem
-                  key={team.id}
-                  label={team.title}
-                  subtitle={teamConnections[team.id]}
-                  avatar={team.avatar}
-                  isSelected={selectedTeamIds.includes(team.id)}
-                  onClick={(e) => handleTeamSelect(team.id, index, e.shiftKey)}
-                  count={teamAssignments[team.id]?.length || 0}
-                />
-              ))}
+              {filteredTeams.map((team, index) => {
+                const mockStats = MOCK_STATS[index % MOCK_STATS.length];
+                const regName = teamConnections[team.id]?.registration || MOCK_REG_NAMES[index % MOCK_REG_NAMES.length];
+                return (
+                  <FilterItem
+                    key={team.id}
+                    label={team.title}
+                    avatar={team.avatar}
+                    isSelected={selectedTeamIds.includes(team.id)}
+                    onClick={(e) => handleTeamSelect(team.id, index, e.shiftKey)}
+                    count={teamAssignments[team.id]?.length || 0}
+                  />
+                );
+              })}
             </div>
           </div>
         </div>
@@ -886,7 +986,14 @@ export default function AssignmentsPageClient({
           flex: 1;
           display: flex;
           flex-direction: column;
-          gap: 1px;
+          gap: 3px;
+          min-width: 0;
+        }
+
+        .filter-item-top-row {
+          display: flex;
+          align-items: center;
+          gap: 6px;
           min-width: 0;
         }
 
@@ -898,20 +1005,48 @@ export default function AssignmentsPageClient({
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+          flex-shrink: 0;
         }
 
-        .filter-item-subtitle {
+        .filter-item-reg-pill {
+          display: inline-flex;
+          align-items: center;
+          height: 20px;
+          padding: 0 7px;
+          border-radius: 4px;
+          background: var(--u-color-background-canvas, #e0e1e1);
           font-family: var(--u-font-body);
           font-size: 11px;
-          font-weight: 400;
-          color: var(--u-color-base-foreground-subtle, #607081);
+          font-weight: 600;
+          color: var(--u-color-base-foreground, #36485c);
+          white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          max-width: 140px;
+          flex-shrink: 1;
+        }
+
+        .filter-item-stats {
+          display: flex;
+          align-items: center;
+          gap: 3px;
+          flex-wrap: wrap;
+        }
+
+        .filter-item-stat {
+          font-family: var(--u-font-body);
+          font-size: 11px;
+          color: var(--u-color-base-foreground-subtle, #607081);
           white-space: nowrap;
         }
 
-        .filter-item--selected .filter-item-subtitle {
-          color: var(--u-color-base-foreground, #36485c);
+        .filter-item-stat--declined {
+          color: #bb1700;
+        }
+
+        .filter-item-stat-dot {
+          font-size: 11px;
+          color: var(--u-color-line-subtle, #c4c6c8);
         }
 
         .filter-item--selected .filter-item-label {
@@ -981,7 +1116,189 @@ export default function AssignmentsPageClient({
           padding-top: var(--u-space-one-and-half, 24px);
           padding-bottom: var(--u-space-one-and-half, 24px);
         }
+        .tc-modal-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.4);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 2000;
+        }
+
+        .tc-modal {
+          background: var(--u-color-background-container, #fefefe);
+          border-radius: 8px;
+          width: 400px;
+          max-width: calc(100vw - 32px);
+          box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        }
+
+        .tc-modal-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 16px 20px;
+          border-bottom: 1px solid var(--u-color-line-subtle, #c4c6c8);
+        }
+
+        .tc-modal-title {
+          margin: 0;
+          font-family: var(--u-font-body);
+          font-size: 16px;
+          font-weight: 700;
+          color: var(--u-color-base-foreground, #36485c);
+        }
+
+        .tc-modal-close {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 28px;
+          height: 28px;
+          border: none;
+          background: transparent;
+          border-radius: 4px;
+          color: var(--u-color-base-foreground-subtle, #607081);
+          cursor: pointer;
+        }
+
+        .tc-modal-close:hover { background: var(--u-color-background-canvas, #eff0f0); }
+
+        .tc-modal-body {
+          padding: 20px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .tc-modal-label {
+          display: block;
+          font-family: var(--u-font-body);
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--u-color-base-foreground, #36485c);
+          margin-bottom: 4px;
+        }
+
+        .tc-modal-select-wrap { position: relative; display: flex; align-items: center; }
+
+        .tc-modal-select {
+          width: 100%;
+          appearance: none;
+          padding: 8px 32px 8px 12px;
+          border: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          border-radius: 4px;
+          background: var(--u-color-background-container, #fefefe);
+          font-family: var(--u-font-body);
+          font-size: 14px;
+          color: var(--u-color-base-foreground, #36485c);
+          cursor: pointer;
+        }
+
+        .tc-modal-select-chevron {
+          position: absolute;
+          right: 10px;
+          pointer-events: none;
+          color: var(--u-color-base-foreground-subtle, #607081);
+        }
+
+        .tc-modal-select:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .tc-modal-footer {
+          display: flex;
+          justify-content: flex-end;
+          gap: 8px;
+          padding: 12px 20px 16px;
+          border-top: 1px solid var(--u-color-line-subtle, #c4c6c8);
+        }
+
+        .tc-btn {
+          padding: 8px 16px;
+          border-radius: 4px;
+          font-family: var(--u-font-body);
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          border: none;
+        }
+
+        .tc-btn--secondary {
+          background: var(--u-color-background-canvas, #eff0f0);
+          color: var(--u-color-base-foreground, #36485c);
+        }
+
+        .tc-btn--primary {
+          background: var(--u-color-emphasis-foreground, #085bb4);
+          color: #fff;
+        }
+
+        .tc-btn--disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+        }
       `}</style>
+
+      {attachModalTeamId && createPortal(
+        <div className="tc-modal-overlay" onClick={() => setAttachModalTeamId(null)}>
+          <div className="tc-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="tc-modal-header">
+              <h3 className="tc-modal-title">Attach Registration</h3>
+              <button className="tc-modal-close" onClick={() => setAttachModalTeamId(null)} aria-label="Close">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+            <div className="tc-modal-body">
+              <div>
+                <label className="tc-modal-label">Program</label>
+                <div className="tc-modal-select-wrap">
+                  <select
+                    className="tc-modal-select"
+                    value={modalProgramId}
+                    onChange={(e) => { setModalProgramId(e.target.value); setModalRegistrationId(''); }}
+                  >
+                    <option value="">Select a program…</option>
+                    {DUES_PROGRAMS.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                  <span className="tc-modal-select-chevron"><ChevronDownIcon /></span>
+                </div>
+              </div>
+              <div>
+                <label className="tc-modal-label">Registration</label>
+                <div className="tc-modal-select-wrap">
+                  <select
+                    className="tc-modal-select"
+                    value={modalRegistrationId}
+                    onChange={(e) => setModalRegistrationId(e.target.value)}
+                    disabled={!modalProgram}
+                  >
+                    <option value="">{modalProgram ? 'Select a registration…' : 'Select a program first'}</option>
+                    {modalProgram?.registrations.map(r => (
+                      <option key={r.id} value={r.id}>{r.name}</option>
+                    ))}
+                  </select>
+                  <span className="tc-modal-select-chevron"><ChevronDownIcon /></span>
+                </div>
+              </div>
+            </div>
+            <div className="tc-modal-footer">
+              <button className="tc-btn tc-btn--secondary" onClick={() => setAttachModalTeamId(null)}>Cancel</button>
+              <button
+                className={`tc-btn tc-btn--primary${(!modalProgramId || !modalRegistrationId) ? ' tc-btn--disabled' : ''}`}
+                onClick={confirmAttach}
+                disabled={!modalProgramId || !modalRegistrationId}
+              >
+                Attach
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

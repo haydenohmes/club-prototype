@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import Select from '@/components/Select';
@@ -309,6 +310,17 @@ export default function ProgramDetailPageClient({
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
+  const [teamsViewMode, setTeamsViewMode] = useState<'teams' | 'athletes'>('teams');
+  const [selectedAthleteIds, setSelectedAthleteIds] = useState<string[]>([]);
+  const [emailDrawerOpen, setEmailDrawerOpen] = useState(false);
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailContact, setEmailContact] = useState('');
+  const [emailMessage, setEmailMessage] = useState('');
+  const [emailIncludeAcceptDecline, setEmailIncludeAcceptDecline] = useState(false);
+  const [emailExpirationEnabled, setEmailExpirationEnabled] = useState(false);
+  const [emailExpirationDate, setEmailExpirationDate] = useState('');
+  const [emailExpirationTime, setEmailExpirationTime] = useState('5:00 PM');
+  const emailEditorRef = useRef<HTMLDivElement>(null);
 
   // Resolve builder-created programs stored locally when not found server-side
   useEffect(() => {
@@ -385,6 +397,11 @@ export default function ProgramDetailPageClient({
   const teamStatAccepted = programTeams.reduce((sum, t) => sum + t.accepted, 0);
   const teamStatDeclined = programTeams.reduce((sum, t) => sum + t.declined, 0);
   const teamStatPaid = programTeams.reduce((sum, t) => sum + t.paid, 0);
+
+  const athleteRows = programTeams.flatMap((team, teamIdx) => [
+    ...team.acceptedNames.map((name: string, i: number) => ({ id: `${team.id}-acc-${i}`, name, teamName: team.name, status: 'Accepted' as const, primaryContact: pickNames(teamIdx * 50 + i * 3 + 200, 1)[0] })),
+    ...team.declinedNames.map((name: string, i: number) => ({ id: `${team.id}-dec-${i}`, name, teamName: team.name, status: 'Declined' as const, primaryContact: pickNames(teamIdx * 50 + i * 3 + 250, 1)[0] })),
+  ]);
 
   return (
     <div className="pd-page">
@@ -534,7 +551,6 @@ export default function ProgramDetailPageClient({
           <div className="pd-cell pd-cell--money">Refunded <SortArrow /></div>
           <div className="pd-cell pd-cell--money">Outstanding <SortArrow /></div>
           <div className="pd-cell pd-cell--team">Team <SortArrow /></div>
-          <div className="pd-cell pd-cell--roster-status">Roster Status <SortArrow /></div>
           <div className="pd-cell pd-cell--pstatus">Status <SortArrow /></div>
         </div>
         {rows.map(a => {
@@ -561,9 +577,6 @@ export default function ProgramDetailPageClient({
               <div className="pd-cell pd-cell--money">{a.refunded}</div>
               <div className="pd-cell pd-cell--money">{a.outstanding}</div>
               <div className="pd-cell pd-cell--team">{a.team}</div>
-              <div className="pd-cell pd-cell--roster-status">
-                <span className={`pd-roster-pill pd-roster-pill--${a.rosterStatus.toLowerCase()}`}>{a.rosterStatus}</span>
-              </div>
               <div className="pd-cell pd-cell--pstatus">
                 <span className={`pd-pstatus pd-pstatus--${a.paymentStatus.toLowerCase()}`}>
                   {a.paymentStatus === 'Completed' && (
@@ -610,6 +623,22 @@ export default function ProgramDetailPageClient({
       {activeTab === 'teams' && (
         <div className="pd-reg-panel">
           <div className="pd-teams-head">
+            <div className="pd-vt-group">
+              <button
+                type="button"
+                className={`pd-vt-pill${teamsViewMode === 'teams' ? ' pd-vt-pill--active' : ''}`}
+                onClick={() => setTeamsViewMode('teams')}
+              >
+                Teams
+              </button>
+              <button
+                type="button"
+                className={`pd-vt-pill${teamsViewMode === 'athletes' ? ' pd-vt-pill--active' : ''}`}
+                onClick={() => setTeamsViewMode('athletes')}
+              >
+                Athletes
+              </button>
+            </div>
             <Button buttonStyle="standard" buttonType="secondary" size="medium" onClick={() => router.push(`/teams/assignments?returnTo=/programs/${programId}`)}>
               Assign Athletes
             </Button>
@@ -617,45 +646,78 @@ export default function ProgramDetailPageClient({
               Add Teams
             </Button>
           </div>
-          <div className="pd-teams-scroll"><div className="pd-teams-table">
-            <div className="pd-tt-row pd-tt-header">
-              <div className="pd-tt-cell pd-tt-name"><span>Team Name</span></div>
-              <div className="pd-tt-cell pd-tt-status"><span>Status</span></div>
-              <div className="pd-tt-cell pd-tt-flex"><span>Season</span></div>
-              <div className="pd-tt-cell pd-tt-flex"><span>Gender</span></div>
-              <div className="pd-tt-cell pd-tt-flex"><span>Sport</span></div>
-              <div className="pd-tt-cell pd-tt-num"><span>Coaches</span></div>
-              <div className="pd-tt-cell pd-tt-num"><span>Athletes</span></div>
-              <div className="pd-tt-cell pd-tt-num-sm"><span>Assigned</span></div>
-              <div className="pd-tt-cell pd-tt-num-sm"><span>Invited</span></div>
-              <div className="pd-tt-cell pd-tt-num-sm"><span>Accepted</span></div>
-              <div className="pd-tt-cell pd-tt-num-sm"><span>Declined</span></div>
-              <div className="pd-tt-cell pd-tt-num-sm"><span>Paid</span></div>
-            </div>
-            {programTeams.map(team => (
-              <div
-                key={team.id}
-                className="pd-tt-row pd-tt-data"
-                role="button"
-                tabIndex={0}
-                onClick={() => setDrawerTeam({ id: team.id, title: team.name, sport: team.sport, gender: team.gender, grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: team.status, tier: null, seasonId: null, rosterCount: team.athletes, maxRosterSize: null, ageMin: null, ageMax: null, coachCount: team.coaches, birthdayFrom: null, birthdayTo: null })}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDrawerTeam({ id: team.id, title: team.name, sport: team.sport, gender: team.gender, grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: team.status, tier: null, seasonId: null, rosterCount: team.athletes, maxRosterSize: null, ageMin: null, ageMax: null, coachCount: team.coaches, birthdayFrom: null, birthdayTo: null }); } }}
-              >
-                <div className="pd-tt-cell pd-tt-name pd-tt-emph">{team.name}</div>
-                <div className="pd-tt-cell pd-tt-status"><span className={`pd-team-pill pd-team-pill--${team.status.toLowerCase()}`}>{team.status}</span></div>
-                <div className="pd-tt-cell pd-tt-flex">{team.season}</div>
-                <div className="pd-tt-cell pd-tt-flex">{team.gender}</div>
-                <div className="pd-tt-cell pd-tt-flex">{team.sport}</div>
-                <div className="pd-tt-cell pd-tt-num"><NameTooltip count={team.coaches} names={team.coachNames} /></div>
-                <div className="pd-tt-cell pd-tt-num"><NameTooltip count={team.athletes} names={team.athleteNames} /></div>
-                <div className="pd-tt-cell pd-tt-num-sm"><NameTooltip count={team.assigned} names={team.assignedNames} /></div>
-                <div className="pd-tt-cell pd-tt-num-sm"><NameTooltip count={team.invited} names={team.invitedNames} /></div>
-                <div className="pd-tt-cell pd-tt-num-sm"><NameTooltip count={team.accepted} names={team.acceptedNames} /></div>
-                <div className="pd-tt-cell pd-tt-num-sm"><NameTooltip count={team.declined} names={team.declinedNames} /></div>
-                <div className="pd-tt-cell pd-tt-num-sm"><NameTooltip count={team.paid} names={team.paidNames} /></div>
+          {teamsViewMode === 'teams' ? (
+            <div className="pd-teams-scroll"><div className="pd-teams-table">
+              <div className="pd-tt-row pd-tt-header">
+                <div className="pd-tt-cell pd-tt-name"><span>Team Name</span></div>
+                <div className="pd-tt-cell pd-tt-status"><span>Status</span></div>
+                <div className="pd-tt-cell pd-tt-flex"><span>Season</span></div>
+                <div className="pd-tt-cell pd-tt-flex"><span>Gender</span></div>
+                <div className="pd-tt-cell pd-tt-flex"><span>Sport</span></div>
+                <div className="pd-tt-cell pd-tt-num"><span>Coaches</span></div>
+                <div className="pd-tt-cell pd-tt-num"><span>Athletes</span></div>
               </div>
-            ))}
-          </div></div>
+              {programTeams.map(team => (
+                <div
+                  key={team.id}
+                  className="pd-tt-row pd-tt-data"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setDrawerTeam({ id: team.id, title: team.name, sport: team.sport, gender: team.gender, grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: team.status, tier: null, seasonId: null, rosterCount: team.athletes, maxRosterSize: null, ageMin: null, ageMax: null, coachCount: team.coaches, birthdayFrom: null, birthdayTo: null })}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDrawerTeam({ id: team.id, title: team.name, sport: team.sport, gender: team.gender, grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: team.status, tier: null, seasonId: null, rosterCount: team.athletes, maxRosterSize: null, ageMin: null, ageMax: null, coachCount: team.coaches, birthdayFrom: null, birthdayTo: null }); } }}
+                >
+                  <div className="pd-tt-cell pd-tt-name pd-tt-emph">{team.name}</div>
+                  <div className="pd-tt-cell pd-tt-status"><span className={`pd-team-pill pd-team-pill--${team.status.toLowerCase()}`}>{team.status}</span></div>
+                  <div className="pd-tt-cell pd-tt-flex">{team.season}</div>
+                  <div className="pd-tt-cell pd-tt-flex">{team.gender}</div>
+                  <div className="pd-tt-cell pd-tt-flex">{team.sport}</div>
+                  <div className="pd-tt-cell pd-tt-num"><NameTooltip count={team.coaches} names={team.coachNames} /></div>
+                  <div className="pd-tt-cell pd-tt-num"><NameTooltip count={team.athletes} names={team.athleteNames} /></div>
+                </div>
+              ))}
+            </div></div>
+          ) : (
+            <div className="pd-teams-scroll"><div className="pd-teams-table">
+              <div className="pd-tt-row pd-tt-header">
+                <div className="pd-tt-cell pd-tt-check">
+                  <input
+                    type="checkbox"
+                    checked={athleteRows.length > 0 && selectedAthleteIds.length === athleteRows.length}
+                    ref={(el) => { if (el) el.indeterminate = selectedAthleteIds.length > 0 && selectedAthleteIds.length < athleteRows.length; }}
+                    onChange={() => setSelectedAthleteIds(selectedAthleteIds.length === athleteRows.length ? [] : athleteRows.map(a => a.id))}
+                  />
+                </div>
+                <div className="pd-tt-cell pd-tt-name"><span>Athlete</span></div>
+                <div className="pd-tt-cell pd-tt-flex"><span>Primary Contact</span></div>
+                <div className="pd-tt-cell pd-tt-flex"><span>Team</span></div>
+                <div className="pd-tt-cell pd-tt-status"><span>Status</span></div>
+              </div>
+              {athleteRows.map((athlete) => {
+                const isSel = selectedAthleteIds.includes(athlete.id);
+                return (
+                  <div
+                    key={athlete.id}
+                    className={`pd-tt-row pd-tt-data${isSel ? ' pd-tt-data--sel' : ''}`}
+                    onClick={() => setSelectedAthleteIds(prev => isSel ? prev.filter(id => id !== athlete.id) : [...prev, athlete.id])}
+                  >
+                    <div className="pd-tt-cell pd-tt-check" onClick={e => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={isSel}
+                        onChange={() => setSelectedAthleteIds(prev => isSel ? prev.filter(id => id !== athlete.id) : [...prev, athlete.id])}
+                      />
+                    </div>
+                    <div className="pd-tt-cell pd-tt-name pd-tt-emph">{athlete.name}</div>
+                    <div className="pd-tt-cell pd-tt-flex">{athlete.primaryContact}</div>
+                    <div className="pd-tt-cell pd-tt-flex">{athlete.teamName}</div>
+                    <div className="pd-tt-cell pd-tt-status">
+                      <span className={`pd-roster-pill pd-roster-pill--${athlete.status.toLowerCase()}`}>{athlete.status}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div></div>
+          )}
         </div>
       )}
 
@@ -927,7 +989,6 @@ export default function ProgramDetailPageClient({
         .pd-cell--reg-date { width: 62px; flex-shrink: 0; }
         .pd-cell--money { width: 68px; flex-shrink: 0; }
         .pd-cell--team { width: 65px; flex-shrink: 0; }
-        .pd-cell--roster-status { width: 84px; flex-shrink: 0; }
         .pd-cell--pstatus { width: 84px; flex-shrink: 0; }
         .pd-roster-pill {
           display: inline-flex;
@@ -1057,6 +1118,36 @@ export default function ProgramDetailPageClient({
           gap: 8px;
           width: 100%;
         }
+        .pd-vt-group {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          margin-right: auto;
+        }
+        .pd-vt-pill {
+          display: inline-flex;
+          align-items: center;
+          padding: 5px 14px;
+          border: 1.5px solid var(--u-color-line-subtle, #c4c6c8);
+          border-radius: 9999px;
+          background: transparent;
+          font-family: var(--u-font-body);
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--u-color-base-foreground-subtle, #607081);
+          cursor: pointer;
+          transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+        }
+        .pd-vt-pill--active {
+          background: #1a2332;
+          border-color: #1a2332;
+          color: #ffffff;
+        }
+        .pd-vt-pill:not(.pd-vt-pill--active):hover {
+          background: var(--u-color-background-subtle, #f5f6f7);
+          border-color: var(--u-color-base-foreground-subtle, #607081);
+          color: var(--u-color-base-foreground, #36485c);
+        }
         .pd-teams-confirm-nudge {
           display: flex;
           align-items: center;
@@ -1177,6 +1268,273 @@ export default function ProgramDetailPageClient({
           color: var(--u-color-base-foreground-subtle, #607081);
           flex-shrink: 0;
         }
+
+        /* Athletes table checkbox column */
+        .pd-tt-check { flex: 0 0 44px; justify-content: center; padding: 0 8px; }
+        .pd-tt-data--sel { background: var(--u-color-background-subtle, #f5f6f7); }
+        .pd-tt-data--sel:hover { background: var(--u-color-background-subtle, #f5f6f7); }
+        .pd-tt-check input[type="checkbox"] { cursor: pointer; width: 16px; height: 16px; accent-color: #1a2332; }
+      `}</style>
+
+      <style jsx global>{`
+        /* Email contacts action bar */
+        .ec-action-bar {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 52px;
+          background: var(--u-color-emphasis-background-contrast, #0273e3);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 24px;
+          z-index: 500;
+        }
+        .ec-action-label {
+          font-family: var(--u-font-body);
+          font-size: 14px;
+          font-weight: 700;
+          color: #ffffff;
+        }
+        .ec-action-right {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+        .ec-email-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          height: 34px;
+          padding: 0 14px;
+          border: none;
+          border-radius: 4px;
+          background: rgba(255,255,255,0.15);
+          color: #ffffff;
+          font-family: var(--u-font-body);
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: background 0.12s ease;
+        }
+        .ec-email-btn:hover { background: rgba(255,255,255,0.25); }
+        .ec-dismiss-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 34px;
+          height: 34px;
+          border: none;
+          border-radius: 4px;
+          background: transparent;
+          color: rgba(255,255,255,0.8);
+          cursor: pointer;
+          margin-left: 4px;
+          transition: background 0.12s ease, color 0.12s ease;
+        }
+        .ec-dismiss-btn:hover { background: rgba(255,255,255,0.15); color: #ffffff; }
+
+        /* Email drawer overlay */
+        .ec-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.35);
+          z-index: 600;
+        }
+
+        /* Email drawer */
+        .ec-drawer {
+          position: fixed;
+          top: 0;
+          right: 0;
+          bottom: 0;
+          width: 520px;
+          background: var(--u-color-background-container, #fefefe);
+          display: flex;
+          flex-direction: column;
+          z-index: 700;
+          box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+        }
+        .ec-drawer-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 20px 24px 16px;
+          border-bottom: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          flex-shrink: 0;
+        }
+        .ec-drawer-header-left { display: flex; flex-direction: column; gap: 2px; }
+        .ec-drawer-title {
+          margin: 0;
+          font-family: var(--u-font-body);
+          font-size: 18px;
+          font-weight: 700;
+          color: var(--u-color-base-foreground-contrast, #071c31);
+        }
+        .ec-drawer-count {
+          font-family: var(--u-font-body);
+          font-size: 13px;
+          color: var(--u-color-base-foreground-subtle, #607081);
+        }
+        .ec-drawer-close {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border: none;
+          background: transparent;
+          border-radius: 4px;
+          color: var(--u-color-base-foreground-subtle, #607081);
+          cursor: pointer;
+          flex-shrink: 0;
+          transition: background 0.12s ease;
+        }
+        .ec-drawer-close:hover { background: var(--u-color-background-subtle, #f5f6f7); color: var(--u-color-base-foreground-contrast, #071c31); }
+        .ec-drawer-body {
+          flex: 1;
+          overflow-y: auto;
+          padding: 20px 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .ec-field { display: flex; flex-direction: column; gap: 6px; }
+        .ec-label {
+          font-family: var(--u-font-body);
+          font-size: 13px;
+          font-weight: 700;
+          color: var(--u-color-base-foreground-contrast, #071c31);
+        }
+        .ec-req { color: var(--u-color-alert-foreground, #bb1700); }
+        .ec-input {
+          height: 38px;
+          padding: 0 10px;
+          border: 1.5px solid var(--u-color-line-subtle, #c4c6c8);
+          border-radius: 4px;
+          font-family: var(--u-font-body);
+          font-size: 14px;
+          color: var(--u-color-base-foreground-contrast, #071c31);
+          background: var(--u-color-background-container, #fefefe);
+          outline: none;
+          transition: border-color 0.12s ease;
+        }
+        .ec-input:focus { border-color: var(--u-color-emphasis-background-contrast, #0273e3); }
+        .ec-input[readonly] { background: var(--u-color-background-default, #e8eaec); color: var(--u-color-base-foreground-subtle, #607081); }
+        .ec-field-note {
+          margin: -8px 0 0;
+          font-family: var(--u-font-body);
+          font-size: 12px;
+          color: var(--u-color-base-foreground-subtle, #607081);
+        }
+        .ec-message-editor {
+          border: 1.5px solid var(--u-color-line-subtle, #c4c6c8);
+          border-radius: 4px;
+          overflow: hidden;
+        }
+        .ec-message-editor:focus-within { border-color: var(--u-color-emphasis-background-contrast, #0273e3); }
+        .ec-toolbar {
+          display: flex;
+          align-items: center;
+          gap: 2px;
+          padding: 6px 8px;
+          border-bottom: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          background: var(--u-color-background-default, #f5f6f7);
+        }
+        .ec-toolbar-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 28px;
+          height: 28px;
+          border: none;
+          border-radius: 4px;
+          background: transparent;
+          color: var(--u-color-base-foreground, #36485c);
+          cursor: pointer;
+          transition: background 0.1s ease;
+        }
+        .ec-toolbar-btn:hover { background: var(--u-color-background-canvas, #e0e1e1); }
+        .ec-toolbar-sep {
+          width: 1px;
+          height: 18px;
+          background: var(--u-color-line-subtle, #c4c6c8);
+          margin: 0 4px;
+          flex-shrink: 0;
+        }
+        .ec-textarea {
+          min-height: 200px;
+          padding: 12px;
+          font-family: var(--u-font-body);
+          font-size: 14px;
+          line-height: 1.6;
+          color: var(--u-color-base-foreground-contrast, #071c31);
+          outline: none;
+        }
+        .ec-textarea:empty::before {
+          content: 'Write your message…';
+          color: var(--u-color-base-foreground-subtle, #85909e);
+          pointer-events: none;
+        }
+        .ec-toggle-card {
+          border: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          border-radius: 8px;
+          overflow: hidden;
+        }
+        .ec-toggle-card-body {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 14px 16px;
+        }
+        .ec-toggle-card-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+        .ec-toggle-title { font-family: var(--u-font-body); font-size: 14px; font-weight: 700; color: var(--u-color-base-foreground-contrast, #071c31); }
+        .ec-toggle-desc { font-family: var(--u-font-body); font-size: 12px; color: var(--u-color-base-foreground-subtle, #607081); }
+        .ec-toggle {
+          width: 40px; height: 22px; border-radius: 9999px; padding: 3px;
+          border: none; background: var(--u-color-line-default, #85909e);
+          display: flex; align-items: center; justify-content: flex-start;
+          cursor: pointer; flex-shrink: 0; transition: background 0.15s ease;
+        }
+        .ec-toggle--on { background: var(--u-color-emphasis-background-contrast, #0273e3); justify-content: flex-end; }
+        .ec-toggle-thumb { width: 16px; height: 16px; border-radius: 9999px; background: #fff; flex-shrink: 0; }
+        .ec-expiry-row { display: flex; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--u-color-line-subtle, #c4c6c8); }
+        .ec-expiry-field { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+        .ec-expiry-label { font-family: var(--u-font-body); font-size: 12px; font-weight: 700; color: var(--u-color-base-foreground, #36485c); }
+        .ec-expiry-input, .ec-expiry-select {
+          height: 34px; padding: 0 8px;
+          border: 1.5px solid var(--u-color-line-subtle, #c4c6c8);
+          border-radius: 4px;
+          font-family: var(--u-font-body); font-size: 13px;
+          color: var(--u-color-base-foreground-contrast, #071c31);
+          background: var(--u-color-background-container, #fefefe);
+          outline: none;
+        }
+        .ec-expiry-input:focus, .ec-expiry-select:focus { border-color: var(--u-color-emphasis-background-contrast, #0273e3); }
+        .ec-drawer-footer {
+          padding: 16px 24px;
+          border-top: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          flex-shrink: 0;
+          display: flex;
+          justify-content: flex-end;
+        }
+        .ec-send-btn {
+          height: 38px;
+          padding: 0 24px;
+          border: none;
+          border-radius: 4px;
+          background: var(--u-color-emphasis-background-contrast, #0273e3);
+          color: #ffffff;
+          font-family: var(--u-font-body);
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: background 0.12s ease, opacity 0.12s ease;
+        }
+        .ec-send-btn:hover:not(:disabled) { background: #005bbf; }
+        .ec-send-btn:disabled { opacity: 0.45; cursor: not-allowed; }
       `}</style>
 
       <ConfirmTeamsDrawer
@@ -1185,6 +1543,140 @@ export default function ProgramDetailPageClient({
         onConfirm={async () => { setDrawerTeam(null); }}
         teams={drawerTeam ? [drawerTeam] : []}
       />
+
+      {/* Action bar */}
+      {selectedAthleteIds.length > 0 && createPortal(
+        <div className="ec-action-bar">
+          <span className="ec-action-label">{selectedAthleteIds.length} {selectedAthleteIds.length === 1 ? 'Athlete' : 'Athletes'} Selected</span>
+          <div className="ec-action-right">
+            <button className="ec-email-btn" onClick={() => setEmailDrawerOpen(true)}>
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                <path d="M3 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M2 6l8 6 8-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              Email Contacts
+            </button>
+            <button className="ec-dismiss-btn" onClick={() => setSelectedAthleteIds([])} aria-label="Clear selection">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Email drawer */}
+      {emailDrawerOpen && createPortal(
+        <>
+          <div className="ec-overlay" onClick={() => setEmailDrawerOpen(false)} />
+          <div className="ec-drawer">
+            <div className="ec-drawer-header">
+              <div className="ec-drawer-header-left">
+                <h2 className="ec-drawer-title">Email Contacts</h2>
+                <span className="ec-drawer-count">{selectedAthleteIds.length} recipient{selectedAthleteIds.length !== 1 ? 's' : ''}</span>
+              </div>
+              <button className="ec-drawer-close" onClick={() => setEmailDrawerOpen(false)} aria-label="Close">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+            <div className="ec-drawer-body">
+              <div className="ec-field">
+                <label className="ec-label">Sender</label>
+                <input type="text" className="ec-input" value="no-reply@hudl.com" readOnly />
+              </div>
+              <p className="ec-field-note">Include your contact information in your message so recipients can reach you directly.</p>
+              <div className="ec-field">
+                <label className="ec-label">Primary Contact <span className="ec-req">*</span></label>
+                <input type="text" className="ec-input" placeholder="Add a contact..." value={emailContact} onChange={e => setEmailContact(e.target.value)} />
+              </div>
+              <div className="ec-field">
+                <label className="ec-label">Subject <span className="ec-req">*</span></label>
+                <input type="text" className="ec-input" placeholder="Add a subject..." value={emailSubject} onChange={e => setEmailSubject(e.target.value)} />
+              </div>
+              <div className="ec-field">
+                <label className="ec-label">Message <span className="ec-req">*</span></label>
+                <div className="ec-message-editor">
+                  <div className="ec-toolbar">
+                    <button type="button" className="ec-toolbar-btn" title="Bold">
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M4 3h5a2.5 2.5 0 0 1 0 5H4V3z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/><path d="M4 8h5.5a3 3 0 0 1 0 6H4V8z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/></svg>
+                    </button>
+                    <div className="ec-toolbar-sep" />
+                    <button type="button" className="ec-toolbar-btn" title="Align left">
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
+                    </button>
+                    <button type="button" className="ec-toolbar-btn" title="Align center">
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M4 8h8M3 12h10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
+                    </button>
+                    <div className="ec-toolbar-sep" />
+                    <button type="button" className="ec-toolbar-btn" title="Bullet list">
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="3" cy="5" r="1.2" fill="currentColor"/><path d="M6 5h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/><circle cx="3" cy="9" r="1.2" fill="currentColor"/><path d="M6 9h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/><circle cx="3" cy="13" r="1.2" fill="currentColor"/><path d="M6 13h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
+                    </button>
+                    <button type="button" className="ec-toolbar-btn" title="Insert link">
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M6.5 9.5a3.5 3.5 0 0 0 4.95 0l2-2a3.5 3.5 0 0 0-4.95-4.95l-1.25 1.25" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/><path d="M9.5 6.5a3.5 3.5 0 0 0-4.95 0l-2 2a3.5 3.5 0 0 0 4.95 4.95l1.25-1.25" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
+                    </button>
+                  </div>
+                  <div
+                    ref={emailEditorRef}
+                    className="ec-textarea"
+                    contentEditable
+                    suppressContentEditableWarning
+                    onInput={() => { if (emailEditorRef.current) setEmailMessage(emailEditorRef.current.innerText); }}
+                  />
+                </div>
+              </div>
+              <div className="ec-toggle-card">
+                <div className="ec-toggle-card-body">
+                  <div className="ec-toggle-card-text">
+                    <span className="ec-toggle-title">Include Accept / Decline</span>
+                    <span className="ec-toggle-desc">Recipients will see a link to accept or decline their team assignment.</span>
+                  </div>
+                  <button type="button" className={`ec-toggle${emailIncludeAcceptDecline ? ' ec-toggle--on' : ''}`} onClick={() => setEmailIncludeAcceptDecline(v => !v)}>
+                    <span className="ec-toggle-thumb" />
+                  </button>
+                </div>
+              </div>
+              <div className="ec-toggle-card" style={{ marginTop: 8 }}>
+                <div className="ec-toggle-card-body">
+                  <div className="ec-toggle-card-text">
+                    <span className="ec-toggle-title">Set Expiration Date</span>
+                    <span className="ec-toggle-desc">Email link will expire at the specified date and time.</span>
+                  </div>
+                  <button type="button" className={`ec-toggle${emailExpirationEnabled ? ' ec-toggle--on' : ''}`} onClick={() => setEmailExpirationEnabled(v => !v)}>
+                    <span className="ec-toggle-thumb" />
+                  </button>
+                </div>
+                {emailExpirationEnabled && (
+                  <div className="ec-expiry-row">
+                    <div className="ec-expiry-field">
+                      <label className="ec-expiry-label">Date</label>
+                      <input type="date" className="ec-expiry-input" value={emailExpirationDate} onChange={e => setEmailExpirationDate(e.target.value)} />
+                    </div>
+                    <div className="ec-expiry-field">
+                      <label className="ec-expiry-label">Time</label>
+                      <select className="ec-expiry-select" value={emailExpirationTime} onChange={e => setEmailExpirationTime(e.target.value)}>
+                        {['6:00 AM','7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM','6:00 PM','7:00 PM','8:00 PM','9:00 PM','10:00 PM','11:59 PM'].map(t => <option key={t}>{t}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="ec-drawer-footer">
+              <button
+                className="ec-send-btn"
+                disabled={!emailSubject.trim() || !emailMessage.trim()}
+                onClick={() => { setEmailDrawerOpen(false); setSelectedAthleteIds([]); }}
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        </>,
+        document.body
+      )}
     </div>
   );
 }

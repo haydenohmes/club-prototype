@@ -12,6 +12,8 @@ interface InviteAthlete {
   initials: string;
   primaryContact: string;
   isSelected: boolean;
+  status?: 'assigned' | 'invited' | 'accepted' | 'deposit' | 'paid';
+  sentAt?: string;
 }
 
 interface InviteTeam {
@@ -73,9 +75,9 @@ const INITIAL_REGISTRATIONS: InviteRegistration[] = [
         name: '8U Black',
         isExpanded: true,
         athletes: [
-          { id: 'a1', name: 'Liam Thompson',  initials: 'LT', primaryContact: 'Jennifer Thompson', isSelected: false},
-          { id: 'a2', name: 'Mason Garcia',   initials: 'MG', primaryContact: 'Maria Garcia',       isSelected: false},
-          { id: 'a3', name: 'Noah Williams',  initials: 'NW', primaryContact: 'Sarah Williams',     isSelected: false },
+          { id: 'a1', name: 'Liam Thompson',  initials: 'LT', primaryContact: 'Jennifer Thompson', isSelected: false, status: 'assigned' as const },
+          { id: 'a2', name: 'Mason Garcia',   initials: 'MG', primaryContact: 'Maria Garcia',       isSelected: false, status: 'assigned' as const },
+          { id: 'a3', name: 'Noah Williams',  initials: 'NW', primaryContact: 'Sarah Williams',     isSelected: false, status: 'assigned' as const },
         ],
       },
       {
@@ -83,8 +85,8 @@ const INITIAL_REGISTRATIONS: InviteRegistration[] = [
         name: '10U Gold',
         isExpanded: false,
         athletes: [
-          { id: 'a4', name: 'Ethan Martinez', initials: 'EM', primaryContact: 'Carlos Martinez', isSelected: false},
-          { id: 'a5', name: 'Oliver Davis',   initials: 'OD', primaryContact: 'Amy Davis',       isSelected: false},
+          { id: 'a4', name: 'Ethan Martinez', initials: 'EM', primaryContact: 'Carlos Martinez', isSelected: false, status: 'assigned' as const },
+          { id: 'a5', name: 'Oliver Davis',   initials: 'OD', primaryContact: 'Amy Davis',       isSelected: false, status: 'assigned' as const },
         ],
       },
     ],
@@ -99,14 +101,21 @@ const INITIAL_REGISTRATIONS: InviteRegistration[] = [
         name: '12U Blue',
         isExpanded: false,
         athletes: [
-          { id: 'a6', name: 'Lucas Wilson',   initials: 'LW', primaryContact: 'David Wilson',   isSelected: false},
-          { id: 'a7', name: 'Aiden Brown',    initials: 'AB', primaryContact: 'Lisa Brown',      isSelected: false },
-          { id: 'a8', name: 'Jackson Taylor', initials: 'JT', primaryContact: 'Michael Taylor', isSelected: false },
+          { id: 'a6', name: 'Lucas Wilson',   initials: 'LW', primaryContact: 'David Wilson',   isSelected: false, status: 'assigned' as const },
+          { id: 'a7', name: 'Aiden Brown',    initials: 'AB', primaryContact: 'Lisa Brown',      isSelected: false, status: 'assigned' as const },
+          { id: 'a8', name: 'Jackson Taylor', initials: 'JT', primaryContact: 'Michael Taylor', isSelected: false, status: 'assigned' as const },
         ],
       },
     ],
   },
 ];
+
+// Default registrations pre-attached to every team
+const DEFAULT_TEAM_REGISTRATIONS: Record<string, { program: string; registration: string }> = {
+  'team-1': { program: '2026 Fall Club Dues', registration: 'U10 Player Dues' },
+  'team-2': { program: '2026 Fall Club Dues', registration: 'U10 Player Dues' },
+  'team-3': { program: '2026 Fall Club Dues', registration: 'U12 Player Dues' },
+};
 
 // Build the invite list from teams passed in by the club dues builder (teams that
 // were linked and have athletes), pre-attached to the registration being sent.
@@ -115,6 +124,8 @@ const NAME_POOL = [
   'Lucas Wilson', 'Aiden Brown', 'Jackson Taylor', 'Sophia Lee', 'Emma Clark',
   'Ava Lewis', 'Mia Walker', 'Harper Young', 'Ella King', 'Jack Scott',
 ];
+
+const STATUS_POOL: Array<'invited' | 'accepted' | 'declined' | 'assigned'> = ['assigned', 'assigned', 'assigned', 'assigned', 'assigned', 'assigned', 'assigned', 'assigned', 'assigned', 'assigned'];
 
 function makeAthletes(teamIdx: number, count: number): InviteAthlete[] {
   return Array.from({ length: Math.max(1, count) }, (_, i) => {
@@ -126,6 +137,7 @@ function makeAthletes(teamIdx: number, count: number): InviteAthlete[] {
       initials: `${first[0]}${last ? last[0] : ''}`.toUpperCase(),
       primaryContact: `${last || first} Family`,
       isSelected: false,
+      status: STATUS_POOL[(teamIdx * 3 + i) % STATUS_POOL.length],
     };
   });
 }
@@ -257,7 +269,7 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
   // director attaches one per team here (the "Attach Registration" button).
   type Attachment = { program: string; registration: string };
   const [teamRegistrations, setTeamRegistrations] = useState<Record<string, Attachment>>(() => {
-    if (!attachedRegistrationName) return {};
+    if (!attachedRegistrationName) return DEFAULT_TEAM_REGISTRATIONS;
     const map: Record<string, Attachment> = {};
     // Teams passed from the dues builder (linked + have athletes) arrive attached
     if (prefillTeams && prefillTeams.length) {
@@ -300,6 +312,25 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
   const [alignMode, setAlignMode]     = useState<'left' | 'center' | 'right'>('left');
   const [listActive, setListActive]   = useState(false);
   const [sendConfirmed, setSendConfirmed] = useState(false);
+  const [sentCount, setSentCount] = useState(0);
+  const [includeAcceptDecline, setIncludeAcceptDecline] = useState(true);
+  const [expirationEnabled, setExpirationEnabled] = useState(false);
+  const [expirationDate, setExpirationDate] = useState('');
+  const [expirationTime, setExpirationTime] = useState('5:00 PM');
+  const [statusDropdown, setStatusDropdown] = useState<{ id: string; regId: string; teamId: string; x: number; y: number } | null>(null);
+
+  const setAthleteStatus = (
+    regId: string, teamId: string, athleteId: string,
+    status: InviteAthlete['status'],
+  ) => {
+    setRegistrations(prev => prev.map(r => r.id !== regId ? r : {
+      ...r,
+      teams: r.teams.map(t => t.id !== teamId ? t : {
+        ...t,
+        athletes: t.athletes.map(a => a.id !== athleteId ? a : { ...a, status }),
+      }),
+    }));
+  };
 
   // ── Helpers ──
 
@@ -394,18 +425,22 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
   const totalSelected = registrations.reduce((sum, r) =>
     sum + r.teams.reduce((ts, t) => ts + t.athletes.filter(a => a.isSelected).length, 0), 0);
 
-  // Every team that has athletes selected must have a registration attached
-  const teamsWithSelection = registrations.flatMap(r => r.teams).filter(t => t.athletes.some(a => a.isSelected));
-  const allSelectedTeamsAttached = teamsWithSelection.every(t => !!teamRegistrations[t.id]);
-  const canSend = totalSelected > 0 && subject.trim().length > 0 && message.trim().length > 0 && allSelectedTeamsAttached;
+  const canSend = totalSelected > 0 && subject.trim().length > 0 && message.trim().length > 0;
 
   const handleSend = () => {
     if (!canSend) return;
+    setSentCount(totalSelected);
     setSendConfirmed(true);
-    setTimeout(() => {
-      if (onClose) onClose();
-      else router.push('/teams/assignments');
-    }, 1800);
+    const now = new Date();
+    const sentAt = `${now.toLocaleString('en-US', { month: 'short', day: 'numeric' })}, ${now.getFullYear()}`;
+    setRegistrations(prev => prev.map(r => ({
+      ...r,
+      teams: r.teams.map(t => ({
+        ...t,
+        athletes: t.athletes.map(a => a.isSelected ? { ...a, isSelected: false, status: 'invited' as const, sentAt } : a),
+      })),
+    })));
+    setTimeout(() => setSendConfirmed(false), 2500);
   };
 
   const renderTeamAccordion = (reg: InviteRegistration, team: InviteTeam) => {
@@ -421,25 +456,17 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
           <div className="si-team-left">
             <span className="si-team-name">{team.name}</span>
             <div className="si-attach-wrap" onClick={(e) => e.stopPropagation()}>
-              {attached ? (
-                <span className="si-reg-pill">
-                  <span className="si-reg-pill-text">Registration: {attached.registration}</span>
-                  <button
-                    type="button"
-                    className="si-reg-pill-edit"
-                    onClick={() => openAttachModal(team.id)}
-                    aria-label="Edit registration"
-                  >
-                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                      <path d="M11.5 2.5l2 2-7 7-2.5.5.5-2.5 7-7z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </button>
-                </span>
-              ) : (
-                <button type="button" className="si-attach-btn" onClick={() => openAttachModal(team.id)}>
-                  + Attach Registration
-                </button>
-              )}
+              <button
+                type="button"
+                className="si-reg-pill"
+                onClick={() => openAttachModal(team.id)}
+                aria-label="Edit registration"
+              >
+                <span className="si-reg-pill-text">{attached?.registration ?? 'Select registration'}</span>
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, opacity: 0.7 }}>
+                  <path d="M11.5 2.5l2 2-7 7-2.5.5.5-2.5 7-7z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
             </div>
           </div>
           <div className="si-team-header-right">
@@ -476,16 +503,30 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
                   <div className="si-athlete-contact">Primary Contact: {athlete.primaryContact}</div>
                 </div>
                 <div className="si-athlete-right">
-                  <button
-                    type="button"
-                    className="si-athlete-remove"
-                    onClick={(e) => { e.stopPropagation(); removeAthlete(reg.id, team.id, athlete.id); }}
-                    aria-label={`Remove ${athlete.name}`}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  </button>
+                  {athlete.status && (
+                    <span className="si-status-pill-group">
+                      {athlete.status === 'invited' && athlete.sentAt && (
+                        <span className="si-sent-date">Sent {athlete.sentAt}</span>
+                      )}
+                      <span className="si-status-pill-wrap">
+                        <button
+                          type="button"
+                          className={`si-status-pill si-status-pill--${athlete.status} si-status-pill--btn`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (statusDropdown?.id === athlete.id) { setStatusDropdown(null); return; }
+                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                            setStatusDropdown({ id: athlete.id, regId: reg.id, teamId: team.id, x: rect.right, y: rect.bottom + 4 });
+                          }}
+                        >
+                          {athlete.status === 'deposit' ? 'Paid Deposit' : athlete.status === 'paid' ? 'Paid in Full' : athlete.status.charAt(0).toUpperCase() + athlete.status.slice(1)}
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ marginLeft: 3, flexShrink: 0 }}>
+                            <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                      </span>
+                    </span>
+                  )}
                   <div className={`si-checkbox si-checkbox--sm${athlete.isSelected ? ' si-checkbox--checked' : ''}`}>
                     {athlete.isSelected && <CheckIcon />}
                   </div>
@@ -514,7 +555,6 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
             className={`si-btn si-btn--primary${!canSend ? ' si-btn--disabled' : ''}`}
             onClick={handleSend}
             disabled={!canSend}
-            title={!allSelectedTeamsAttached ? 'Attach a registration to each selected team before sending' : undefined}
           >
             {sendConfirmed ? 'Sent!' : 'Send'}
           </button>
@@ -529,11 +569,6 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
           <span className="si-step-label">STEP: 1</span>
           <h2 className="si-panel-title">Select Teams &amp; Athletes</h2>
           <p className="si-panel-subtitle">Choose which athletes receive this invitation.</p>
-
-          <div className="si-info-note">
-            <InfoIcon />
-            <span>All selected athletes will receive an email with a link to accept or decline their team assignment.</span>
-          </div>
 
           {/* Flat team list — each team shows its own attached registration */}
           <div className="si-team-list">
@@ -668,9 +703,74 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
                 />
               </div>
             </div>
+
+          {/* Accept/Decline toggle card */}
+          <div className="si-toggle-card">
+            <div className="si-toggle-card-body">
+              <div className="si-toggle-card-text">
+                <span className="si-toggle-card-title">Include Accept / Decline</span>
+                <span className="si-toggle-card-desc">Recipients will see a link to accept or decline their team assignment.</span>
+              </div>
+              <button
+                type="button"
+                className={`si-toggle${includeAcceptDecline ? ' si-toggle--on' : ''}`}
+                onClick={() => setIncludeAcceptDecline(v => !v)}
+                aria-pressed={includeAcceptDecline}
+                aria-label="Include accept or decline"
+              >
+                <span className="si-toggle-thumb" />
+              </button>
+            </div>
+          </div>
+          <div className="si-toggle-card" style={{ marginTop: 8 }}>
+            <div className="si-toggle-card-body">
+              <div className="si-toggle-card-text">
+                <span className="si-toggle-card-title">Set Expiration Date</span>
+                <span className="si-toggle-card-desc">Invitation link will expire at the specified date and time.</span>
+              </div>
+              <button
+                type="button"
+                className={`si-toggle${expirationEnabled ? ' si-toggle--on' : ''}`}
+                onClick={() => setExpirationEnabled(v => !v)}
+                aria-pressed={expirationEnabled}
+                aria-label="Set expiration date"
+              >
+                <span className="si-toggle-thumb" />
+              </button>
+            </div>
+            {expirationEnabled && (
+              <div className="si-expiry-row">
+                <div className="si-expiry-field">
+                  <label className="si-expiry-label">Date</label>
+                  <input
+                    type="date"
+                    className="si-expiry-input"
+                    value={expirationDate}
+                    onChange={e => setExpirationDate(e.target.value)}
+                  />
+                </div>
+                <div className="si-expiry-field">
+                  <label className="si-expiry-label">Time</label>
+                  <div className="si-expiry-select-wrap">
+                    <select
+                      className="si-expiry-select"
+                      value={expirationTime}
+                      onChange={e => setExpirationTime(e.target.value)}
+                    >
+                      {['6:00 AM','7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM',
+                        '12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM',
+                        '6:00 PM','7:00 PM','8:00 PM','9:00 PM','10:00 PM','11:59 PM'
+                      ].map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                    <span className="si-expiry-chevron"><ChevronDownIcon /></span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
           </div>
         </div>
-      </div>
+        </div>
 
       {/* Attach Registration modal */}
       {attachModalTeamId && createPortal(
@@ -732,13 +832,41 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
       )}
 
       {/* Send confirmation overlay */}
+      {statusDropdown && createPortal(
+        <>
+          <div className="si-status-dropdown-overlay" onClick={() => setStatusDropdown(null)} />
+          <div
+            className="si-status-dropdown"
+            style={{ position: 'fixed', top: statusDropdown.y, right: `calc(100vw - ${statusDropdown.x}px)` }}
+          >
+            {([
+              { label: 'Assigned',      status: 'assigned' as const },
+              { label: 'Invited',       status: 'invited'  as const },
+              { label: 'Accepted',      status: 'accepted' as const },
+              { label: 'Paid Deposit',  status: 'deposit'  as const },
+              { label: 'Paid in Full',  status: 'paid'     as const },
+            ] as const).map(opt => (
+              <button
+                key={opt.label}
+                type="button"
+                className="si-status-dropdown-item"
+                onClick={(e) => { e.stopPropagation(); setAthleteStatus(statusDropdown.regId, statusDropdown.teamId, statusDropdown.id, opt.status); setStatusDropdown(null); }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </>,
+        document.body
+      )}
+
       {sendConfirmed && (
         <div className="si-send-toast">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <circle cx="10" cy="10" r="9" stroke="#22c55e" strokeWidth="1.5"/>
             <path d="M6 10l3 3 5-5" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          Invitations sent to {totalSelected} athlete{totalSelected !== 1 ? 's' : ''}
+          Invitations sent to {sentCount} athlete{sentCount !== 1 ? 's' : ''}
         </div>
       )}
 
@@ -921,42 +1049,32 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
           background: #005bbf;
         }
 
-        /* Attached-registration pill (shown on the team once attached) */
+        /* Registration pill — always present, clickable to edit */
         .si-reg-pill {
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          height: 28px;
+          height: 26px;
           max-width: 260px;
-          padding: 0 6px 0 10px;
-          border: 1px solid #9dccf5;
-          border-radius: 9999px;
-          background: #e7f3fd;
+          padding: 0 8px;
+          border: none;
+          border-radius: 4px;
+          background: var(--u-color-background-canvas, #e0e1e1);
+          cursor: pointer;
+          color: var(--u-color-base-foreground, #36485c);
+          transition: background 0.15s ease;
+        }
+        .si-reg-pill:hover {
+          background: #d2d4d5;
         }
         .si-reg-pill-text {
           font-family: var(--u-font-body);
           font-size: 12px;
           font-weight: 600;
-          color: #085bb4;
+          color: var(--u-color-base-foreground, #36485c);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-        }
-        .si-reg-pill-edit {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 20px;
-          height: 20px;
-          border: none;
-          background: none;
-          border-radius: 9999px;
-          cursor: pointer;
-          color: var(--u-color-emphasis-background-contrast, #0273e3);
-          flex-shrink: 0;
-        }
-        .si-reg-pill-edit:hover {
-          background: rgba(2, 115, 227, 0.1);
         }
 
         /* ── Attach Registration modal ── */
@@ -1354,12 +1472,63 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
           color: var(--u-color-base-foreground-subtle, #607081);
         }
 
+        .si-status-pill-wrap {
+          position: relative;
+          display: inline-flex;
+        }
+
         .si-status-pill {
+          display: inline-flex;
+          align-items: center;
           padding: 2px 8px;
           border-radius: 9999px;
           font-size: 11px;
           font-weight: 600;
           white-space: nowrap;
+        }
+
+        .si-status-pill--btn {
+          border: none;
+          cursor: pointer;
+          font-family: var(--u-font-body);
+          transition: filter 0.1s ease;
+        }
+
+        .si-status-pill--btn:hover { filter: brightness(0.93); }
+
+        .si-status-dropdown-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 1100;
+        }
+
+        .si-status-dropdown {
+          z-index: 1101;
+          background: var(--u-color-background-container, #fefefe);
+          border: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          border-radius: 6px;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+          min-width: 130px;
+          padding: 4px 0;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .si-status-dropdown-item {
+          padding: 7px 14px;
+          text-align: left;
+          background: none;
+          border: none;
+          font-family: var(--u-font-body);
+          font-size: 13px;
+          font-weight: 500;
+          color: var(--u-color-base-foreground, #36485c);
+          cursor: pointer;
+          white-space: nowrap;
+        }
+
+        .si-status-dropdown-item:hover {
+          background: var(--u-color-background-canvas, #eff0f0);
         }
         .si-status-pill--invited {
           background: #fdf0d6;
@@ -1368,6 +1537,50 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
         .si-status-pill--assigned {
           background: #e0e1e1;
           color: #36485c;
+        }
+        .si-status-pill--accepted {
+          background: rgba(23, 129, 67, 0.1);
+          color: #178143;
+        }
+        .si-status-pill--declined {
+          background: rgba(187, 23, 0, 0.08);
+          color: #bb1700;
+        }
+        .si-status-pill--deposit {
+          background: #fef3c7;
+          color: #92400e;
+        }
+        .si-status-pill--paid {
+          background: rgba(23, 129, 67, 0.12);
+          color: #178143;
+        }
+
+        .si-status-pill-group {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+        }
+
+        .si-sent-date {
+          font-size: 11px;
+          color: var(--u-color-base-foreground-subtle, #607081);
+          white-space: nowrap;
+        }
+
+        .si-payment-pill {
+          padding: 2px 8px;
+          border-radius: 9999px;
+          font-size: 11px;
+          font-weight: 600;
+          white-space: nowrap;
+        }
+        .si-payment-pill--deposit {
+          background: rgba(180, 83, 9, 0.1);
+          color: #92400e;
+        }
+        .si-payment-pill--paid {
+          background: rgba(23, 129, 67, 0.1);
+          color: #178143;
         }
 
         .si-athlete-remove {
@@ -1390,6 +1603,138 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
         }
 
         /* ── Selection footer ── */
+        .si-toggle-card {
+          flex-shrink: 0;
+          border: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          border-radius: 8px;
+          background: var(--u-color-background-container, #fefefe);
+          margin-top: 12px;
+        }
+
+        .si-toggle-card-body {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 14px 16px;
+        }
+
+        .si-toggle-card-text {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .si-toggle-card-title {
+          font-family: var(--u-font-body);
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--u-color-base-foreground, #36485c);
+        }
+
+        .si-toggle-card-desc {
+          font-family: var(--u-font-body);
+          font-size: 12px;
+          color: var(--u-color-base-foreground-subtle, #607081);
+        }
+
+        .si-toggle {
+          flex-shrink: 0;
+          width: 40px;
+          height: 24px;
+          border-radius: 9999px;
+          border: none;
+          background: var(--u-color-line-subtle, #c4c6c8);
+          padding: 0;
+          cursor: pointer;
+          position: relative;
+          transition: background 0.2s ease;
+        }
+
+        .si-toggle--on {
+          background: var(--u-color-emphasis-foreground, #085bb4);
+        }
+
+        .si-toggle-thumb {
+          position: absolute;
+          top: 3px;
+          left: 3px;
+          width: 18px;
+          height: 18px;
+          border-radius: 9999px;
+          background: #fff;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+          transition: transform 0.2s ease;
+        }
+
+        .si-toggle--on .si-toggle-thumb {
+          transform: translateX(16px);
+        }
+
+        .si-expiry-row {
+          display: flex;
+          gap: 12px;
+          padding: 0 16px 14px;
+          border-top: 1px solid var(--u-color-line-subtle, #e0e1e1);
+          padding-top: 12px;
+        }
+
+        .si-expiry-field {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          flex: 1;
+        }
+
+        .si-expiry-label {
+          font-family: var(--u-font-body);
+          font-size: 11px;
+          font-weight: 600;
+          color: var(--u-color-base-foreground-subtle, #607081);
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+
+        .si-expiry-input {
+          height: 36px;
+          padding: 0 10px;
+          border: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          border-radius: 4px;
+          background: var(--u-color-background-container, #fefefe);
+          font-family: var(--u-font-body);
+          font-size: 13px;
+          color: var(--u-color-base-foreground, #36485c);
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .si-expiry-select-wrap {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+
+        .si-expiry-select {
+          width: 100%;
+          height: 36px;
+          padding: 0 28px 0 10px;
+          appearance: none;
+          border: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          border-radius: 4px;
+          background: var(--u-color-background-container, #fefefe);
+          font-family: var(--u-font-body);
+          font-size: 13px;
+          color: var(--u-color-base-foreground, #36485c);
+          cursor: pointer;
+        }
+
+        .si-expiry-chevron {
+          position: absolute;
+          right: 8px;
+          pointer-events: none;
+          color: var(--u-color-base-foreground-subtle, #607081);
+        }
+
         .si-selection-footer {
           flex-shrink: 0;
           padding-top: 12px;
@@ -1420,8 +1765,8 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
         }
 
         .si-field--flex {
-          flex: 1;
-          min-height: 0;
+          display: flex;
+          flex-direction: column;
         }
 
         .si-field-label {
@@ -1471,8 +1816,6 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
           border: 1px solid var(--u-color-line-subtle, #c4c6c8);
           border-radius: 4px;
           overflow: hidden;
-          flex: 1;
-          min-height: 0;
           transition: border-color 0.15s;
         }
         .si-message-editor:focus-within {
@@ -1520,8 +1863,7 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
         }
 
         .si-message-textarea {
-          flex: 1;
-          min-height: 200px;
+          min-height: 260px;
           border: none;
           outline: none;
           padding: 12px;

@@ -526,26 +526,6 @@ function TableContent({
           <span className="header-label">Athletes</span>
           <SortIcon />
         </div>
-        <div className="table-cell cell-stat">
-          <span className="header-label">Assigned</span>
-          <SortIcon />
-        </div>
-        <div className="table-cell cell-stat">
-          <span className="header-label">Invited</span>
-          <SortIcon />
-        </div>
-        <div className="table-cell cell-stat">
-          <span className="header-label">Accepted</span>
-          <SortIcon />
-        </div>
-        <div className="table-cell cell-stat">
-          <span className="header-label">Declined</span>
-          <SortIcon />
-        </div>
-        <div className="table-cell cell-stat">
-          <span className="header-label">Paid</span>
-          <SortIcon />
-        </div>
         {onDeleteTeam && <div className="table-cell cell-actions" />}
       </div>
 
@@ -577,11 +557,6 @@ function TableContent({
             <div className="table-cell cell-sport">{team.sport ? formatSport(team.sport) : '—'}</div>
             <div className="table-cell cell-coaches">{team.coachCount}</div>
             <div className="table-cell cell-athletes">{team.rosterCount}</div>
-            <div className="table-cell cell-stat">{team.assignedCount ?? 0}</div>
-            <div className="table-cell cell-stat">{team.invitedCount ?? 0}</div>
-            <div className="table-cell cell-stat">{team.acceptedCount ?? 0}</div>
-            <div className="table-cell cell-stat">{team.declinedCount ?? 0}</div>
-            <div className="table-cell cell-stat">{team.paidCount ?? 0}</div>
             {onDeleteTeam && (
               <div className="table-cell cell-actions">
                 {team.status === 'draft' && (

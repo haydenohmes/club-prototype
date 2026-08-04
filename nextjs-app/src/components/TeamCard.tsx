@@ -25,6 +25,7 @@ interface TeamCardProps {
   onAddAthletes?: () => void;
   onDrop?: (teamId: string) => void;
   onRemoveAthlete?: (athleteId: string) => void;
+  onEditRegistration?: (teamId: string) => void;
   isDragActive?: boolean;
 }
 
@@ -42,6 +43,7 @@ export default function TeamCard({
   onAddAthletes,
   onDrop,
   onRemoveAthlete,
+  onEditRegistration,
   isDragActive = false,
 }: TeamCardProps) {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -95,11 +97,17 @@ export default function TeamCard({
         <div className="team-card-info">
           <div className="team-card-name-row">
             <h3 className="team-card-name">{teamName}</h3>
+            {status === 'draft' && <span className="team-card-status-badge team-card-status-badge--draft">Draft</span>}
             {status === 'archived' && <span className="team-card-status-badge">Archived</span>}
+            {connectedRegistration && (
+              <button type="button" className="team-card-reg-pill" onClick={() => onEditRegistration?.(teamId)}>
+                <span className="team-card-reg-pill-text">{connectedRegistration}</span>
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, opacity: 0.6 }}>
+                  <path d="M11.5 2.5l2 2-7 7-2.5.5.5-2.5 7-7z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            )}
           </div>
-          {connectedRegistration && (
-            <p className="team-card-connected">Connected to {connectedRegistration}</p>
-          )}
           <div className="team-card-stats">
             <span className="team-card-stat">
               Assigned: <strong>{assignedCount}</strong>
@@ -271,13 +279,38 @@ export default function TeamCard({
           line-height: 1.4;
         }
 
-        .team-card-connected {
-          margin: 2px 0 0;
+        .team-card-reg-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          height: 26px;
+          padding: 0 8px;
+          border: none;
+          border-radius: 4px;
+          background: var(--u-color-background-canvas, #e0e1e1);
           font-family: var(--u-font-body);
-          font-size: 11px;
-          font-weight: 500;
-          color: var(--u-color-base-foreground-subtle, #607081);
-          line-height: 1.3;
+          font-size: 12px;
+          font-weight: 600;
+          color: var(--u-color-base-foreground, #36485c);
+          white-space: nowrap;
+          max-width: 160px;
+          flex-shrink: 0;
+          cursor: pointer;
+          transition: background 0.15s ease;
+        }
+
+        .team-card-reg-pill:hover {
+          background: var(--u-color-background-subtle, #d4d5d6);
+        }
+
+        .team-card-reg-pill-text {
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .team-card-status-badge--draft {
+          background: var(--u-color-warning-background, #fef3c7);
+          color: var(--u-color-warning-foreground, #92400e);
         }
 
         .team-card-stats {
