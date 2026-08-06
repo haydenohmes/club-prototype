@@ -277,13 +277,13 @@ function EditableMultiSelectCell({ values, options, onSave, onSaveSuccess, place
           justify-content: space-between;
           gap: 8px;
           width: 100%;
-          height: 40px;
-          padding: var(--u-space-half, 8px) var(--u-space-three-quarter, 12px);
-          border: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          height: 36px;
+          padding: 0 var(--u-space-three-quarter, 12px);
+          border: 1px solid transparent;
           border-radius: var(--u-border-radius-medium, 4px);
-          background: var(--u-color-background-container, #fefefe);
+          background: transparent;
           font-family: var(--u-font-body);
-          font-size: var(--u-font-size-default, 16px);
+          font-size: var(--u-font-size-200, 14px);
           color: var(--u-color-base-foreground, #36485c);
           cursor: pointer;
           text-align: left;
@@ -292,10 +292,11 @@ function EditableMultiSelectCell({ values, options, onSave, onSaveSuccess, place
 
         .multiselect-trigger:hover:not(:disabled) {
           background: var(--u-color-background-subtle, #f5f6f7);
-          border-color: var(--u-color-base-foreground-subtle, #607081);
+          border-color: var(--u-color-line-subtle, #c4c6c8);
         }
 
         .multiselect-trigger--open {
+          background: var(--u-color-background-container, #fefefe);
           border-color: var(--u-color-emphasis-background-contrast, #0273e3);
         }
 
@@ -1405,13 +1406,13 @@ const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
         .inline-input {
           width: 100%;
-          height: 40px;
-          padding: var(--u-space-half, 8px) var(--u-space-three-quarter, 12px);
-          border: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          height: 36px;
+          padding: 0 var(--u-space-three-quarter, 12px);
+          border: 1px solid transparent;
           border-radius: var(--u-border-radius-medium, 4px);
-          background: var(--u-color-background-container, #fefefe);
+          background: transparent;
           font-family: var(--u-font-body);
-          font-size: var(--u-font-size-default, 16px);
+          font-size: var(--u-font-size-200, 14px);
           color: var(--u-color-base-foreground, #36485c);
           outline: none;
           transition: border-color 0.15s ease, background 0.15s ease;
@@ -1425,12 +1426,13 @@ const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
           color: var(--u-color-base-foreground-subtle, #607081);
         }
 
-        .inline-input:hover:not(:focus) {
+        .inline-input:hover:not(:focus):not(:disabled) {
           background: var(--u-color-background-subtle, #f5f6f7);
-          border-color: var(--u-color-base-foreground-subtle, #607081);
+          border-color: var(--u-color-line-subtle, #c4c6c8);
         }
 
         .inline-input:focus {
+          background: var(--u-color-background-container, #fefefe);
           border-color: var(--u-color-emphasis-background-contrast, #0273e3);
         }
 
@@ -1460,6 +1462,21 @@ const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
         .inline-select-cell .select-trigger {
           min-width: unset;
+          border-color: transparent;
+          background: transparent;
+          height: 36px;
+          font-size: var(--u-font-size-200, 14px);
+          transition: border-color 0.15s ease, background 0.15s ease;
+        }
+
+        .inline-select-cell .select-trigger:hover {
+          background: var(--u-color-background-subtle, #f5f6f7);
+          border-color: var(--u-color-line-subtle, #c4c6c8);
+        }
+
+        .inline-select-cell .select-trigger--open {
+          background: var(--u-color-background-container, #fefefe);
+          border-color: var(--u-color-emphasis-background-contrast, #0273e3);
         }
 
         .inline-select {
