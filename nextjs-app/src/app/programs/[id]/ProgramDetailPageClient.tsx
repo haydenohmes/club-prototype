@@ -696,14 +696,13 @@ export default function ProgramDetailPageClient({
           <div className="pd-teams-scroll"><div className="pd-teams-table">
               <div className="pd-tt-row pd-tt-header">
                 <div className="pd-tt-cell pd-tt-name"><span>Team Name</span></div>
-                <div className="pd-tt-cell pd-tt-status"><span>Status</span></div>
                 <div className="pd-tt-cell pd-tt-flex"><span>Season</span></div>
                 <div className="pd-tt-cell pd-tt-flex"><span>Gender</span></div>
                 <div className="pd-tt-cell pd-tt-flex"><span>Sport</span></div>
                 <div className="pd-tt-cell pd-tt-num"><span>Coaches</span></div>
                 <div className="pd-tt-cell pd-tt-num"><span>Athletes</span></div>
               </div>
-              {programTeams.filter(t => t.status !== 'Draft').map(team => (
+              {programTeams.map(team => (
                 <div
                   key={team.id}
                   className="pd-tt-row pd-tt-data"
@@ -713,7 +712,6 @@ export default function ProgramDetailPageClient({
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDrawerTeam({ id: team.id, title: team.name, sport: team.sport, gender: team.gender, grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: team.status, tier: null, seasonId: null, rosterCount: team.athletes, maxRosterSize: null, ageMin: null, ageMax: null, coachCount: team.coaches, birthdayFrom: null, birthdayTo: null }); } }}
                 >
                   <div className="pd-tt-cell pd-tt-name pd-tt-emph">{team.name}</div>
-                  <div className="pd-tt-cell pd-tt-status"><span className={`pd-team-pill pd-team-pill--${team.status.toLowerCase()}`}>{team.status}</span></div>
                   <div className="pd-tt-cell pd-tt-flex">{team.season}</div>
                   <div className="pd-tt-cell pd-tt-flex">{team.gender}</div>
                   <div className="pd-tt-cell pd-tt-flex">{team.sport}</div>
