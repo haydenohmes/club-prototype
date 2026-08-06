@@ -684,7 +684,6 @@ export default function ProgramDetailPageClient({
                 { label: 'Invited',  value: String(teamStatInvited) },
                 { label: 'Accepted', value: String(teamStatAccepted) },
                 { label: 'Declined', value: String(teamStatDeclined) },
-                { label: 'Paid',     value: String(teamStatPaid) },
               ]}
             />
           </div>
