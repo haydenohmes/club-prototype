@@ -468,6 +468,7 @@ export default function ProgramDetailPageClient({
       </div>
 
       {/* Tabs */}
+      <div className="pd-tabs-row">
       <div className="pd-tabs" role="tablist">
         <button
           role="tab"
@@ -501,6 +502,12 @@ export default function ProgramDetailPageClient({
         >
           Athletes
         </button>
+      </div>
+      {activeTab === 'teams' && (
+        <Button buttonStyle="standard" buttonType="primary" size="medium" onClick={() => router.push(`/teams/assignments?returnTo=/programs/${programId}`)}>
+          Assign Athletes
+        </Button>
+      )}
       </div>
 
       {activeTab === 'overview' && (
@@ -686,11 +693,6 @@ export default function ProgramDetailPageClient({
                 { label: 'Declined', value: String(teamStatDeclined) },
               ]}
             />
-          </div>
-          <div className="pd-teams-head">
-            <Button buttonStyle="standard" buttonType="primary" size="medium" onClick={() => router.push(`/teams/assignments?returnTo=/programs/${programId}`)}>
-              Assign Athletes
-            </Button>
           </div>
           <div className="pd-teams-scroll"><div className="pd-teams-table">
               <div className="pd-tt-row pd-tt-header">
@@ -1067,10 +1069,16 @@ export default function ProgramDetailPageClient({
         .pd-pstatus--overdue { color: var(--u-color-alert-foreground, #bb1700); }
 
         /* Tabs */
+        .pd-tabs-row {
+          display: flex;
+          align-items: flex-end;
+          justify-content: space-between;
+          gap: 16px;
+        }
         .pd-tabs {
           display: flex;
           gap: 24px;
-          width: 100%;
+          flex: 1;
           border-bottom: 1px solid var(--u-color-line-subtle, #c4c6c8);
         }
         .pd-tab {
