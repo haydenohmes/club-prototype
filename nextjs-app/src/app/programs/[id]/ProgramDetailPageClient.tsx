@@ -338,7 +338,7 @@ export default function ProgramDetailPageClient({
     () => programs.find(p => p.id === programId) ?? null
   );
   const [openRegistration, setOpenRegistration] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'registrations' | 'teams' | 'athletes'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'registrations' | 'teams-list' | 'teams' | 'athletes'>('overview');
   const [drawerTeam, setDrawerTeam] = useState<TeamWithStats | null>(null);
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
@@ -488,6 +488,14 @@ export default function ProgramDetailPageClient({
           onClick={() => setActiveTab('registrations')}
         >
           Registration Options
+        </button>
+        <button
+          role="tab"
+          aria-selected={activeTab === 'teams-list'}
+          className={`pd-tab${activeTab === 'teams-list' ? ' pd-tab--active' : ''}`}
+          onClick={() => setActiveTab('teams-list')}
+        >
+          Teams
         </button>
         <button
           role="tab"
@@ -665,6 +673,44 @@ export default function ProgramDetailPageClient({
               </div>
             ))}
           </div>
+          </div>
+        </div>
+      )}
+
+      {/* Teams list tab */}
+      {activeTab === 'teams-list' && (
+        <div className="pd-reg-panel">
+          <div className="pd-teams-list">
+            {['Draft', 'Active'].map(statusGroup => {
+              const grouped = programTeams.filter(t => t.status === statusGroup);
+              if (!grouped.length) return null;
+              return (
+                <div key={statusGroup} className="pd-tl-group">
+                  <div className="pd-tl-group-header">
+                    <span className={`pd-tl-status-badge pd-tl-status-badge--${statusGroup.toLowerCase()}`}>{statusGroup}</span>
+                    <span className="pd-tl-group-count">{grouped.length}</span>
+                  </div>
+                  {grouped.map(team => (
+                    <div key={team.id} className="pd-tl-row" role="button" tabIndex={0}
+                      onClick={() => setDrawerTeam({ id: team.id, title: team.name, sport: team.sport, gender: team.gender, grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: team.status, tier: null, seasonId: null, rosterCount: team.athletes, maxRosterSize: null, ageMin: null, ageMax: null, coachCount: team.coaches, birthdayFrom: null, birthdayTo: null })}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDrawerTeam({ id: team.id, title: team.name, sport: team.sport, gender: team.gender, grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: team.status, tier: null, seasonId: null, rosterCount: team.athletes, maxRosterSize: null, ageMin: null, ageMax: null, coachCount: team.coaches, birthdayFrom: null, birthdayTo: null }); } }}
+                    >
+                      <div className="pd-tl-avatar">
+                        <span className="pd-tl-avatar-initials">{team.name.split(' ').map((w: string) => w[0]).join('').slice(0,2).toUpperCase()}</span>
+                      </div>
+                      <div className="pd-tl-info">
+                        <span className="pd-tl-name">{team.name}</span>
+                        <span className="pd-tl-meta">{team.season} · {team.gender} · {team.sport}</span>
+                      </div>
+                      <div className="pd-tl-stats">
+                        <span className="pd-tl-stat"><strong>{team.athletes}</strong> Athletes</span>
+                        <span className="pd-tl-stat"><strong>{team.coaches}</strong> Coaches</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -1162,6 +1208,92 @@ export default function ProgramDetailPageClient({
         }
 
         /* Teams tab */
+        .pd-teams-list { display: flex; flex-direction: column; gap: 24px; }
+        .pd-tl-group { display: flex; flex-direction: column; gap: 4px; }
+        .pd-tl-group-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 0 0 8px;
+          border-bottom: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          margin-bottom: 4px;
+        }
+        .pd-tl-status-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: 600;
+          font-family: var(--u-font-body);
+        }
+        .pd-tl-status-badge--draft { background: #fef3c7; color: #92400e; }
+        .pd-tl-status-badge--active { background: #e8f5e9; color: #2e7d32; }
+        .pd-tl-group-count {
+          font-size: 12px;
+          font-weight: 500;
+          color: var(--u-color-base-foreground-subtle, #607081);
+          font-family: var(--u-font-body);
+        }
+        .pd-tl-row {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 10px 12px;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: background 0.12s ease;
+        }
+        .pd-tl-row:hover { background: var(--u-color-background-callout, #f8f8f9); }
+        .pd-tl-avatar {
+          width: 36px;
+          height: 36px;
+          border-radius: 9999px;
+          background: var(--u-color-identity-default, #38434f);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .pd-tl-avatar-initials {
+          font-size: 12px;
+          font-weight: 700;
+          color: white;
+          font-family: var(--u-font-body);
+          text-transform: uppercase;
+        }
+        .pd-tl-info {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          flex: 1;
+          min-width: 0;
+        }
+        .pd-tl-name {
+          font-size: 14px;
+          font-weight: 700;
+          color: var(--u-color-base-foreground, #36485c);
+          font-family: var(--u-font-body);
+        }
+        .pd-tl-meta {
+          font-size: 12px;
+          font-weight: 500;
+          color: var(--u-color-base-foreground-subtle, #607081);
+          font-family: var(--u-font-body);
+        }
+        .pd-tl-stats {
+          display: flex;
+          gap: 16px;
+          flex-shrink: 0;
+        }
+        .pd-tl-stat {
+          font-size: 12px;
+          font-weight: 500;
+          color: var(--u-color-base-foreground-subtle, #607081);
+          font-family: var(--u-font-body);
+        }
+        .pd-tl-stat strong { font-weight: 700; color: var(--u-color-base-foreground, #36485c); }
+
         .pd-teams-head {
           display: flex;
           align-items: center;
