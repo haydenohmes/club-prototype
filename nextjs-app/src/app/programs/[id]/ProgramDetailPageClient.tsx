@@ -697,7 +697,7 @@ export default function ProgramDetailPageClient({
                 <div className="pd-tt-cell pd-tt-name"><span>Team Name</span></div>
                 <div className="pd-tt-cell pd-tt-flex"><span>Season</span></div>
                 <div className="pd-tt-cell pd-tt-flex"><span>Gender</span></div>
-                <div className="pd-tt-cell pd-tt-num"><span>Athletes</span></div>
+                <div className="pd-tt-cell pd-tt-num"><span>Players Assigned</span></div>
               </div>
               {programTeams.map(team => (
                 <div
