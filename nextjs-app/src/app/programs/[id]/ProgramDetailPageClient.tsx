@@ -338,7 +338,7 @@ export default function ProgramDetailPageClient({
     () => programs.find(p => p.id === programId) ?? null
   );
   const [openRegistration, setOpenRegistration] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'registrations' | 'teams'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'registrations' | 'teams' | 'athletes'>('overview');
   const [drawerTeam, setDrawerTeam] = useState<TeamWithStats | null>(null);
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
@@ -492,6 +492,14 @@ export default function ProgramDetailPageClient({
           onClick={() => setActiveTab('teams')}
         >
           Team Assignments
+        </button>
+        <button
+          role="tab"
+          aria-selected={activeTab === 'athletes'}
+          className={`pd-tab${activeTab === 'athletes' ? ' pd-tab--active' : ''}`}
+          onClick={() => setActiveTab('athletes')}
+        >
+          Athletes
         </button>
       </div>
 
@@ -681,28 +689,11 @@ export default function ProgramDetailPageClient({
             />
           </div>
           <div className="pd-teams-head">
-            <div className="pd-vt-group">
-              <button
-                type="button"
-                className={`pd-vt-pill${teamsViewMode === 'teams' ? ' pd-vt-pill--active' : ''}`}
-                onClick={() => setTeamsViewMode('teams')}
-              >
-                Teams
-              </button>
-              <button
-                type="button"
-                className={`pd-vt-pill${teamsViewMode === 'athletes' ? ' pd-vt-pill--active' : ''}`}
-                onClick={() => setTeamsViewMode('athletes')}
-              >
-                Athletes
-              </button>
-            </div>
             <Button buttonStyle="standard" buttonType="primary" size="medium" onClick={() => router.push(`/teams/assignments?returnTo=/programs/${programId}`)}>
               Assign Athletes
             </Button>
           </div>
-          {teamsViewMode === 'teams' ? (
-            <div className="pd-teams-scroll"><div className="pd-teams-table">
+          <div className="pd-teams-scroll"><div className="pd-teams-table">
               <div className="pd-tt-row pd-tt-header">
                 <div className="pd-tt-cell pd-tt-name"><span>Team Name</span></div>
                 <div className="pd-tt-cell pd-tt-status"><span>Status</span></div>
@@ -731,48 +722,54 @@ export default function ProgramDetailPageClient({
                 </div>
               ))}
             </div></div>
-          ) : (
-            <div className="pd-teams-scroll"><div className="pd-teams-table">
-              <div className="pd-tt-row pd-tt-header">
-                <div className="pd-tt-cell pd-tt-check">
-                  <input
-                    type="checkbox"
-                    checked={athleteRows.length > 0 && selectedAthleteIds.length === athleteRows.length}
-                    ref={(el) => { if (el) el.indeterminate = selectedAthleteIds.length > 0 && selectedAthleteIds.length < athleteRows.length; }}
-                    onChange={() => setSelectedAthleteIds(selectedAthleteIds.length === athleteRows.length ? [] : athleteRows.map(a => a.id))}
-                  />
-                </div>
-                <div className="pd-tt-cell pd-tt-name"><span>Athlete</span></div>
-                <div className="pd-tt-cell pd-tt-flex"><span>Primary Contact</span></div>
-                <div className="pd-tt-cell pd-tt-flex"><span>Team</span></div>
-                <div className="pd-tt-cell pd-tt-status"><span>Status</span></div>
+        </div>
+      )}
+
+      {/* Athletes tab */}
+      {activeTab === 'athletes' && (
+        <div className="pd-reg-panel">
+          <div className="pd-table-scroll">
+          <div className="pd-teams-table">
+            <div className="pd-tt-row pd-tt-header">
+              <div className="pd-tt-cell pd-tt-check">
+                <input
+                  type="checkbox"
+                  checked={athleteRows.length > 0 && selectedAthleteIds.length === athleteRows.length}
+                  ref={(el) => { if (el) el.indeterminate = selectedAthleteIds.length > 0 && selectedAthleteIds.length < athleteRows.length; }}
+                  onChange={() => setSelectedAthleteIds(selectedAthleteIds.length === athleteRows.length ? [] : athleteRows.map(a => a.id))}
+                />
               </div>
-              {athleteRows.map((athlete) => {
-                const isSel = selectedAthleteIds.includes(athlete.id);
-                return (
-                  <div
-                    key={athlete.id}
-                    className={`pd-tt-row pd-tt-data${isSel ? ' pd-tt-data--sel' : ''}`}
-                    onClick={() => setSelectedAthleteIds(prev => isSel ? prev.filter(id => id !== athlete.id) : [...prev, athlete.id])}
-                  >
-                    <div className="pd-tt-cell pd-tt-check" onClick={e => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={isSel}
-                        onChange={() => setSelectedAthleteIds(prev => isSel ? prev.filter(id => id !== athlete.id) : [...prev, athlete.id])}
-                      />
-                    </div>
-                    <div className="pd-tt-cell pd-tt-name pd-tt-emph">{athlete.name}</div>
-                    <div className="pd-tt-cell pd-tt-flex">{athlete.primaryContact}</div>
-                    <div className="pd-tt-cell pd-tt-flex">{athlete.teamName}</div>
-                    <div className="pd-tt-cell pd-tt-status">
-                      <span className={`pd-roster-pill pd-roster-pill--${athlete.status.toLowerCase()}`}>{athlete.status}</span>
-                    </div>
+              <div className="pd-tt-cell pd-tt-name"><span>Athlete</span></div>
+              <div className="pd-tt-cell pd-tt-flex"><span>Primary Contact</span></div>
+              <div className="pd-tt-cell pd-tt-flex"><span>Team</span></div>
+              <div className="pd-tt-cell pd-tt-status"><span>Status</span></div>
+            </div>
+            {athleteRows.map((athlete) => {
+              const isSel = selectedAthleteIds.includes(athlete.id);
+              return (
+                <div
+                  key={athlete.id}
+                  className={`pd-tt-row pd-tt-data${isSel ? ' pd-tt-data--sel' : ''}`}
+                  onClick={() => setSelectedAthleteIds(prev => isSel ? prev.filter(id => id !== athlete.id) : [...prev, athlete.id])}
+                >
+                  <div className="pd-tt-cell pd-tt-check" onClick={e => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={isSel}
+                      onChange={() => setSelectedAthleteIds(prev => isSel ? prev.filter(id => id !== athlete.id) : [...prev, athlete.id])}
+                    />
                   </div>
-                );
-              })}
-            </div></div>
-          )}
+                  <div className="pd-tt-cell pd-tt-name pd-tt-emph">{athlete.name}</div>
+                  <div className="pd-tt-cell pd-tt-flex">{athlete.primaryContact}</div>
+                  <div className="pd-tt-cell pd-tt-flex">{athlete.teamName}</div>
+                  <div className="pd-tt-cell pd-tt-status">
+                    <span className={`pd-roster-pill pd-roster-pill--${athlete.status.toLowerCase()}`}>{athlete.status}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          </div>
         </div>
       )}
 
