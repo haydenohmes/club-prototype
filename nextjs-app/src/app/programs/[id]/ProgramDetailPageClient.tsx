@@ -697,8 +697,6 @@ export default function ProgramDetailPageClient({
                 <div className="pd-tt-cell pd-tt-name"><span>Team Name</span></div>
                 <div className="pd-tt-cell pd-tt-flex"><span>Season</span></div>
                 <div className="pd-tt-cell pd-tt-flex"><span>Gender</span></div>
-                <div className="pd-tt-cell pd-tt-flex"><span>Sport</span></div>
-                <div className="pd-tt-cell pd-tt-num"><span>Coaches</span></div>
                 <div className="pd-tt-cell pd-tt-num"><span>Athletes</span></div>
               </div>
               {programTeams.map(team => (
@@ -713,8 +711,6 @@ export default function ProgramDetailPageClient({
                   <div className="pd-tt-cell pd-tt-name pd-tt-emph">{team.name}</div>
                   <div className="pd-tt-cell pd-tt-flex">{team.season}</div>
                   <div className="pd-tt-cell pd-tt-flex">{team.gender}</div>
-                  <div className="pd-tt-cell pd-tt-flex">{team.sport}</div>
-                  <div className="pd-tt-cell pd-tt-num"><NameTooltip count={team.coaches} names={team.coachNames} /></div>
                   <div className="pd-tt-cell pd-tt-num"><NameTooltip count={team.athletes} items={[...team.acceptedNames.map((n: string) => ({ name: n, status: 'Accepted' })), ...team.declinedNames.map((n: string) => ({ name: n, status: 'Declined' }))]} /></div>
                 </div>
               ))}
