@@ -679,39 +679,43 @@ export default function ProgramDetailPageClient({
 
       {/* Teams list tab */}
       {activeTab === 'teams-list' && (
-        <div className="pd-reg-panel">
-          <div className="pd-teams-list">
-            {['Draft', 'Active'].map(statusGroup => {
-              const grouped = programTeams.filter(t => t.status === statusGroup);
-              if (!grouped.length) return null;
-              return (
-                <div key={statusGroup} className="pd-tl-group">
-                  <div className="pd-tl-group-header">
-                    <span className={`pd-tl-status-badge pd-tl-status-badge--${statusGroup.toLowerCase()}`}>{statusGroup}</span>
-                    <span className="pd-tl-group-count">{grouped.length}</span>
-                  </div>
-                  {grouped.map(team => (
-                    <div key={team.id} className="pd-tl-row" role="button" tabIndex={0}
-                      onClick={() => setDrawerTeam({ id: team.id, title: team.name, sport: team.sport, gender: team.gender, grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: team.status, tier: null, seasonId: null, rosterCount: team.athletes, maxRosterSize: null, ageMin: null, ageMax: null, coachCount: team.coaches, birthdayFrom: null, birthdayTo: null })}
-                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDrawerTeam({ id: team.id, title: team.name, sport: team.sport, gender: team.gender, grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: team.status, tier: null, seasonId: null, rosterCount: team.athletes, maxRosterSize: null, ageMin: null, ageMax: null, coachCount: team.coaches, birthdayFrom: null, birthdayTo: null }); } }}
-                    >
-                      <div className="pd-tl-avatar">
-                        <span className="pd-tl-avatar-initials">{team.name.split(' ').map((w: string) => w[0]).join('').slice(0,2).toUpperCase()}</span>
-                      </div>
-                      <div className="pd-tl-info">
-                        <span className="pd-tl-name">{team.name}</span>
-                        <span className="pd-tl-meta">{team.season} · {team.gender} · {team.sport}</span>
-                      </div>
-                      <div className="pd-tl-stats">
-                        <span className="pd-tl-stat"><strong>{team.athletes}</strong> Athletes</span>
-                        <span className="pd-tl-stat"><strong>{team.coaches}</strong> Coaches</span>
-                      </div>
+        <div className="pd-tl-table-wrapper">
+          <table className="pd-tl-table">
+            <thead>
+              <tr>
+                <th className="pd-tl-cell-avatar">Avatar</th>
+                <th className="pd-tl-cell-title">Title</th>
+                <th className="pd-tl-cell-flex">Sport</th>
+                <th className="pd-tl-cell-flex">Gender</th>
+                <th className="pd-tl-cell-num">Athletes</th>
+                <th className="pd-tl-cell-num">Coaches</th>
+              </tr>
+            </thead>
+            <tbody>
+              {programTeams.map(team => (
+                <tr key={team.id}
+                  onClick={() => setDrawerTeam({ id: team.id, title: team.name, sport: team.sport, gender: team.gender, grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: team.status, tier: null, seasonId: null, rosterCount: team.athletes, maxRosterSize: null, ageMin: null, ageMax: null, coachCount: team.coaches, birthdayFrom: null, birthdayTo: null })}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <td className="pd-tl-cell-avatar">
+                    <div className="pd-tl-av">
+                      <span className="pd-tl-av-initials">{team.name.split(' ').map((w: string) => w[0]).join('').slice(0,2).toUpperCase()}</span>
                     </div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
+                  </td>
+                  <td className="pd-tl-cell-title">
+                    <div className="pd-tl-title-row">
+                      <span className="pd-tl-name">{team.name}</span>
+                      {team.status === 'Draft' && <span className="pd-tl-draft-badge">Draft</span>}
+                    </div>
+                  </td>
+                  <td className="pd-tl-cell-flex">{team.sport}</td>
+                  <td className="pd-tl-cell-flex">{team.gender}</td>
+                  <td className="pd-tl-cell-num">{team.athletes}</td>
+                  <td className="pd-tl-cell-num">{team.coaches}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
@@ -1208,91 +1212,78 @@ export default function ProgramDetailPageClient({
         }
 
         /* Teams tab */
-        .pd-teams-list { display: flex; flex-direction: column; gap: 24px; }
-        .pd-tl-group { display: flex; flex-direction: column; gap: 4px; }
-        .pd-tl-group-header {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 0 0 8px;
+        .pd-tl-table-wrapper {
+          width: 100%;
+          overflow: auto;
+          background: var(--u-color-background-container, #fefefe);
+        }
+        .pd-tl-table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        .pd-tl-table thead {
+          background: var(--u-color-background-container, #fefefe);
+          position: sticky;
+          top: 0;
+          z-index: 10;
+        }
+        .pd-tl-table th {
+          padding: 8px 12px;
+          text-align: left;
+          font-family: var(--u-font-body);
+          font-size: 14px;
+          font-weight: 700;
+          color: var(--u-color-base-foreground-contrast, #071c31);
           border-bottom: 1px solid var(--u-color-line-subtle, #c4c6c8);
-          margin-bottom: 4px;
+          white-space: nowrap;
         }
-        .pd-tl-status-badge {
-          display: inline-flex;
-          align-items: center;
-          padding: 2px 8px;
-          border-radius: 4px;
-          font-size: 12px;
-          font-weight: 600;
+        .pd-tl-table td {
+          padding: 0 12px;
+          border-bottom: 1px dashed var(--u-color-line-subtle, #c4c6c8);
           font-family: var(--u-font-body);
+          font-size: 14px;
+          color: var(--u-color-base-foreground, #36485c);
+          vertical-align: middle;
+          height: 52px;
         }
-        .pd-tl-status-badge--draft { background: #fef3c7; color: #92400e; }
-        .pd-tl-status-badge--active { background: #e8f5e9; color: #2e7d32; }
-        .pd-tl-group-count {
-          font-size: 12px;
-          font-weight: 500;
-          color: var(--u-color-base-foreground-subtle, #607081);
-          font-family: var(--u-font-body);
-        }
-        .pd-tl-row {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 10px 12px;
-          border-radius: 6px;
-          cursor: pointer;
-          transition: background 0.12s ease;
-        }
-        .pd-tl-row:hover { background: var(--u-color-background-callout, #f8f8f9); }
-        .pd-tl-avatar {
-          width: 36px;
-          height: 36px;
+        .pd-tl-table tbody tr:hover { background: var(--u-color-background-subtle, #f5f6f7); }
+        .pd-tl-cell-avatar { width: 60px; }
+        .pd-tl-cell-title { min-width: 156px; }
+        .pd-tl-cell-flex { min-width: 124px; }
+        .pd-tl-cell-num { min-width: 80px; }
+        .pd-tl-av {
+          width: 32px;
+          height: 32px;
           border-radius: 9999px;
           background: var(--u-color-identity-default, #38434f);
           display: flex;
           align-items: center;
           justify-content: center;
-          flex-shrink: 0;
         }
-        .pd-tl-avatar-initials {
-          font-size: 12px;
+        .pd-tl-av-initials {
+          font-size: 11px;
           font-weight: 700;
           color: white;
           font-family: var(--u-font-body);
           text-transform: uppercase;
         }
-        .pd-tl-info {
+        .pd-tl-title-row {
           display: flex;
-          flex-direction: column;
-          gap: 2px;
-          flex: 1;
-          min-width: 0;
+          align-items: center;
+          gap: 8px;
         }
-        .pd-tl-name {
-          font-size: 14px;
-          font-weight: 700;
-          color: var(--u-color-base-foreground, #36485c);
+        .pd-tl-name { font-weight: 700; }
+        .pd-tl-draft-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-size: 11px;
+          font-weight: 600;
           font-family: var(--u-font-body);
+          background: #fef3c7;
+          color: #92400e;
         }
-        .pd-tl-meta {
-          font-size: 12px;
-          font-weight: 500;
-          color: var(--u-color-base-foreground-subtle, #607081);
-          font-family: var(--u-font-body);
-        }
-        .pd-tl-stats {
-          display: flex;
-          gap: 16px;
-          flex-shrink: 0;
-        }
-        .pd-tl-stat {
-          font-size: 12px;
-          font-weight: 500;
-          color: var(--u-color-base-foreground-subtle, #607081);
-          font-family: var(--u-font-body);
-        }
-        .pd-tl-stat strong { font-weight: 700; color: var(--u-color-base-foreground, #36485c); }
 
         .pd-teams-head {
           display: flex;
