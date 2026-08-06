@@ -631,23 +631,27 @@ export default function ProgramDetailPageClient({
       {/* Registration Options tab */}
       {activeTab === 'registrations' && (
         <div className="pd-reg-panel">
-          <div className="pd-reg-list">
+          <div className="pd-table-scroll">
+          <div className="pd-table">
+            <div className="pd-row pd-row--head">
+              <div className="pd-cell pd-cell--name">Name <SortArrow /></div>
+              <div className="pd-cell pd-cell--pstatus">Status <SortArrow /></div>
+              <div className="pd-cell pd-cell--reg-option">Date Range <SortArrow /></div>
+              <div className="pd-cell pd-cell--money">Registered <SortArrow /></div>
+              <div className="pd-cell pd-cell--money">Price <SortArrow /></div>
+            </div>
             {regOptions.map(opt => (
-              <div key={opt.id} className="pd-reg-card">
-                <div className="pd-reg-card-main">
-                  <div className="pd-reg-card-top">
-                    <span className="pd-reg-name">{opt.name}</span>
-                    <span className={`pd-reg-pill pd-reg-pill--${opt.status.toLowerCase()}`}>{opt.status}</span>
-                  </div>
-                  <div className="pd-reg-meta">
-                    <span>{dateRange}</span>
-                    <span className="pd-reg-dot" />
-                    <span>{opt.registered} registered</span>
-                  </div>
+              <div key={opt.id} className="pd-row">
+                <div className="pd-cell pd-cell--name pd-cell--emphasis">{opt.name}</div>
+                <div className="pd-cell pd-cell--pstatus">
+                  <span className={`pd-reg-pill pd-reg-pill--${opt.status.toLowerCase()}`}>{opt.status}</span>
                 </div>
-                <span className="pd-reg-price">{formatCurrency(opt.price)}</span>
+                <div className="pd-cell pd-cell--reg-option">{dateRange}</div>
+                <div className="pd-cell pd-cell--money">{opt.registered}</div>
+                <div className="pd-cell pd-cell--money">{formatCurrency(opt.price)}</div>
               </div>
             ))}
+          </div>
           </div>
         </div>
       )}
@@ -655,6 +659,27 @@ export default function ProgramDetailPageClient({
       {/* Teams tab */}
       {activeTab === 'teams' && (
         <div className="pd-reg-panel">
+          <div className="pd-stats">
+            <StatGroup
+              label="Teams"
+              value={String(programTeams.length)}
+              rows={[
+                { label: 'Draft',  value: String(programTeams.filter(t => t.status === 'Draft').length) },
+                { label: 'Active', value: String(programTeams.filter(t => t.status === 'Active').length) },
+                { label: 'Archived', value: String(programTeams.filter(t => t.status === 'Archived').length) },
+              ]}
+            />
+            <StatGroup
+              label="Athletes"
+              value={String(teamStatAthletes)}
+              rows={[
+                { label: 'Invited',  value: String(teamStatInvited) },
+                { label: 'Accepted', value: String(teamStatAccepted) },
+                { label: 'Declined', value: String(teamStatDeclined) },
+                { label: 'Paid',     value: String(teamStatPaid) },
+              ]}
+            />
+          </div>
           <div className="pd-teams-head">
             <div className="pd-vt-group">
               <button
