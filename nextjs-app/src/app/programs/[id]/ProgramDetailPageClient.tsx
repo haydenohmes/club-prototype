@@ -454,6 +454,9 @@ export default function ProgramDetailPageClient({
           <p className="pd-subtitle">{type} · {dateRange}</p>
         </div>
         <div className="pd-header-right">
+          <Button buttonStyle="standard" buttonType="primary" size="medium" onClick={() => router.push(`/teams/assignments?returnTo=/programs/${programId}`)}>
+            Assign Athletes
+          </Button>
           <span className="pd-reg-info"><InfoIcon /></span>
           <span className="pd-reg-label">Open Registration</span>
           <Toggle checked={openRegistration} onChange={setOpenRegistration} />
@@ -503,11 +506,6 @@ export default function ProgramDetailPageClient({
           Athletes
         </button>
       </div>
-      {activeTab === 'teams' && (
-        <Button buttonStyle="standard" buttonType="primary" size="medium" onClick={() => router.push(`/teams/assignments?returnTo=/programs/${programId}`)}>
-          Assign Athletes
-        </Button>
-      )}
       </div>
 
       {activeTab === 'overview' && (
