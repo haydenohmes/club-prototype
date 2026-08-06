@@ -669,7 +669,7 @@ export default function ProgramDetailPageClient({
         <div className="pd-reg-panel">
           <div className="pd-stats">
             <StatGroup
-              label="Teams"
+              label="Team Acceptance"
               value={String(programTeams.length)}
               rows={[
                 { label: 'Draft',  value: String(programTeams.filter(t => t.status === 'Draft').length) },
