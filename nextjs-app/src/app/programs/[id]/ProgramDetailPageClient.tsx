@@ -703,7 +703,7 @@ export default function ProgramDetailPageClient({
                 <div className="pd-tt-cell pd-tt-num"><span>Coaches</span></div>
                 <div className="pd-tt-cell pd-tt-num"><span>Athletes</span></div>
               </div>
-              {programTeams.map(team => (
+              {programTeams.filter(t => t.status !== 'Draft').map(team => (
                 <div
                   key={team.id}
                   className="pd-tt-row pd-tt-data"
