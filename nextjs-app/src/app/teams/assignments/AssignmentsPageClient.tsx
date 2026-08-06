@@ -205,7 +205,7 @@ export default function AssignmentsPageClient({
   // Merge builder-created registrations and generate athletes for them (prototype: localStorage)
   const [allRegistrations, setAllRegistrations] = useState<Registration[]>(registrations);
   const [generatedAthletes, setGeneratedAthletes] = useState<RegisteredAthlete[]>([]);
-  const [teamConnections, setTeamConnections] = useState<Record<string, { program: string; registration: string }>>({});
+  const [teamConnections, setTeamConnections] = useState<Record<string, { program: string; registrations: string[] }>>({});
   useEffect(() => {
     try {
       const raw = localStorage.getItem('createdRegistrations');
@@ -225,24 +225,26 @@ export default function AssignmentsPageClient({
   // Attach-registration modal
   const [attachModalTeamId, setAttachModalTeamId] = useState<string | null>(null);
   const [modalProgramId, setModalProgramId] = useState<string>('');
-  const [modalRegistrationId, setModalRegistrationId] = useState<string>('');
+  const [modalRegistrationIds, setModalRegistrationIds] = useState<string[]>([]);
   const modalProgram = DUES_PROGRAMS.find(p => p.id === modalProgramId) ?? null;
 
   const openAttachModal = (teamId: string) => {
     const current = teamConnections[teamId];
     const prog = current ? DUES_PROGRAMS.find(p => p.name === current.program) : null;
-    const reg = prog && current ? prog.registrations.find(r => r.name === current.registration) : null;
+    const storedNames = current?.registrations ?? [];
+    const storedIds = prog ? prog.registrations.filter(r => storedNames.includes(r.name)).map(r => r.id) : [];
     setModalProgramId(prog?.id ?? '');
-    setModalRegistrationId(reg?.id ?? '');
+    setModalRegistrationIds(storedIds);
     setAttachModalTeamId(teamId);
   };
 
   const confirmAttach = () => {
-    if (!attachModalTeamId || !modalProgram || !modalRegistrationId) return;
-    const regObj = modalProgram.registrations.find(r => r.id === modalRegistrationId);
-    if (!regObj) return;
+    if (!attachModalTeamId || !modalProgram || modalRegistrationIds.length === 0) return;
+    const regNames = modalRegistrationIds
+      .map(id => modalProgram.registrations.find(r => r.id === id)?.name)
+      .filter((n): n is string => !!n);
     const teamId = attachModalTeamId;
-    const updated = { ...teamConnections, [teamId]: { program: modalProgram.name, registration: regObj.name } };
+    const updated = { ...teamConnections, [teamId]: { program: modalProgram.name, registrations: regNames } };
     setTeamConnections(updated);
     try { localStorage.setItem('teamRegistrationConnections', JSON.stringify(updated)); } catch { /* ignore */ }
     setAttachModalTeamId(null);
@@ -532,7 +534,15 @@ export default function AssignmentsPageClient({
                     key={team.id}
                     teamId={team.id}
                     teamName={team.title}
-                    connectedRegistration={teamConnections[team.id]?.registration || MOCK_REG_NAMES[teamIndex % MOCK_REG_NAMES.length]}
+                    connectedRegistration={(() => {
+                      const conn = teamConnections[team.id];
+                      if (conn?.registrations?.length) {
+                        return conn.registrations.length === 1
+                          ? conn.registrations[0]
+                          : `${conn.registrations[0]} +${conn.registrations.length - 1}`;
+                      }
+                      return MOCK_REG_NAMES[teamIndex % MOCK_REG_NAMES.length];
+                    })()}
                     avatar={team.avatar}
                     status={team.seasonId === 'season-1' ? 'archived' : 'draft'}
                     assignedCount={teamAssignments[team.id]?.length || mockStats.assigned}
@@ -1225,6 +1235,65 @@ export default function AssignmentsPageClient({
 
         .tc-modal-select:disabled { opacity: 0.5; cursor: not-allowed; }
 
+        .tc-modal-hint {
+          margin: 0;
+          font-family: var(--u-font-body);
+          font-size: 13px;
+          color: var(--u-color-base-foreground-subtle, #607081);
+          padding: 8px 0;
+        }
+
+        .tc-modal-reg-list {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          margin-top: 4px;
+          border: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          border-radius: 6px;
+          overflow: hidden;
+        }
+
+        .tc-modal-reg-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 12px;
+          cursor: pointer;
+          background: var(--u-color-background-container, #fefefe);
+          transition: background 0.1s ease;
+        }
+
+        .tc-modal-reg-item:not(:last-child) {
+          border-bottom: 1px solid var(--u-color-line-subtle, #c4c6c8);
+        }
+
+        .tc-modal-reg-item:hover {
+          background: var(--u-color-background-callout, #f8f8f9);
+        }
+
+        .tc-modal-reg-checkbox {
+          width: 16px;
+          height: 16px;
+          flex-shrink: 0;
+          cursor: pointer;
+          accent-color: var(--u-color-emphasis-foreground, #085bb4);
+        }
+
+        .tc-modal-reg-name {
+          flex: 1;
+          font-family: var(--u-font-body);
+          font-size: 14px;
+          font-weight: 500;
+          color: var(--u-color-base-foreground, #36485c);
+        }
+
+        .tc-modal-reg-price {
+          font-family: var(--u-font-body);
+          font-size: 13px;
+          color: var(--u-color-base-foreground-subtle, #607081);
+          flex-shrink: 0;
+        }
+
         .tc-modal-footer {
           display: flex;
           justify-content: flex-end;
@@ -1277,7 +1346,7 @@ export default function AssignmentsPageClient({
                   <select
                     className="tc-modal-select"
                     value={modalProgramId}
-                    onChange={(e) => { setModalProgramId(e.target.value); setModalRegistrationId(''); }}
+                    onChange={(e) => { setModalProgramId(e.target.value); setModalRegistrationIds([]); }}
                   >
                     <option value="">Select a program…</option>
                     {DUES_PROGRAMS.map(p => (
@@ -1288,29 +1357,37 @@ export default function AssignmentsPageClient({
                 </div>
               </div>
               <div>
-                <label className="tc-modal-label">Registration</label>
-                <div className="tc-modal-select-wrap">
-                  <select
-                    className="tc-modal-select"
-                    value={modalRegistrationId}
-                    onChange={(e) => setModalRegistrationId(e.target.value)}
-                    disabled={!modalProgram}
-                  >
-                    <option value="">{modalProgram ? 'Select a registration…' : 'Select a program first'}</option>
-                    {modalProgram?.registrations.map(r => (
-                      <option key={r.id} value={r.id}>{r.name}</option>
+                <label className="tc-modal-label">Registrations</label>
+                {!modalProgram ? (
+                  <p className="tc-modal-hint">Select a program first</p>
+                ) : (
+                  <div className="tc-modal-reg-list">
+                    {modalProgram.registrations.map(r => (
+                      <label key={r.id} className="tc-modal-reg-item">
+                        <input
+                          type="checkbox"
+                          className="tc-modal-reg-checkbox"
+                          checked={modalRegistrationIds.includes(r.id)}
+                          onChange={(e) => {
+                            setModalRegistrationIds(prev =>
+                              e.target.checked ? [...prev, r.id] : prev.filter(id => id !== r.id)
+                            );
+                          }}
+                        />
+                        <span className="tc-modal-reg-name">{r.name}</span>
+                        <span className="tc-modal-reg-price">{r.price}</span>
+                      </label>
                     ))}
-                  </select>
-                  <span className="tc-modal-select-chevron"><ChevronDownIcon /></span>
-                </div>
+                  </div>
+                )}
               </div>
             </div>
             <div className="tc-modal-footer">
               <button className="tc-btn tc-btn--secondary" onClick={() => setAttachModalTeamId(null)}>Cancel</button>
               <button
-                className={`tc-btn tc-btn--primary${(!modalProgramId || !modalRegistrationId) ? ' tc-btn--disabled' : ''}`}
+                className={`tc-btn tc-btn--primary${(!modalProgramId || modalRegistrationIds.length === 0) ? ' tc-btn--disabled' : ''}`}
                 onClick={confirmAttach}
-                disabled={!modalProgramId || !modalRegistrationId}
+                disabled={!modalProgramId || modalRegistrationIds.length === 0}
               >
                 Attach
               </button>

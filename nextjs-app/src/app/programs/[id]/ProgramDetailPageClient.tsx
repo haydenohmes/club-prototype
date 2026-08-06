@@ -697,11 +697,8 @@ export default function ProgramDetailPageClient({
                 Athletes
               </button>
             </div>
-            <Button buttonStyle="standard" buttonType="secondary" size="medium" onClick={() => router.push(`/teams/assignments?returnTo=/programs/${programId}`)}>
+            <Button buttonStyle="standard" buttonType="primary" size="medium" onClick={() => router.push(`/teams/assignments?returnTo=/programs/${programId}`)}>
               Assign Athletes
-            </Button>
-            <Button buttonStyle="standard" buttonType="primary" size="medium" onClick={() => router.push(isTryout ? '/teams/manage?context=tryout' : '/teams/manage')}>
-              Add Teams
             </Button>
           </div>
           {teamsViewMode === 'teams' ? (
