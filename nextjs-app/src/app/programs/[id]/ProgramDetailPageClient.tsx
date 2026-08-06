@@ -677,7 +677,7 @@ export default function ProgramDetailPageClient({
           <div className="pd-stats">
             <StatGroup
               label="Total Invitations"
-              value={String(programTeams.length)}
+              value="75"
               rows={[
                 { label: 'Invited',  value: String(teamStatInvited) },
                 { label: 'Accepted', value: String(teamStatAccepted) },
