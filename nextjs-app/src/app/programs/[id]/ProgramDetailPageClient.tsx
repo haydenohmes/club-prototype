@@ -457,9 +457,6 @@ export default function ProgramDetailPageClient({
           <span className="pd-reg-info"><InfoIcon /></span>
           <span className="pd-reg-label">Open Registration</span>
           <Toggle checked={openRegistration} onChange={setOpenRegistration} />
-          <Button buttonStyle="standard" buttonType="primary" size="medium" onClick={() => router.push(`/teams/assignments?returnTo=/programs/${programId}`)}>
-            Assign Athletes
-          </Button>
           <button className="pd-more" aria-label="More options">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <circle cx="3" cy="8" r="1.5" fill="currentColor" />
@@ -679,6 +676,15 @@ export default function ProgramDetailPageClient({
 
       {/* Teams list tab */}
       {activeTab === 'teams-list' && (
+        <div className="pd-reg-panel">
+          <div className="pd-tl-actions">
+            <Button buttonStyle="standard" buttonType="secondary" size="medium" onClick={() => router.push(isTryout ? '/teams/manage?context=tryout' : '/teams/manage')}>
+              Add Teams
+            </Button>
+            <Button buttonStyle="standard" buttonType="primary" size="medium" onClick={() => router.push(`/teams/assignments?returnTo=/programs/${programId}`)}>
+              Assign Athletes
+            </Button>
+          </div>
         <div className="pd-tl-table-wrapper">
           <table className="pd-tl-table">
             <thead>
@@ -716,6 +722,7 @@ export default function ProgramDetailPageClient({
               ))}
             </tbody>
           </table>
+        </div>
         </div>
       )}
 
@@ -1212,6 +1219,11 @@ export default function ProgramDetailPageClient({
         }
 
         /* Teams tab */
+        .pd-tl-actions {
+          display: flex;
+          justify-content: flex-end;
+          gap: 8px;
+        }
         .pd-tl-table-wrapper {
           width: 100%;
           overflow: auto;
