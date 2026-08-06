@@ -1375,7 +1375,6 @@ export default function AssignmentsPageClient({
                           }}
                         />
                         <span className="tc-modal-reg-name">{r.name}</span>
-                        <span className="tc-modal-reg-price">{r.price}</span>
                       </label>
                     ))}
                   </div>
