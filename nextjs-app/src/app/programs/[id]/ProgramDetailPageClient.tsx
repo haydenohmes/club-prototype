@@ -672,9 +672,9 @@ export default function ProgramDetailPageClient({
               label="Team Acceptance"
               value={String(programTeams.length)}
               rows={[
-                { label: 'Draft',  value: String(programTeams.filter(t => t.status === 'Draft').length) },
-                { label: 'Active', value: String(programTeams.filter(t => t.status === 'Active').length) },
-                { label: 'Archived', value: String(programTeams.filter(t => t.status === 'Archived').length) },
+                { label: 'Invited',  value: String(teamStatInvited) },
+                { label: 'Accepted', value: String(teamStatAccepted) },
+                { label: 'Declined', value: String(teamStatDeclined) },
               ]}
             />
             <StatGroup
