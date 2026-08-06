@@ -136,7 +136,7 @@ export default function AthleteCard({
               <span className="athlete-card-payment-badge athlete-card-payment-badge--deposit" title="Paid Deposit">D</span>
             )}
             {status === 'paid' && (
-              <span className="athlete-card-payment-badge athlete-card-payment-badge--paid" title="Paid in Full">P</span>
+              <span className="athlete-card-payment-badge athlete-card-payment-badge--paid athlete-card-payment-badge--tooltip" data-tooltip="Paid in Full">P</span>
             )}
           </div>
         );
@@ -322,6 +322,31 @@ export default function AthleteCard({
         .athlete-card-payment-badge--paid {
           background: rgba(23, 129, 67, 0.12);
           color: #178143;
+        }
+
+        .athlete-card-payment-badge--tooltip {
+          position: relative;
+        }
+        .athlete-card-payment-badge--tooltip::after {
+          content: attr(data-tooltip);
+          position: absolute;
+          bottom: calc(100% + 6px);
+          left: 50%;
+          transform: translateX(-50%);
+          background: #1a2636;
+          color: #fff;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 11px;
+          font-weight: 500;
+          white-space: nowrap;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.15s ease;
+          z-index: 100;
+        }
+        .athlete-card-payment-badge--tooltip:hover::after {
+          opacity: 1;
         }
 
         .athlete-card-status--btn {
