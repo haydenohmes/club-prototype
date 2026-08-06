@@ -491,7 +491,7 @@ export default function ProgramDetailPageClient({
           className={`pd-tab${activeTab === 'teams' ? ' pd-tab--active' : ''}`}
           onClick={() => setActiveTab('teams')}
         >
-          Teams
+          Team Assignments
         </button>
       </div>
 
