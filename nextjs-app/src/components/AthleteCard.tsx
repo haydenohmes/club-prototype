@@ -110,24 +110,37 @@ export default function AthleteCard({
           )}
         </div>
       </div>
-      {status && (status !== 'assigned' || showStatusPill) && (
-        onStatusClick ? (
-          <button
-            type="button"
-            className={`athlete-card-status athlete-card-status--${status} athlete-card-status--btn`}
-            onClick={(e) => { e.stopPropagation(); onStatusClick(e); }}
-          >
-            {status === 'deposit' ? 'Paid Deposit' : status === 'paid' ? 'Paid in Full' : status === 'pending' ? 'Pending Payment' : status.charAt(0).toUpperCase() + status.slice(1)}
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ marginLeft: 3, flexShrink: 0 }}>
-              <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        ) : (
-          <span className={`athlete-card-status athlete-card-status--${status}`}>
-            {status === 'deposit' ? 'Paid Deposit' : status === 'paid' ? 'Paid in Full' : status === 'pending' ? 'Pending Payment' : status.charAt(0).toUpperCase() + status.slice(1)}
-          </span>
-        )
-      )}
+      {status && (status !== 'assigned' || showStatusPill) && (() => {
+        const isPaymentStatus = status === 'deposit' || status === 'paid';
+        const displayStatus = isPaymentStatus ? 'accepted' : status;
+        const displayLabel = status === 'pending' ? 'Pending Payment' : displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1);
+        return (
+          <div className="athlete-card-status-group">
+            {onStatusClick ? (
+              <button
+                type="button"
+                className={`athlete-card-status athlete-card-status--${displayStatus} athlete-card-status--btn`}
+                onClick={(e) => { e.stopPropagation(); onStatusClick(e); }}
+              >
+                {displayLabel}
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ marginLeft: 3, flexShrink: 0 }}>
+                  <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            ) : (
+              <span className={`athlete-card-status athlete-card-status--${displayStatus}`}>
+                {displayLabel}
+              </span>
+            )}
+            {status === 'deposit' && (
+              <span className="athlete-card-payment-badge athlete-card-payment-badge--deposit" title="Paid Deposit">D</span>
+            )}
+            {status === 'paid' && (
+              <span className="athlete-card-payment-badge athlete-card-payment-badge--paid" title="Paid in Full">P</span>
+            )}
+          </div>
+        );
+      })()}
       {showCheckbox && (
         <button
           type="button"
@@ -278,6 +291,37 @@ export default function AthleteCard({
           padding: 4px 8px;
           border-radius: 4px;
           flex-shrink: 0;
+        }
+
+        .athlete-card-status-group {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          flex-shrink: 0;
+        }
+
+        .athlete-card-payment-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 20px;
+          height: 20px;
+          border-radius: 4px;
+          font-family: var(--u-font-body);
+          font-size: 11px;
+          font-weight: 700;
+          flex-shrink: 0;
+          cursor: default;
+        }
+
+        .athlete-card-payment-badge--deposit {
+          background: #fef3c7;
+          color: #92400e;
+        }
+
+        .athlete-card-payment-badge--paid {
+          background: rgba(23, 129, 67, 0.12);
+          color: #178143;
         }
 
         .athlete-card-status--btn {

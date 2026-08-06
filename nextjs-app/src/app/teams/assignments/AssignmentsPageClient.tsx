@@ -553,6 +553,10 @@ export default function AssignmentsPageClient({
                       let athleteStatus: 'assigned' | 'invited' | 'accepted' | 'declined' | 'deposit' | 'paid' | 'pending' = 'assigned';
                       if (athleteStatuses[athleteId]) {
                         athleteStatus = athleteStatuses[athleteId];
+                      } else if (mockStats.accepted > 0 && athleteIdx === 0) {
+                        athleteStatus = 'paid';
+                      } else if (mockStats.accepted > 1 && athleteIdx === 1) {
+                        athleteStatus = 'deposit';
                       } else if (athleteIdx < mockStats.accepted) {
                         athleteStatus = 'accepted';
                       } else if (athleteIdx < mockStats.invited) {
