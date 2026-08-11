@@ -43,8 +43,8 @@ interface ProgramDetails {
 
 // ─── Persist created program (prototype: localStorage) ──────────────────────
 
-function persistCreatedProgram(program: ProgramDetails | null, builtRegistrations: Registration[] = [], linkedTeamIds: string[] = []) {
-  if (!program || typeof window === 'undefined') return;
+function persistCreatedProgram(program: ProgramDetails | null, builtRegistrations: Registration[] = [], linkedTeamIds: string[] = []): string | null {
+  if (!program || typeof window === 'undefined') return null;
   try {
     const programId = `local-${Date.now()}`;
     const created = {
@@ -91,9 +91,11 @@ function persistCreatedProgram(program: ProgramDetails | null, builtRegistration
       linkedTeamIds.forEach(teamId => { conn[teamId] = connectionLabel; });
       localStorage.setItem('teamRegistrationConnections', JSON.stringify(conn));
     }
+    return programId;
   } catch {
     // ignore storage failures in the prototype
   }
+  return null;
 }
 
 // ─── Teams from the club store ───────────────────────────────────────────────
@@ -114,7 +116,8 @@ function mapTeam(t: TeamWithStats): Team {
 
 // ─── Steps ─────────────────────────────────────────────────────────────────
 
-const STEPS = ['Program Type', 'Program Details', 'Questions', 'Registrations', 'Summary', 'Next Steps'];
+const STEPS_WITH_NEXT = ['Program Details', 'Questions', 'Registrations', 'Summary', 'Next Steps'];
+const STEPS_NO_NEXT   = ['Program Details', 'Questions', 'Registrations', 'Summary'];
 
 // ─── StepIndicator ─────────────────────────────────────────────────────────
 
@@ -155,9 +158,9 @@ function StepIndicator({ currentStep, steps = STEPS }: { currentStep: number; st
           flex-shrink: 0;
         }
         .step-circle {
-          width: 18px;
-          height: 18px;
-          border-radius: 3px;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
           border: 2px solid var(--u-color-line-subtle, #c4c6c8);
           background: var(--u-color-background-container, #fefefe);
           display: flex;
@@ -1714,23 +1717,6 @@ function AddRegistrationDrawer({
                   </svg>
                   Add Teams
                 </button>
-                <span className="send-inv-wrap">
-                  <button
-                    className="send-invitations-btn"
-                    onClick={() => setSendInvitationsOpen(true)}
-                    disabled={!canSendInvitations}
-                  >
-                    Send Invitations
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ transform: 'scaleX(-1)' }}>
-                      <path d="M2 8l10-5-3 5 3 5L2 8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </button>
-                  {!canSendInvitations && (
-                    <span className="send-inv-tooltip" role="tooltip">
-                      Athletes must be assigned to teams to send invitations
-                    </span>
-                  )}
-                </span>
               </div>
             </SectionCard>
           )}
@@ -2407,14 +2393,22 @@ function SummaryView({
 
 // ─── Next Steps stage (full-page) ───────────────────────────────────────────
 
-const NEXT_STEPS = [
-  { title: 'Tryout registration is live', desc: 'Your tryout is published. Athletes can now sign up and try out.', done: true },
-  { title: 'Build your teams', desc: 'Once tryouts wrap up, create your teams for the season.' },
-  { title: 'Assign athletes to teams', desc: 'Place athletes from your tryout pool onto each team.' },
-  { title: 'Invite athletes to pay dues', desc: 'Set up a dues program and send invitations to collect.' },
+interface NextStep {
+  title: string;
+  desc: string;
+  done?: boolean;
+  action?: { label: string; href: string };
+}
+
+const NEXT_STEPS: NextStep[] = [
+  { title: 'Tryout registration created', desc: 'Athletes can now register for your tryouts on your tryout dates.', done: true },
+  { title: 'Host your tryouts', desc: "Evaluate athletes during your tryout dates. Registrant info will be waiting in Hudl when you're ready." },
+  { title: 'Build your teams', desc: 'Once you know your roster, head to the Teams tab to create teams and assign athletes.', action: { label: 'Go to Teams tab', href: '/teams' } },
+  { title: 'Create your Club Dues program', desc: 'Set up your season registration and link it to your teams. Athletes will get accept/decline invitations.', action: { label: 'Create Club Dues program', href: '/programs?add=team-dues' } },
 ];
 
-function NextStepsView({ program }: { program: ProgramDetails | null }) {
+const NextStepsView = ({ program }: { program: ProgramDetails | null }) => {
+  const router = useRouter();
   return (
     <div className="nsv-wrap">
       <div className="nsv-confirm">
@@ -2425,14 +2419,14 @@ function NextStepsView({ program }: { program: ProgramDetails | null }) {
         </div>
         <h2 className="nsv-title">{program?.title || 'Your program'} is published</h2>
         <p className="nsv-sub">
-          Nothing to do right now — once athletes start registering, here&apos;s how you&apos;ll turn
-          your tryout pool into teams.
+          We&apos;ll remind you when it&apos;s time based on your tryout dates.
         </p>
       </div>
 
       <ol className="nsv-steps">
         {NEXT_STEPS.map((step, i) => {
           const done = 'done' in step && step.done;
+          const action = 'action' in step ? step.action : undefined;
           return (
             <li key={i} className="nsv-step">
               <div className="nsv-marker">
@@ -2450,29 +2444,10 @@ function NextStepsView({ program }: { program: ProgramDetails | null }) {
               <div className="nsv-body">
                 <span className="nsv-step-title">{step.title}</span>
                 <span className="nsv-step-desc">{step.desc}</span>
-                {step.title === 'Build your teams' && (
-                  <div className="nsv-peek">
-                    <span className="nsv-peek-cap">On the Teams page, look for “Add Teams” in the top-right.</span>
-                    <div className="nsv-frame">
-                      <div className="nsv-frame-header">
-                        <span className="nsv-frame-title">Teams</span>
-                        <span className="nsv-btn-wrap">
-                          <span className="nsv-frame-btn">Add Teams</span>
-                          <span className="nsv-pulse" />
-                          <span className="nsv-cursor">
-                            <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                              <path d="M4 3l11 6-4.5 1.4L8 15 4 3z" fill="#fff" stroke="#071c31" strokeWidth="1.2" strokeLinejoin="round" />
-                            </svg>
-                          </span>
-                        </span>
-                      </div>
-                      <div className="nsv-frame-body">
-                        <span className="nsv-ph" style={{ width: '38%' }} />
-                        <span className="nsv-ph" style={{ width: '64%' }} />
-                        <span className="nsv-ph" style={{ width: '50%' }} />
-                      </div>
-                    </div>
-                  </div>
+                {action && (
+                  <button className="nsv-action-btn" onClick={() => router.push(action.href)}>
+                    {action.label} →
+                  </button>
                 )}
               </div>
             </li>
@@ -2571,92 +2546,25 @@ function NextStepsView({ program }: { program: ProgramDetails | null }) {
           background: var(--u-color-emphasis-background-contrast, #0273e3);
         }
 
-        /* Animated "where to build teams" preview */
-        .nsv-peek {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          margin-top: 12px;
-        }
-        .nsv-peek-cap {
-          font-family: var(--u-font-body);
-          font-size: 12px;
-          font-style: italic;
-          color: var(--u-color-base-foreground-subtle, #607081);
-        }
-        .nsv-frame {
-          border: 1px solid var(--u-color-line-subtle, #c4c6c8);
-          border-radius: 8px;
-          background: var(--u-color-background-container, #fefefe);
-          overflow: hidden;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-          max-width: 380px;
-        }
-        .nsv-frame-header {
-          display: flex;
+        .nsv-action-btn {
+          display: inline-flex;
           align-items: center;
-          justify-content: space-between;
-          padding: 10px 12px;
-          border-bottom: 1px solid var(--u-color-line-subtle, #c4c6c8);
-        }
-        .nsv-frame-title {
+          margin-top: 10px;
+          padding: 7px 14px;
+          background: none;
+          border: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          border-radius: 6px;
           font-family: var(--u-font-body);
           font-size: 14px;
-          font-weight: 700;
+          font-weight: 500;
           color: var(--u-color-base-foreground-contrast, #071c31);
+          cursor: pointer;
+          transition: border-color 0.15s ease, background 0.15s ease;
+          align-self: flex-start;
         }
-        .nsv-btn-wrap {
-          position: relative;
-          display: inline-flex;
-        }
-        .nsv-frame-btn {
-          background: var(--u-color-emphasis-background-contrast, #0273e3);
-          color: #fff;
-          font-family: var(--u-font-body);
-          font-size: 11px;
-          font-weight: 600;
-          padding: 6px 10px;
-          border-radius: 4px;
-          white-space: nowrap;
-        }
-        .nsv-pulse {
-          position: absolute;
-          inset: -4px;
-          border-radius: 7px;
-          border: 2px solid var(--u-color-emphasis-background-contrast, #0273e3);
-          pointer-events: none;
-          animation: nsv-pulse 2.4s ease-out infinite;
-        }
-        @keyframes nsv-pulse {
-          0% { transform: scale(1); opacity: 0.85; }
-          70% { transform: scale(1.18); opacity: 0; }
-          100% { opacity: 0; }
-        }
-        .nsv-cursor {
-          position: absolute;
-          right: -8px;
-          bottom: -12px;
-          pointer-events: none;
-          filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
-          animation: nsv-tap 2.4s ease-in-out infinite;
-        }
-        @keyframes nsv-tap {
-          0%, 100% { transform: translate(6px, 6px); }
-          40% { transform: translate(0, 0); }
-          52% { transform: translate(0, 0) scale(0.82); }
-          64% { transform: translate(0, 0) scale(1); }
-        }
-        .nsv-frame-body {
-          padding: 14px 12px;
-          display: flex;
-          flex-direction: column;
-          gap: 9px;
-        }
-        .nsv-ph {
-          display: block;
-          height: 9px;
-          border-radius: 4px;
-          background: var(--u-color-background-canvas, #e6e7e8);
+        .nsv-action-btn:hover {
+          border-color: var(--u-color-base-foreground-subtle, #607081);
+          background: var(--u-color-background-canvas, #eff0f0);
         }
         .nsv-body {
           display: flex;
@@ -2679,7 +2587,7 @@ function NextStepsView({ program }: { program: ProgramDetails | null }) {
       `}</style>
     </div>
   );
-}
+};
 
 // ─── Main page ─────────────────────────────────────────────────────────────
 
@@ -2692,7 +2600,8 @@ export default function RegistrationsPageClient({ initialTeams = [] }: { initial
   const [showNextSteps, setShowNextSteps] = useState(false);
   const programType = typeof window !== 'undefined' ? sessionStorage.getItem('programType') ?? '' : '';
   const showLinkedTeams = programType === 'team-dues';
-  const steps = STEPS;
+  const isClubDues = programType === 'team-dues';
+  const steps = isClubDues ? STEPS_NO_NEXT : STEPS_WITH_NEXT;
   const [programDetails] = useState<ProgramDetails | null>(() => {
     if (typeof window === 'undefined') return null;
     try {
@@ -2729,7 +2638,7 @@ export default function RegistrationsPageClient({ initialTeams = [] }: { initial
 
       {/* Stepper — Club Dues has no "Next Steps" stage */}
       <div className="stepper-bar">
-        <StepIndicator currentStep={showNextSteps ? 5 : showSummary ? 4 : 3} steps={steps} />
+        <StepIndicator currentStep={showNextSteps ? 4 : showSummary ? 3 : 2} steps={steps} />
       </div>
 
       {/* Content */}
@@ -2752,6 +2661,25 @@ export default function RegistrationsPageClient({ initialTeams = [] }: { initial
               />
             ) : (
               <div className="form-body">
+
+                {/* Club Dues: link-to-team banner */}
+                {isClubDues && (
+                  <div className="reg-link-callout">
+                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style={{ flexShrink: 0, marginTop: 2 }}>
+                      <path d="M8.5 11.5a4.5 4.5 0 0 0 6.364 0l2.122-2.121a4.5 4.5 0 0 0-6.364-6.364L9.5 4.136" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                      <path d="M11.5 8.5a4.5 4.5 0 0 0-6.364 0L3.014 10.621a4.5 4.5 0 0 0 6.364 6.364L10.5 15.864" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                    </svg>
+                    <div className="reg-link-callout-body">
+                      <span className="reg-link-callout-title">Link each option to a team</span>
+                      <span className="reg-link-callout-desc">
+                        Each option below needs a team linked to it. Once your program is published, athletes on that team will receive an accept/decline invitation — you send those from the Teams tab.
+                      </span>
+                    </div>
+                    <button className="reg-link-callout-btn" onClick={() => router.push('/teams')}>
+                      Set up a team
+                    </button>
+                  </div>
+                )}
 
                 {/* Registrations table */}
                 {registrations.length > 0 && (
@@ -2817,7 +2745,8 @@ export default function RegistrationsPageClient({ initialTeams = [] }: { initial
                   onClick={() => {
                     persistCreatedProgram(programDetails, registrations, linkedTeams);
                     showToast('Program published successfully', 'success');
-                    setShowNextSteps(true);
+                    if (isClubDues) router.push('/programs');
+                    else setShowNextSteps(true);
                   }}
                 >
                   Publish
@@ -2911,6 +2840,53 @@ export default function RegistrationsPageClient({ initialTeams = [] }: { initial
           flex-direction: column;
           gap: 12px;
         }
+
+        .reg-link-callout {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          padding: 14px 16px;
+          border-radius: 8px;
+          background: var(--u-color-emphasis-background-default, #e8f3fd);
+          border: 1px solid var(--u-color-emphasis-line, #b3d4f5);
+          color: var(--u-color-emphasis-foreground, #0b4f8a);
+        }
+        .reg-link-callout-body {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+        .reg-link-callout-title {
+          font-size: 13px;
+          font-weight: 700;
+          color: var(--u-color-base-foreground-contrast, #071c31);
+        }
+        .reg-link-callout-desc {
+          font-size: 13px;
+          color: var(--u-color-base-foreground, #36485c);
+          line-height: 1.5;
+        }
+        .reg-link-callout-link {
+          color: var(--u-color-link-foreground, #0273e3);
+          font-weight: 600;
+          text-decoration: none;
+        }
+        .reg-link-callout-link:hover { text-decoration: underline; }
+        .reg-link-callout-btn {
+          align-self: flex-start;
+          margin-top: 8px;
+          padding: 7px 14px;
+          border-radius: 6px;
+          border: 1px solid var(--u-color-interactive-default, #0b6fda);
+          background: transparent;
+          color: var(--u-color-interactive-default, #0b6fda);
+          font-family: var(--u-font-body);
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.12s ease;
+        }
+        .reg-link-callout-btn:hover { background: rgba(11,111,218,0.06); }
 
         /* Add Option button — matches Figma gray style */
         .add-reg-btn {

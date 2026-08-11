@@ -140,6 +140,18 @@ const mockPrograms: ProgramWithStats[] = [
     createdBy: { id: 'user-1', firstName: 'Admin', lastName: 'User', avatar: null },
   },
   {
+    id: 'prog-tryout-1',
+    title: '2026 Fall Tryouts',
+    type: 'Tryout',
+    eventDates: { start: '2026-08-15', end: '2026-08-16' },
+    visibility: 'public',
+    registrationStatus: 'open',
+    status: 'published',
+    registrantCount: 47,
+    programValue: 235000,
+    createdBy: { id: 'user-1', firstName: 'Admin', lastName: 'User', avatar: null },
+  },
+  {
     id: 'prog-9',
     title: '2027 Spring Season',
     type: 'Season',

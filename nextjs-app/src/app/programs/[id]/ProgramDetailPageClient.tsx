@@ -324,6 +324,34 @@ function StatGroup({
   );
 }
 
+// ─── Sport icon ──────────────────────────────────────────────────────────────
+
+const SPORT_ICON_PATHS: Record<string, React.ReactNode> = {
+  volleyball: (
+    <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.5" stroke="white" strokeWidth="1.25"/><path d="M4.2 6.5C5.8 5.5 7.8 5.2 9.7 5.8" stroke="white" strokeWidth="1.25" strokeLinecap="round"/><path d="M15.8 6.5C14.2 5.5 12.2 5.2 10.3 5.8" stroke="white" strokeWidth="1.25" strokeLinecap="round"/><path d="M10 5.8C10 7.8 11.2 9.6 13 10.5" stroke="white" strokeWidth="1.25" strokeLinecap="round"/><path d="M10 5.8C10 7.8 8.8 9.6 7 10.5" stroke="white" strokeWidth="1.25" strokeLinecap="round"/><path d="M4.2 13.5C5.5 12 6 10 5.5 8.2" stroke="white" strokeWidth="1.25" strokeLinecap="round"/><path d="M15.8 13.5C14.5 12 14 10 14.5 8.2" stroke="white" strokeWidth="1.25" strokeLinecap="round"/><path d="M4.2 13.5C6.5 14.8 9.5 14.8 11.5 13.2" stroke="white" strokeWidth="1.25" strokeLinecap="round"/></svg>
+  ),
+  football: (
+    <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><ellipse cx="10" cy="10" rx="7" ry="4.5" stroke="white" strokeWidth="1.5" transform="rotate(-30 10 10)"/><path d="M5.5 7.5l9 5M7 5.5l6 9" stroke="white" strokeWidth="1.2" strokeLinecap="round"/></svg>
+  ),
+  basketball: (
+    <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="white" strokeWidth="1.5"/><path d="M2 10h16M10 2v16M4.5 4.5c1.5 1.5 2 3.5 2 5.5s-.5 4-2 5.5M15.5 4.5c-1.5 1.5-2 3.5-2 5.5s.5 4 2 5.5" stroke="white" strokeWidth="1.2" strokeLinecap="round"/></svg>
+  ),
+  baseball: (
+    <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="white" strokeWidth="1.5"/><path d="M6 4.5C7.5 6 8 8 8 10s-.5 4-2 5.5M14 4.5C12.5 6 12 8 12 10s.5 4 2 5.5" stroke="white" strokeWidth="1.2" strokeLinecap="round"/></svg>
+  ),
+};
+
+function SportIcon({ sport }: { sport: string }) {
+  const icon = SPORT_ICON_PATHS[sport.toLowerCase()] ?? (
+    <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="white" strokeWidth="1.5"/><path d="M10 3v14M3 10h14" stroke="white" strokeWidth="1.2" strokeLinecap="round"/></svg>
+  );
+  return (
+    <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#1a2332', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      {icon}
+    </span>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function ProgramDetailPageClient({
@@ -338,7 +366,11 @@ export default function ProgramDetailPageClient({
     () => programs.find(p => p.id === programId) ?? null
   );
   const [openRegistration, setOpenRegistration] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'registrations' | 'teams-list' | 'teams' | 'athletes'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'registrations' | 'teams-list' | 'teams' | 'athletes'>(() => {
+    const tab = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null;
+    const valid = ['overview', 'registrations', 'teams-list', 'teams', 'athletes'];
+    return (valid.includes(tab ?? '') ? tab : 'overview') as 'overview' | 'registrations' | 'teams-list' | 'teams' | 'athletes';
+  });
   const [drawerTeam, setDrawerTeam] = useState<TeamWithStats | null>(null);
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
@@ -415,14 +447,26 @@ export default function ProgramDetailPageClient({
   ];
 
   const programTeams = [
-    { id: 't1', name: '8U Black',  status: 'Draft',  season: 'Fall 2025–2026', gender: 'Male', sport: 'Football', athletes: 12, coaches: 2, assigned: 12, invited: 14, accepted: 12, declined: 2,  paid: 10,
-      coachNames: pickNames(100, 2), athleteNames: pickNames(0, 12), assignedNames: pickNames(0, 12), invitedNames: pickNames(0, 14), acceptedNames: pickNames(0, 12), declinedNames: pickNames(12, 2), paidNames: pickNames(0, 10) },
-    { id: 't2', name: '10U Gold',  status: 'Draft',  season: 'Fall 2025–2026', gender: 'Male', sport: 'Football', athletes: 12, coaches: 3, assigned: 12, invited: 15, accepted: 12, declined: 3,  paid: 11,
-      coachNames: pickNames(103, 3), athleteNames: pickNames(5, 12), assignedNames: pickNames(5, 12), invitedNames: pickNames(5, 15), acceptedNames: pickNames(5, 12), declinedNames: pickNames(17, 3), paidNames: pickNames(5, 11) },
-    { id: 't3', name: '12U Blue',  status: 'Draft',  season: 'Fall 2025–2026', gender: 'Coed', sport: 'Football', athletes: 10, coaches: 2, assigned: 10, invited: 12, accepted: 10, declined: 2,  paid:  8,
-      coachNames: pickNames(106, 2), athleteNames: pickNames(10, 10), assignedNames: pickNames(10, 10), invitedNames: pickNames(10, 12), acceptedNames: pickNames(10, 10), declinedNames: pickNames(20, 2), paidNames: pickNames(10, 8) },
-    { id: 't4', name: '14U Red',   status: 'Active', season: 'Fall 2025–2026', gender: 'Male', sport: 'Football', athletes: 11, coaches: 1, assigned: 11, invited: 13, accepted: 11, declined: 2,  paid: 11,
-      coachNames: pickNames(108, 1), athleteNames: pickNames(15, 11), assignedNames: pickNames(15, 11), invitedNames: pickNames(15, 13), acceptedNames: pickNames(15, 11), declinedNames: pickNames(26, 2), paidNames: pickNames(15, 11) },
+    { id: 't1',  name: '6U Black',   status: 'Draft', season: '2026–2027', gender: 'Male',   sport: 'Volleyball', athletes: 10, coaches: 2, assigned: 10, invited: 12, accepted: 10, declined: 2,  paid:  9,
+      coachNames: pickNames(100, 2), athleteNames: pickNames(0,  10), assignedNames: pickNames(0,  10), invitedNames: pickNames(0,  12), acceptedNames: pickNames(0,  10), declinedNames: pickNames(10, 2), paidNames: pickNames(0,  9) },
+    { id: 't2',  name: '8U Gold',    status: 'Draft', season: '2026–2027', gender: 'Male',   sport: 'Volleyball', athletes: 12, coaches: 2, assigned: 12, invited: 14, accepted: 11, declined: 3,  paid: 10,
+      coachNames: pickNames(102, 2), athleteNames: pickNames(5,  12), assignedNames: pickNames(5,  12), invitedNames: pickNames(5,  14), acceptedNames: pickNames(5,  11), declinedNames: pickNames(16, 3), paidNames: pickNames(5,  10) },
+    { id: 't3',  name: '8U Blue',    status: 'Draft', season: '2026–2027', gender: 'Male',   sport: 'Volleyball', athletes: 11, coaches: 2, assigned: 11, invited: 13, accepted: 11, declined: 2,  paid: 10,
+      coachNames: pickNames(104, 2), athleteNames: pickNames(10, 11), assignedNames: pickNames(10, 11), invitedNames: pickNames(10, 13), acceptedNames: pickNames(10, 11), declinedNames: pickNames(21, 2), paidNames: pickNames(10, 10) },
+    { id: 't4',  name: '10U Red',    status: 'Draft', season: '2026–2027', gender: 'Male',   sport: 'Volleyball', athletes: 13, coaches: 3, assigned: 13, invited: 15, accepted: 12, declined: 3,  paid: 11,
+      coachNames: pickNames(106, 3), athleteNames: pickNames(15, 13), assignedNames: pickNames(15, 13), invitedNames: pickNames(15, 15), acceptedNames: pickNames(15, 12), declinedNames: pickNames(27, 3), paidNames: pickNames(15, 11) },
+    { id: 't5',  name: '10U White',  status: 'Draft', season: '2026–2027', gender: 'Coed',   sport: 'Volleyball', athletes: 10, coaches: 2, assigned: 10, invited: 11, accepted: 10, declined: 1,  paid:  8,
+      coachNames: pickNames(109, 2), athleteNames: pickNames(20, 10), assignedNames: pickNames(20, 10), invitedNames: pickNames(20, 11), acceptedNames: pickNames(20, 10), declinedNames: pickNames(30, 1), paidNames: pickNames(20, 8) },
+    { id: 't6',  name: '12U Black',  status: 'Draft', season: '2026–2027', gender: 'Male',   sport: 'Volleyball', athletes: 12, coaches: 2, assigned: 12, invited: 14, accepted: 12, declined: 2,  paid: 11,
+      coachNames: pickNames(111, 2), athleteNames: pickNames(25, 12), assignedNames: pickNames(25, 12), invitedNames: pickNames(25, 14), acceptedNames: pickNames(25, 12), declinedNames: pickNames(37, 2), paidNames: pickNames(25, 11) },
+    { id: 't7',  name: '12U Gold',   status: 'Draft', season: '2026–2027', gender: 'Male',   sport: 'Volleyball', athletes: 11, coaches: 2, assigned: 11, invited: 13, accepted: 11, declined: 2,  paid: 10,
+      coachNames: pickNames(113, 2), athleteNames: pickNames(30, 11), assignedNames: pickNames(30, 11), invitedNames: pickNames(30, 13), acceptedNames: pickNames(30, 11), declinedNames: pickNames(41, 2), paidNames: pickNames(30, 10) },
+    { id: 't8',  name: '14U Blue',   status: 'Draft', season: '2026–2027', gender: 'Male',   sport: 'Volleyball', athletes: 13, coaches: 3, assigned: 13, invited: 16, accepted: 13, declined: 3,  paid: 12,
+      coachNames: pickNames(115, 3), athleteNames: pickNames(35, 13), assignedNames: pickNames(35, 13), invitedNames: pickNames(35, 16), acceptedNames: pickNames(35, 13), declinedNames: pickNames(48, 3), paidNames: pickNames(35, 12) },
+    { id: 't9',  name: '14U Red',    status: 'Draft', season: '2026–2027', gender: 'Coed',   sport: 'Volleyball', athletes: 10, coaches: 2, assigned: 10, invited: 12, accepted: 10, declined: 2,  paid:  9,
+      coachNames: pickNames(118, 2), athleteNames: pickNames(40, 10), assignedNames: pickNames(40, 10), invitedNames: pickNames(40, 12), acceptedNames: pickNames(40, 10), declinedNames: pickNames(50, 2), paidNames: pickNames(40, 9) },
+    { id: 't10', name: '16U Black',  status: 'Draft', season: '2026–2027', gender: 'Male',   sport: 'Volleyball', athletes: 14, coaches: 3, assigned: 14, invited: 17, accepted: 13, declined: 4,  paid: 12,
+      coachNames: pickNames(120, 3), athleteNames: pickNames(45, 14), assignedNames: pickNames(45, 14), invitedNames: pickNames(45, 17), acceptedNames: pickNames(45, 13), declinedNames: pickNames(58, 4), paidNames: pickNames(45, 12) },
   ];
 
   const teamStatAthletes = programTeams.reduce((sum, t) => sum + t.athletes, 0);
@@ -486,14 +530,16 @@ export default function ProgramDetailPageClient({
         >
           Registration Options
         </button>
-        <button
-          role="tab"
-          aria-selected={activeTab === 'teams-list'}
-          className={`pd-tab${activeTab === 'teams-list' ? ' pd-tab--active' : ''}`}
-          onClick={() => setActiveTab('teams-list')}
-        >
-          Teams
-        </button>
+        {isClubDues && (
+          <button
+            role="tab"
+            aria-selected={activeTab === 'teams-list'}
+            className={`pd-tab${activeTab === 'teams-list' ? ' pd-tab--active' : ''}`}
+            onClick={() => setActiveTab('teams-list')}
+          >
+            Teams
+          </button>
+        )}
         <button
           role="tab"
           aria-selected={activeTab === 'teams'}
@@ -502,14 +548,16 @@ export default function ProgramDetailPageClient({
         >
           Team Assignments
         </button>
-        <button
-          role="tab"
-          aria-selected={activeTab === 'athletes'}
-          className={`pd-tab${activeTab === 'athletes' ? ' pd-tab--active' : ''}`}
-          onClick={() => setActiveTab('athletes')}
-        >
-          Athletes
-        </button>
+        {!isTryout && !isClubDues && (
+          <button
+            role="tab"
+            aria-selected={activeTab === 'athletes'}
+            className={`pd-tab${activeTab === 'athletes' ? ' pd-tab--active' : ''}`}
+            onClick={() => setActiveTab('athletes')}
+          >
+            Athletes
+          </button>
+        )}
       </div>
       </div>
 
@@ -678,10 +726,12 @@ export default function ProgramDetailPageClient({
       {activeTab === 'teams-list' && (
         <div className="pd-reg-panel">
           <div className="pd-tl-actions">
-            <Button buttonStyle="standard" buttonType="secondary" size="medium" onClick={() => router.push(isTryout ? '/teams/manage?context=tryout' : '/teams/manage')}>
-              Add Teams
-            </Button>
-            <Button buttonStyle="standard" buttonType="primary" size="medium" onClick={() => router.push(`/teams/assignments?returnTo=/programs/${programId}`)}>
+            {!isClubDues && (
+              <Button buttonStyle="standard" buttonType="primary" size="medium" onClick={() => router.push(isTryout ? '/teams/manage?context=tryout' : '/teams/manage')}>
+                Add Teams
+              </Button>
+            )}
+            <Button buttonStyle="standard" buttonType="secondary" size="medium" onClick={() => router.push(`/teams/assignments?returnTo=/programs/${programId}`)}>
               Assign Athletes
             </Button>
           </div>
@@ -689,8 +739,8 @@ export default function ProgramDetailPageClient({
           <table className="pd-tl-table">
             <thead>
               <tr>
-                <th className="pd-tl-cell-avatar">Avatar</th>
                 <th className="pd-tl-cell-title">Title</th>
+                <th className="pd-tl-cell-status">Status</th>
                 <th className="pd-tl-cell-flex">Sport</th>
                 <th className="pd-tl-cell-flex">Gender</th>
                 <th className="pd-tl-cell-num">Athletes</th>
@@ -703,16 +753,14 @@ export default function ProgramDetailPageClient({
                   onClick={() => setDrawerTeam({ id: team.id, title: team.name, sport: team.sport, gender: team.gender, grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: team.status, tier: null, seasonId: null, rosterCount: team.athletes, maxRosterSize: null, ageMin: null, ageMax: null, coachCount: team.coaches, birthdayFrom: null, birthdayTo: null })}
                   style={{ cursor: 'pointer' }}
                 >
-                  <td className="pd-tl-cell-avatar">
-                    <div className="pd-tl-av">
-                      <span className="pd-tl-av-initials">{team.name.split(' ').map((w: string) => w[0]).join('').slice(0,2).toUpperCase()}</span>
-                    </div>
-                  </td>
                   <td className="pd-tl-cell-title">
-                    <div className="pd-tl-title-row">
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      <SportIcon sport={team.sport} />
                       <span className="pd-tl-name">{team.name}</span>
-                      {team.status === 'Draft' && <span className="pd-tl-draft-badge">Draft</span>}
-                    </div>
+                    </span>
+                  </td>
+                  <td className="pd-tl-cell-status">
+                    {team.status && <span className="pd-tl-draft-badge">{team.status}</span>}
                   </td>
                   <td className="pd-tl-cell-flex">{team.sport}</td>
                   <td className="pd-tl-cell-flex">{team.gender}</td>
@@ -1163,6 +1211,39 @@ export default function ProgramDetailPageClient({
 
         /* Registration options */
         .pd-reg-panel { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+        .pd-link-callout {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          padding: 14px 16px;
+          border-radius: 8px;
+          background: var(--u-color-emphasis-background-default, #e8f3fd);
+          border: 1px solid var(--u-color-emphasis-line, #b3d4f5);
+          color: var(--u-color-emphasis-foreground, #0b4f8a);
+        }
+        .pd-link-callout-body {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+        .pd-link-callout-title {
+          font-family: var(--u-font-body);
+          font-size: 13px;
+          font-weight: 700;
+          color: var(--u-color-base-foreground-contrast, #071c31);
+        }
+        .pd-link-callout-desc {
+          font-family: var(--u-font-body);
+          font-size: 13px;
+          color: var(--u-color-base-foreground, #36485c);
+          line-height: 1.5;
+        }
+        .pd-link-callout-link {
+          color: var(--u-color-link-foreground, #0273e3);
+          font-weight: 600;
+          text-decoration: none;
+        }
+        .pd-link-callout-link:hover { text-decoration: underline; }
         .pd-reg-list { display: flex; flex-direction: column; gap: 12px; width: 100%; }
         .pd-reg-card {
           display: flex;
@@ -1261,6 +1342,7 @@ export default function ProgramDetailPageClient({
         .pd-tl-table tbody tr:hover { background: var(--u-color-background-subtle, #f5f6f7); }
         .pd-tl-cell-avatar { width: 60px; }
         .pd-tl-cell-title { min-width: 156px; }
+        .pd-tl-cell-status { min-width: 100px; }
         .pd-tl-cell-flex { min-width: 124px; }
         .pd-tl-cell-num { min-width: 80px; }
         .pd-tl-av {

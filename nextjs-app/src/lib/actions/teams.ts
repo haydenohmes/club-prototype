@@ -14,6 +14,10 @@ export interface TeamWithStats {
   status: string;
   tier: 'free' | 'performance' | null;
   seasonId: string | null;
+  programId?: string | null;
+  programName?: string | null;
+  registrationStatus?: 'open' | 'closed' | null;
+  registrationName?: string | null;
   rosterCount: number;
   maxRosterSize: number | null;
   ageMin: number | null;
@@ -68,7 +72,7 @@ declare global {
 }
 
 // Bump this any time the seed data changes — forces re-init on next hot reload
-const MOCK_STORE_VERSION = 25;
+const MOCK_STORE_VERSION = 30;
 
 // Base team shapes — reused across seasons
 const BASE_TEAMS = [
@@ -125,10 +129,22 @@ function makeTeams(seasonId: string, status: string, prefix: string, seed = 0): 
   });
 }
 
-// Elevation Volleyball Club teams — clean slate. The shared store is empty so the Teams page and
-// Manage Teams read as "no teams". The Assign Athletes demo teams live in `assignmentDemoTeams` below.
+// Elevation Volleyball Club teams — 10 draft teams for the 2026-2027 season (Fall 2026 / season-3).
+const DRAFT_FOOTBALL_TEAMS_2026: TeamWithStats[] = [
+  { id: 'ft-1',  title: '6U Black',  sport: 'Volleyball', gender: 'Male', grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: 'draft', tier: null, seasonId: 'season-3', programId: 'prog-6', programName: '2026 Fall Season',         registrationStatus: 'open',   registrationName: '6U Boys Volleyball',                rosterCount: 10, maxRosterSize: 14, ageMin: 6,  ageMax: 6,  coachCount: 2, birthdayFrom: null, birthdayTo: null, assignedCount: 0, invitedCount: 0, acceptedCount: 0, declinedCount: 0, paidCount: 0 },
+  { id: 'ft-2',  title: '8U Gold',   sport: 'Volleyball', gender: 'Male', grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: 'draft', tier: null, seasonId: 'season-3', programId: 'prog-4', programName: '2026 Spring Season',       registrationStatus: 'open',   registrationName: '8U Boys Volleyball',                rosterCount: 12, maxRosterSize: 16, ageMin: 8,  ageMax: 8,  coachCount: 2, birthdayFrom: null, birthdayTo: null, assignedCount: 0, invitedCount: 0, acceptedCount: 0, declinedCount: 0, paidCount: 0 },
+  { id: 'ft-3',  title: '8U Blue',   sport: 'Volleyball', gender: 'Male', grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: 'draft', tier: null, seasonId: 'season-3', programId: 'prog-1', programName: '2025 Fall Season',         registrationStatus: 'open',   registrationName: '8U Fall Volleyball',                rosterCount: 11, maxRosterSize: 16, ageMin: 8,  ageMax: 8,  coachCount: 2, birthdayFrom: null, birthdayTo: null, assignedCount: 0, invitedCount: 0, acceptedCount: 0, declinedCount: 0, paidCount: 0 },
+  { id: 'ft-4',  title: '10U Red',   sport: 'Volleyball', gender: 'Male', grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: 'draft', tier: null, seasonId: 'season-3', programId: 'prog-6', programName: '2026 Fall Season',         registrationStatus: 'open',   registrationName: '10U Boys Volleyball',               rosterCount: 13, maxRosterSize: 18, ageMin: 10, ageMax: 10, coachCount: 3, birthdayFrom: null, birthdayTo: null, assignedCount: 0, invitedCount: 0, acceptedCount: 0, declinedCount: 0, paidCount: 0 },
+  { id: 'ft-5',  title: '10U White', sport: 'Volleyball', gender: 'Coed', grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: 'draft', tier: null, seasonId: 'season-3', programId: 'prog-3', programName: '2025 Winter Skills Camp',   registrationStatus: 'closed', registrationName: 'Winter Skills Camp – All Ages',     rosterCount: 10, maxRosterSize: 16, ageMin: 10, ageMax: 10, coachCount: 2, birthdayFrom: null, birthdayTo: null, assignedCount: 0, invitedCount: 0, acceptedCount: 0, declinedCount: 0, paidCount: 0 },
+  { id: 'ft-6',  title: '12U Black', sport: 'Volleyball', gender: 'Male', grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: 'draft', tier: null, seasonId: 'season-3', programId: 'prog-4', programName: '2026 Spring Season',       registrationStatus: 'open',   registrationName: '12U Boys Volleyball',               rosterCount: 12, maxRosterSize: 18, ageMin: 12, ageMax: 12, coachCount: 2, birthdayFrom: null, birthdayTo: null, assignedCount: 0, invitedCount: 0, acceptedCount: 0, declinedCount: 0, paidCount: 0 },
+  { id: 'ft-7',  title: '12U Gold',  sport: 'Volleyball', gender: 'Male', grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: 'draft', tier: null, seasonId: 'season-3', programId: 'prog-2', programName: '2025 Fall Clinic',         registrationStatus: 'open',   registrationName: 'Serving & Passing Clinic – All Ages', rosterCount: 11, maxRosterSize: 18, ageMin: 12, ageMax: 12, coachCount: 2, birthdayFrom: null, birthdayTo: null, assignedCount: 0, invitedCount: 0, acceptedCount: 0, declinedCount: 0, paidCount: 0 },
+  { id: 'ft-8',  title: '14U Blue',  sport: 'Volleyball', gender: 'Male', grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: 'draft', tier: null, seasonId: 'season-3', programId: 'prog-5', programName: '2026 Spring Tournament',   registrationStatus: 'open',   registrationName: '14U Tournament Entry',              rosterCount: 13, maxRosterSize: 20, ageMin: 14, ageMax: 14, coachCount: 3, birthdayFrom: null, birthdayTo: null, assignedCount: 0, invitedCount: 0, acceptedCount: 0, declinedCount: 0, paidCount: 0 },
+  { id: 'ft-9',  title: '14U Red',   sport: 'Volleyball', gender: 'Coed', grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: 'draft', tier: null, seasonId: 'season-3', programId: 'prog-3', programName: '2025 Winter Skills Camp',   registrationStatus: 'closed', registrationName: 'Winter Skills Camp – All Ages',     rosterCount: 10, maxRosterSize: 18, ageMin: 14, ageMax: 14, coachCount: 2, birthdayFrom: null, birthdayTo: null, assignedCount: 0, invitedCount: 0, acceptedCount: 0, declinedCount: 0, paidCount: 0 },
+  { id: 'ft-10', title: '16U Black', sport: 'Volleyball', gender: 'Male', grades: null, avatar: null, primaryColor: null, secondaryColor: null, status: 'draft', tier: null, seasonId: 'season-3', programId: 'prog-9', programName: '2027 Spring Season',       registrationStatus: 'open',   registrationName: '16U Boys Volleyball',               rosterCount: 14, maxRosterSize: 22, ageMin: 16, ageMax: 16, coachCount: 3, birthdayFrom: null, birthdayTo: null, assignedCount: 0, invitedCount: 0, acceptedCount: 0, declinedCount: 0, paidCount: 0 },
+];
+
 if (!global.__mockTeamStore || global.__mockTeamStoreVersion !== MOCK_STORE_VERSION) {
-global.__mockTeamStore = [];
+global.__mockTeamStore = [...DRAFT_FOOTBALL_TEAMS_2026];
 global.__mockTeamStoreVersion = MOCK_STORE_VERSION;
 }
 const mockTeamStore = global.__mockTeamStore!;

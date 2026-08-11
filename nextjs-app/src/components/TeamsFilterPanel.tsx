@@ -7,6 +7,7 @@ import React, { useEffect, useState } from 'react';
 export interface TeamsFilters {
   statuses: string[];
   seasons: string[];
+  programs: string[];
   sports: string[];
   genders: string[];
 }
@@ -21,7 +22,7 @@ export const TEAM_STATUS_OPTIONS: Option[] = [
 ];
 
 export function createDefaultTeamsFilters(defaultSeason?: string): TeamsFilters {
-  return { statuses: [], seasons: defaultSeason ? [defaultSeason] : [], sports: [], genders: [] };
+  return { statuses: [], seasons: defaultSeason ? [defaultSeason] : [], programs: [], sports: [], genders: [] };
 }
 
 const labelFor = (opts: Option[], v: string) => opts.find(o => o.value === v)?.label ?? v;
@@ -33,6 +34,7 @@ export interface TeamsChip {
 
 interface OptionSets {
   seasonOptions: Option[];
+  programOptions: Option[];
   sportOptions: Option[];
   genderOptions: Option[];
 }
@@ -43,6 +45,8 @@ export function buildTeamsChips(filters: TeamsFilters, opts: OptionSets): TeamsC
     chips.push({ key: 'statuses', label: `Status: ${filters.statuses.map(v => labelFor(TEAM_STATUS_OPTIONS, v)).join(', ')}` });
   if (filters.seasons.length)
     chips.push({ key: 'seasons', label: `Season: ${filters.seasons.map(v => labelFor(opts.seasonOptions, v)).join(', ')}` });
+  if (filters.programs.length)
+    chips.push({ key: 'programs', label: `Program: ${filters.programs.map(v => labelFor(opts.programOptions, v)).join(', ')}` });
   if (filters.sports.length)
     chips.push({ key: 'sports', label: `Sport: ${filters.sports.map(v => labelFor(opts.sportOptions, v)).join(', ')}` });
   if (filters.genders.length)
@@ -134,6 +138,7 @@ export default function TeamsFilterPanel({
   filters,
   setFilters,
   seasonOptions,
+  programOptions,
   sportOptions,
   genderOptions,
   onClose,
@@ -142,6 +147,7 @@ export default function TeamsFilterPanel({
   filters: TeamsFilters;
   setFilters: React.Dispatch<React.SetStateAction<TeamsFilters>>;
   seasonOptions: Option[];
+  programOptions: Option[];
   sportOptions: Option[];
   genderOptions: Option[];
   onClose: () => void;
@@ -167,7 +173,7 @@ export default function TeamsFilterPanel({
     setFilters(prev => ({ ...prev, [key]: [] }));
   };
 
-  const clearAll = () => setFilters({ statuses: [], seasons: [], sports: [], genders: [] });
+  const clearAll = () => setFilters({ statuses: [], seasons: [], programs: [], sports: [], genders: [] });
 
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const toggleCollapse = (key: string) =>
@@ -177,7 +183,7 @@ export default function TeamsFilterPanel({
       return next;
     });
 
-  const chips = buildTeamsChips(filters, { seasonOptions, sportOptions, genderOptions });
+  const chips = buildTeamsChips(filters, { seasonOptions, programOptions, sportOptions, genderOptions });
 
   return (
     <aside className="tf-panel" role="region" aria-label="Filters">
@@ -225,6 +231,16 @@ export default function TeamsFilterPanel({
           </button>
           {!collapsed.has('seasons') && (
             <PillGroup options={seasonOptions} selected={filters.seasons} onToggle={v => toggle('seasons', v)} />
+          )}
+        </div>
+
+        <div className="tf-section">
+          <button className="tf-section-head" onClick={() => toggleCollapse('programs')} aria-expanded={!collapsed.has('programs')}>
+            <span className={`tf-chevron${collapsed.has('programs') ? ' tf-chevron--collapsed' : ''}`}><ChevronIcon /></span>
+            Program
+          </button>
+          {!collapsed.has('programs') && (
+            <PillGroup options={programOptions} selected={filters.programs} onToggle={v => toggle('programs', v)} />
           )}
         </div>
 

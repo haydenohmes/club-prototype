@@ -323,7 +323,7 @@ function StatusBadge({ status }: { status: string }) {
         {label}
       </span>
       {isDraft && (
-        <span className="status-tooltip">Build your teams and confirm to make active.</span>
+        <span className="status-tooltip">Not active yet. Assign athletes, then confirm to start the season.</span>
       )}
       <style jsx>{`
         .status-badge-wrapper {
@@ -348,8 +348,8 @@ function StatusBadge({ status }: { status: string }) {
         }
 
         .status-badge--draft {
-          background: #fef3c7;
-          color: #92400e;
+          background: var(--u-color-background-default, #e8eaec);
+          color: var(--u-color-base-foreground-subtle, #607081);
           cursor: help;
         }
 
@@ -510,6 +510,14 @@ function TableContent({
           <span className="header-label">Season</span>
           <SortIcon />
         </div>
+        <div className="table-cell cell-program">
+          <span className="header-label">Program</span>
+          <SortIcon />
+        </div>
+        <div className="table-cell cell-registration">
+          <span className="header-label">Registration</span>
+          <SortIcon />
+        </div>
         <div className="table-cell cell-gender">
           <span className="header-label">Gender</span>
           <SortIcon />
@@ -553,6 +561,20 @@ function TableContent({
             </div>
             <div className="table-cell cell-status"><StatusBadge status={team.status} /></div>
             <div className="table-cell cell-year">{yearLabel}</div>
+            <div className="table-cell cell-program">
+              {team.programId && team.programName ? (
+                <a
+                  className="program-link"
+                  href={`/programs/${team.programId}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {team.programName}
+                </a>
+              ) : '—'}
+            </div>
+            <div className="table-cell cell-registration">
+              {team.registrationName ?? '—'}
+            </div>
             <div className="table-cell cell-gender">{formatGender(team.gender)}</div>
             <div className="table-cell cell-sport">{team.sport ? formatSport(team.sport) : '—'}</div>
             <div className="table-cell cell-coaches">{team.coachCount}</div>
@@ -580,7 +602,6 @@ function TableContent({
         .teams-table {
           display: flex;
           flex-direction: column;
-          min-width: 1016px;
           width: 100%;
         }
 
@@ -631,16 +652,18 @@ function TableContent({
           color: var(--u-color-base-foreground-contrast, #071c31);
         }
 
-        /* All columns fixed — team name grows but has a floor; scroll covers narrow viewports */
-        .cell-team-name { flex: 1 0 200px; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-        .cell-status    { flex: 0 0 76px; }
+        /* All columns share space evenly */
+        .cell-team-name    { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+        .cell-status       { flex: 1 1 0; }
         .cell-year,
-        .cell-season    { flex: 0 0 90px; }
-        .cell-gender    { flex: 0 0 72px; }
-        .cell-sport     { flex: 0 0 90px; }
+        .cell-season       { flex: 1 1 0; }
+        .cell-program      { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+        .cell-registration { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+        .cell-gender       { flex: 1 1 0; }
+        .cell-sport        { flex: 1 1 0; }
         .cell-coaches,
-        .cell-athletes  { flex: 0 0 74px; padding: 8px 8px; justify-content: flex-end; }
-        .cell-stat      { flex: 0 0 68px; padding: 8px 8px; justify-content: flex-end; }
+        .cell-athletes     { flex: 1 1 0; padding: 8px 8px; justify-content: flex-end; }
+        .cell-stat         { flex: 1 1 0; padding: 8px 8px; justify-content: flex-end; }
 
         .cell-actions {
           width: 48px;
@@ -694,6 +717,40 @@ function TableContent({
           white-space: nowrap;
         }
 
+        .program-link {
+          font-family: var(--u-font-body);
+          font-size: 14px;
+          font-weight: 500;
+          color: var(--u-color-interactive-default, #0b6fda);
+          text-decoration: underline;
+          text-underline-offset: 3px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .program-link:hover {
+          opacity: 0.8;
+        }
+
+        .reg-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-family: var(--u-font-body, sans-serif);
+          font-size: 12px;
+          font-weight: 500;
+          line-height: 1;
+          white-space: nowrap;
+        }
+        .reg-badge--open {
+          background: #dcfce7;
+          color: #14532d;
+        }
+        .reg-badge--closed {
+          background: var(--u-color-background-default, #e8eaec);
+          color: var(--u-color-base-foreground-subtle, #607081);
+        }
 
       `}</style>
     </div>

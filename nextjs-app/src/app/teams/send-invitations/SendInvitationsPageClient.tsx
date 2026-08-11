@@ -279,6 +279,12 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
     INITIAL_REGISTRATIONS.forEach(r => r.teams.forEach(t => { map[t.id] = { program: 'Attached in Club Dues', registration: attachedRegistrationName }; }));
     return map;
   });
+  // Per-team invitation type: 'accept-decline' | 'welcome-email' (default accept-decline)
+  const [teamInviteTypes, setTeamInviteTypes] = useState<Record<string, 'accept-decline' | 'welcome-email'>>({});
+  const getTeamInviteType = (teamId: string) => teamInviteTypes[teamId] ?? 'accept-decline';
+  const setTeamInviteType = (teamId: string, type: 'accept-decline' | 'welcome-email') =>
+    setTeamInviteTypes(prev => ({ ...prev, [teamId]: type }));
+
   // Attach-registration modal
   const [attachModalTeamId, setAttachModalTeamId] = useState<string | null>(null);
   const [modalProgramId, setModalProgramId] = useState<string>('');
@@ -449,25 +455,13 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
     const teamAll      = teamSelected === teamTotal && teamTotal > 0;
     const teamSome     = teamSelected > 0 && !teamAll;
     const attached     = teamRegistrations[team.id];
+    const inviteType   = getTeamInviteType(team.id);
 
     return (
       <div key={team.id} className="si-team-accordion">
         <div className="si-team-header" onClick={() => toggleTeamExpand(reg.id, team.id)}>
           <div className="si-team-left">
             <span className="si-team-name">{team.name}</span>
-            <div className="si-attach-wrap" onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                className="si-reg-pill"
-                onClick={() => openAttachModal(team.id)}
-                aria-label="Edit registration"
-              >
-                <span className="si-reg-pill-text">{attached?.registration ?? 'Select registration'}</span>
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, opacity: 0.7 }}>
-                  <path d="M11.5 2.5l2 2-7 7-2.5.5.5-2.5 7-7z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
           </div>
           <div className="si-team-header-right">
             <span className="si-team-count">{teamSelected} of {teamTotal}</span>
@@ -487,7 +481,44 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
         </div>
 
         {team.isExpanded && (
-          <div className="si-team-athletes">
+          <>
+            {/* ── Invitation type segmented control ── */}
+            <div className="si-invite-type-section" onClick={(e) => e.stopPropagation()}>
+              <div className="si-invite-type-row">
+                <span className="si-invite-type-label">Invitation type</span>
+                <div className="si-invite-seg" role="group">
+                  <button
+                    type="button"
+                    className={`si-invite-seg-btn${inviteType === 'accept-decline' ? ' si-invite-seg-btn--active' : ''}`}
+                    onClick={() => setTeamInviteType(team.id, 'accept-decline')}
+                  >
+                    ✉ Accept / Decline
+                  </button>
+                  <button
+                    type="button"
+                    className={`si-invite-seg-btn${inviteType === 'welcome-email' ? ' si-invite-seg-btn--active' : ''}`}
+                    onClick={() => setTeamInviteType(team.id, 'welcome-email')}
+                  >
+                    👋 Welcome Email
+                  </button>
+                </div>
+                {inviteType === 'accept-decline' && (
+                  <button
+                    type="button"
+                    className="si-reg-pill"
+                    onClick={() => openAttachModal(team.id)}
+                    aria-label="Edit registration"
+                  >
+                    <span className="si-reg-pill-text">{attached?.registration ?? 'Link registration'}</span>
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, opacity: 0.7 }}>
+                      <path d="M11.5 2.5l2 2-7 7-2.5.5.5-2.5 7-7z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="si-team-athletes">
             {team.athletes.map(athlete => (
               <div
                 key={athlete.id}
@@ -508,22 +539,8 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
                       {athlete.status === 'invited' && athlete.sentAt && (
                         <span className="si-sent-date">Sent {athlete.sentAt}</span>
                       )}
-                      <span className="si-status-pill-wrap">
-                        <button
-                          type="button"
-                          className={`si-status-pill si-status-pill--${athlete.status} si-status-pill--btn`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (statusDropdown?.id === athlete.id) { setStatusDropdown(null); return; }
-                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                            setStatusDropdown({ id: athlete.id, regId: reg.id, teamId: team.id, x: rect.right, y: rect.bottom + 4 });
-                          }}
-                        >
-                          {athlete.status === 'deposit' ? 'Paid Deposit' : athlete.status === 'paid' ? 'Paid in Full' : athlete.status.charAt(0).toUpperCase() + athlete.status.slice(1)}
-                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ marginLeft: 3, flexShrink: 0 }}>
-                            <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </button>
+                      <span className={`si-status-pill si-status-pill--${athlete.status}`}>
+                        {athlete.status === 'deposit' ? 'Paid Deposit' : athlete.status === 'paid' ? 'Paid in Full' : athlete.status.charAt(0).toUpperCase() + athlete.status.slice(1)}
                       </span>
                     </span>
                   )}
@@ -534,6 +551,7 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
               </div>
             ))}
           </div>
+          </>
         )}
       </div>
     );
@@ -1279,6 +1297,61 @@ export default function SendInvitationsPageClient({ onClose, attachedRegistratio
           color: #1e40af;
           line-height: 1.4;
           flex-shrink: 0;
+        }
+
+        /* ── Invitation type segmented control ── */
+        .si-invite-type-section {
+          padding: 8px 14px;
+          border-top: 1px solid var(--u-color-line-subtle, #e0e1e1);
+          background: var(--u-color-background-canvas, #f8f9fa);
+        }
+
+        .si-invite-type-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .si-invite-type-label {
+          font-size: 12px;
+          font-weight: 600;
+          color: var(--u-color-base-foreground-subtle, #607081);
+          flex-shrink: 0;
+        }
+
+        .si-invite-seg {
+          display: flex;
+          border: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          border-radius: 6px;
+          overflow: hidden;
+          flex-shrink: 0;
+        }
+
+        .si-invite-seg-btn {
+          height: 28px;
+          padding: 0 12px;
+          background: var(--u-color-background-container, #fefefe);
+          border: none;
+          border-right: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          font-family: var(--u-font-body);
+          font-size: 12px;
+          font-weight: 500;
+          color: var(--u-color-base-foreground, #36485c);
+          cursor: pointer;
+          transition: background 0.1s ease, color 0.1s ease;
+          white-space: nowrap;
+        }
+        .si-invite-seg-btn:last-child {
+          border-right: none;
+        }
+        .si-invite-seg-btn:hover:not(.si-invite-seg-btn--active) {
+          background: var(--u-color-background-canvas, #eff0f0);
+        }
+        .si-invite-seg-btn--active {
+          background: var(--u-color-emphasis-background-contrast, #0273e3);
+          color: #fff;
+          font-weight: 600;
         }
 
         /* ── Team list ── */

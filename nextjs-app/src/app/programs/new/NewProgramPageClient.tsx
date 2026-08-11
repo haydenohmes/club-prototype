@@ -4,12 +4,14 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/Button';
 import StartStep from './StartStep';
+import TypePickerModal from '@/components/TypePickerModal';
 
 // ─── Step indicator ────────────────────────────────────────────────────────
 
-const STEPS = ['Program Type', 'Program Details', 'Questions', 'Registrations', 'Summary', 'Next Steps'];
+const STEPS_WITH_NEXT = ['Program Details', 'Questions', 'Registrations', 'Summary', 'Next Steps'];
+const STEPS_NO_NEXT   = ['Program Details', 'Questions', 'Registrations', 'Summary'];
 
-function StepIndicator({ currentStep, steps = STEPS }: { currentStep: number; steps?: string[] }) {
+function StepIndicator({ currentStep, steps = STEPS_WITH_NEXT }: { currentStep: number; steps?: string[] }) {
   return (
     <div className="steps-row">
       {steps.map((label, i) => {
@@ -51,9 +53,9 @@ function StepIndicator({ currentStep, steps = STEPS }: { currentStep: number; st
         }
 
         .step-circle {
-          width: 18px;
-          height: 18px;
-          border-radius: 3px;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
           border: 2px solid var(--u-color-line-subtle, #c4c6c8);
           background: var(--u-color-background-container, #fefefe);
           display: flex;
@@ -458,24 +460,227 @@ function SectionHeader({
 // ─── Main component ────────────────────────────────────────────────────────
 
 const PROGRAM_TYPE_OPTIONS = [
-  { value: 'tryout', label: 'Tryout' },
-  { value: 'team-dues', label: 'Club Dues' },
+  { value: 'tryout',        label: 'Tryout' },
+  { value: 'team-dues',     label: 'Club Dues' },
+  { value: 'camps-clinics', label: 'Camps / Clinics' },
+  { value: 'misc',          label: 'Misc' },
   { value: 'one-time-registration', label: 'One-Time Registration' },
 ];
 
-export default function NewProgramPageClient() {
+const ADMIN_TEAMS = [
+  { value: 'ta-1', label: '8U Gold' },
+  { value: 'ta-2', label: '8U Blue' },
+  { value: 'ta-3', label: '10U Gold' },
+  { value: 'ta-4', label: '10U Blue' },
+  { value: 'ta-5', label: '10U Silver' },
+  { value: 'ta-6', label: '12U Gold' },
+  { value: 'ta-7', label: '12U Blue' },
+  { value: 'ta-8', label: '14U Gold' },
+  { value: 'ta-9', label: '14U Blue' },
+];
+
+// ─── Multi-select dropdown ─────────────────────────────────────────────────
+
+function MultiSelect({
+  options,
+  value,
+  onChange,
+  placeholder,
+}: {
+  options: { value: string; label: string }[];
+  value: string[];
+  onChange: (v: string[]) => void;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
+
+  const toggle = (val: string) => {
+    onChange(value.includes(val) ? value.filter(v => v !== val) : [...value, val]);
+  };
+
+  const remove = (val: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange(value.filter(v => v !== val));
+  };
+
+  return (
+    <div className="ms-wrap" ref={ref}>
+      <div
+        className={`ms-trigger${open ? ' ms-trigger--open' : ''}`}
+        onClick={() => setOpen(o => !o)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setOpen(o => !o); }}
+      >
+        <div className="ms-pills">
+          {value.length === 0 && (
+            <span className="ms-placeholder">{placeholder ?? 'Select...'}</span>
+          )}
+          {value.map(v => {
+            const label = options.find(o => o.value === v)?.label ?? v;
+            return (
+              <span key={v} className="ms-pill">
+                {label}
+                <button className="ms-pill-remove" onClick={e => remove(v, e)} aria-label={`Remove ${label}`}>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <path d="M8 2L2 8M2 2l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </span>
+            );
+          })}
+        </div>
+        <svg className="ms-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+
+      {open && (
+        <div className="ms-dropdown">
+          {options.map(opt => {
+            const checked = value.includes(opt.value);
+            return (
+              <button key={opt.value} className={`ms-option${checked ? ' ms-option--checked' : ''}`} onClick={() => toggle(opt.value)}>
+                <span className="ms-check">
+                  {checked && (
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </span>
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <style jsx>{`
+        .ms-wrap { position: relative; width: 100%; }
+        .ms-trigger {
+          min-height: 40px;
+          padding: 4px 36px 4px 8px;
+          border: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          border-radius: 4px;
+          background: var(--u-color-background-container, #fefefe);
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          position: relative;
+          transition: border-color 0.15s ease;
+        }
+        .ms-trigger--open,
+        .ms-trigger:focus {
+          border-color: var(--u-color-emphasis-background-contrast, #0273e3);
+          box-shadow: 0 0 0 3px rgba(2, 115, 227, 0.15);
+          outline: none;
+        }
+        .ms-pills { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; min-width: 0; }
+        .ms-placeholder {
+          font-family: var(--u-font-body);
+          font-size: 14px;
+          color: var(--u-color-base-foreground-subtle, #607081);
+          padding: 0 4px;
+          line-height: 30px;
+        }
+        .ms-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          height: 26px;
+          padding: 0 6px 0 8px;
+          background: var(--u-color-emphasis-background-contrast, #0273e3);
+          border-radius: 4px;
+          font-family: var(--u-font-body);
+          font-size: 13px;
+          font-weight: 500;
+          color: #fff;
+          white-space: nowrap;
+        }
+        .ms-pill-remove {
+          display: flex; align-items: center; justify-content: center;
+          background: none; border: none; padding: 2px; cursor: pointer;
+          color: rgba(255,255,255,0.8); border-radius: 2px;
+        }
+        .ms-pill-remove:hover { color: #fff; }
+        .ms-arrow {
+          position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+          color: var(--u-color-base-foreground-subtle, #607081);
+          pointer-events: none;
+          transition: transform 0.15s ease;
+        }
+        .ms-trigger--open .ms-arrow { transform: translateY(-50%) rotate(180deg); }
+        .ms-dropdown {
+          position: absolute;
+          top: calc(100% + 4px);
+          left: 0; right: 0;
+          background: var(--u-color-background-container, #fefefe);
+          border: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          border-radius: 6px;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+          z-index: 200;
+          padding: 4px;
+          max-height: 220px;
+          overflow-y: auto;
+        }
+        .ms-option {
+          display: flex; align-items: center; gap: 8px;
+          width: 100%; padding: 8px 10px;
+          background: none; border: none; border-radius: 4px;
+          font-family: var(--u-font-body); font-size: 14px;
+          color: var(--u-color-base-foreground, #36485c);
+          cursor: pointer; text-align: left;
+          transition: background 0.1s ease;
+        }
+        .ms-option:hover { background: var(--u-color-background-canvas, #eff0f0); }
+        .ms-option--checked { color: var(--u-color-base-foreground-contrast, #071c31); font-weight: 500; }
+        .ms-check {
+          width: 16px; height: 16px; flex-shrink: 0;
+          border: 1.5px solid var(--u-color-line-subtle, #c4c6c8);
+          border-radius: 3px;
+          display: flex; align-items: center; justify-content: center;
+          background: var(--u-color-background-container, #fefefe);
+        }
+        .ms-option--checked .ms-check {
+          background: var(--u-color-emphasis-background-contrast, #0273e3);
+          border-color: var(--u-color-emphasis-background-contrast, #0273e3);
+          color: #fff;
+        }
+      `}</style>
+    </div>
+  );
+}
+
+export default function NewProgramPageClient({
+  initialType = '',
+  initialInvitation = '',
+}: {
+  initialType?: string;
+  initialInvitation?: string;
+}) {
   const router = useRouter();
 
   // Form state
   const [title, setTitle] = useState('');
-  const [programType, setProgramType] = useState('');
+  const [programType, setProgramType] = useState(initialType);
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [visibility, setVisibility] = useState<'private' | 'public'>('private');
   const [feesCoveredBy, setFeesCoveredBy] = useState<'registrants' | 'organization'>('registrants');
-  const [invitationType, setInvitationType] = useState('');
-  const [phase, setPhase] = useState<'select' | 'details'>('select');
+  const [adminTeams, setAdminTeams] = useState<string[]>([]);
+  const [typePickerOpen, setTypePickerOpen] = useState(false);
+  const [invitationType, setInvitationType] = useState(initialInvitation);
+  const [phase, setPhase] = useState<'select' | 'details'>(initialType ? 'details' : 'select');
 
   const handleCancel = () => router.push('/programs');
 
@@ -508,7 +713,7 @@ export default function NewProgramPageClient() {
 
       {/* ── Stepper bar ────────────────────────────────────────────── */}
       <div className="stepper-bar">
-        <StepIndicator currentStep={1} />
+        <StepIndicator currentStep={0} steps={programType === 'team-dues' ? STEPS_NO_NEXT : STEPS_WITH_NEXT} />
       </div>
 
       {/* ── Content ────────────────────────────────────────────────── */}
@@ -523,6 +728,58 @@ export default function NewProgramPageClient() {
 
               {/* ── Section 1: Core details ──────────────────────── */}
               <div className="form-section">
+
+                {/* Title + Type row */}
+                <div className="field-group">
+                  <div className="field-row">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
+                      <FormLabel label="Title" required />
+                      <TextInput
+                        id="program-title"
+                        value={title}
+                        onChange={setTitle}
+                        placeholder="e.g. 2026 Spring Club Volleyball"
+                        maxLength={150}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
+                      <FormLabel label="Type" />
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0 12px',
+                        height: '40px',
+                        border: '1px solid var(--u-color-line-subtle, #c4c6c8)',
+                        borderRadius: '4px',
+                        background: 'var(--u-color-background-canvas, #eff0f0)',
+                        fontFamily: 'var(--u-font-body)',
+                      }}>
+                        <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--u-color-base-foreground-contrast, #071c31)' }}>
+                          {PROGRAM_TYPE_OPTIONS.find(o => o.value === programType)?.label ?? '—'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setTypePickerOpen(true)}
+                          aria-label="Change program type"
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                            background: 'none', border: 'none', padding: '4px', cursor: 'pointer',
+                            color: 'var(--u-color-base-foreground-subtle, #607081)',
+                            borderRadius: '4px', flexShrink: 0,
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--u-color-base-foreground-contrast, #071c31)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--u-color-base-foreground-subtle, #607081)')}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                            <path d="M11.5 2.5a1.5 1.5 0 012.1 2.1L5 13.2l-3 .8.8-3 8.7-8.5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Description */}
                 <div className="field-group">
                   <FormLabel label="Description" />
@@ -631,6 +888,25 @@ export default function NewProgramPageClient() {
                 </div>
               </div>
 
+              <SectionDivider />
+
+              {/* ── Section 4: Team Admin Access ─────────────────── */}
+              <div className="form-section">
+                <SectionHeader
+                  title={<>Team Admin Access <span style={{ fontWeight: 400, color: 'var(--u-color-base-foreground-subtle, #607081)', fontSize: '14px' }}>(Optional)</span></>}
+                  description="Select which teams should have admin access to manage this program."
+                />
+                <MultiSelect
+                  options={ADMIN_TEAMS}
+                  value={adminTeams}
+                  onChange={setAdminTeams}
+                  placeholder="Select teams..."
+                />
+                <p className="team-access-hint">
+                  If no teams are selected, only org admins can manage this program.
+                </p>
+              </div>
+
             </div>
           </div>
         </div>
@@ -662,6 +938,9 @@ export default function NewProgramPageClient() {
           </Button>
         </div>
       </footer>
+
+      {/* ── Type picker modal ─────────────────────────────────────── */}
+      <TypePickerModal open={typePickerOpen} onClose={() => setTypePickerOpen(false)} title="Edit program" />
 
       {/* ── Page-level styles ──────────────────────────────────────── */}
       <style jsx>{`
@@ -747,6 +1026,13 @@ export default function NewProgramPageClient() {
           display: flex;
           flex-direction: column;
           gap: var(--u-space-one, 16px);
+        }
+
+        .team-access-hint {
+          font-family: var(--u-font-body);
+          font-size: 13px;
+          color: var(--u-color-base-foreground-subtle, #607081);
+          margin: 6px 0 0;
         }
 
         :global(.inline-link) {

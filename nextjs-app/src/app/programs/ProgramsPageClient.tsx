@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Button from '@/components/Button';
 import ProgramsTable from '@/components/ProgramsTable';
+import TypePickerModal from '@/components/TypePickerModal';
 import { useToast } from '@/components/Toast';
 import type { ProgramWithStats } from '@/lib/actions/programs';
 
@@ -11,14 +12,30 @@ interface ProgramsPageClientProps {
   programs: ProgramWithStats[];
 }
 
+type ProgramType = 'camps-clinics' | 'tryout' | 'team-dues' | 'misc';
+
 export default function ProgramsPageClient({ programs }: ProgramsPageClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [typePickerOpen, setTypePickerOpen] = useState(false);
+  const [initialModalType, setInitialModalType] = useState<ProgramType | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Auto-open modal with pre-selected type when ?add=<type> is in the URL
+  useEffect(() => {
+    const addParam = searchParams.get('add') as ProgramType | null;
+    if (addParam) {
+      setInitialModalType(addParam);
+      setTypePickerOpen(true);
+    }
+  }, [searchParams]);
 
   // Merge in programs created through the builder (prototype: stored in localStorage)
   const [allPrograms, setAllPrograms] = useState<ProgramWithStats[]>(programs);
+  const [arcDismissed, setArcDismissed] = useState(false);
+  const [arcTeamsBuilt, setArcTeamsBuilt] = useState(false);
 
   useEffect(() => {
     try {
@@ -29,6 +46,12 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
       setAllPrograms(programs);
     }
   }, [programs]);
+
+  useEffect(() => {
+    try {
+      setArcTeamsBuilt(localStorage.getItem('arcTeamsBuilt') === 'true');
+    } catch { /* ignore */ }
+  }, []);
 
   const handleDeleteProgram = (id: string) => {
     const target = allPrograms.find(p => p.id === id);
@@ -55,6 +78,25 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
     if (menuOpen) document.addEventListener('mousedown', handleOutsideClick);
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [menuOpen]);
+
+  // ── Season arc detection ──────────────────────────────────────────────────
+  const tryoutProgram = allPrograms.find(
+    p => p.type?.toLowerCase() === 'tryout' && p.status === 'published' && p.title?.trim()
+  );
+  const hasDuesProgram = allPrograms.some(p =>
+    ['club dues', 'team-dues', 'team dues'].includes((p.type ?? '').toLowerCase())
+  );
+  const arcStep = hasDuesProgram ? 4 : arcTeamsBuilt ? 4 : 3;
+  const showArc = !!tryoutProgram && !arcDismissed && !hasDuesProgram;
+  const arcCtaHref = arcStep === 3 ? '/teams/manage' : '/programs?add=team-dues';
+  const arcCtaLabel = arcStep === 3 ? 'Build teams & assign athletes' : 'Create Club Dues';
+
+  const ARC_STEPS = [
+    { label: 'Create tryout program' },
+    { label: 'Host tryouts' },
+    { label: 'Build teams' },
+    { label: 'Create Club Dues' },
+  ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
@@ -91,7 +133,7 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
             buttonStyle="standard"
             buttonType="primary"
             size="medium"
-            onClick={() => router.push('/programs/new')}
+            onClick={() => setTypePickerOpen(true)}
           >
             Add Program
           </Button>
@@ -129,7 +171,61 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
         </div>
       </div>
 
-      <ProgramsTable programs={allPrograms} onDeleteProgram={handleDeleteProgram} />
+      <TypePickerModal open={typePickerOpen} onClose={() => { setTypePickerOpen(false); setInitialModalType(null); }} initialType={initialModalType} />
+
+      {/* ── Season arc card ─────────────────────────────────────────── */}
+      {showArc && (
+        <div className="arc-card">
+          {/* Left label */}
+          <div className="arc-card-left">
+            <span className="arc-card-eyebrow">Season in progress</span>
+            <span className="arc-card-title">{tryoutProgram!.title}</span>
+          </div>
+
+          {/* Steps */}
+          <div className="arc-steps">
+            {ARC_STEPS.map((step, i) => {
+              const stepNum  = i + 1;
+              const isDone   = stepNum < arcStep;
+              const isActive = stepNum === arcStep;
+              return (
+                <div key={step.label} className="arc-step-wrap">
+                  {i > 0 && <span className={`arc-connector${isDone ? ' arc-connector--done' : ''}`} />}
+                  <div className={`arc-step${isDone ? ' arc-step--done' : isActive ? ' arc-step--active' : ' arc-step--pending'}`}>
+                    <span className="arc-step-dot">
+                      {isDone
+                        ? <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M8.5 2.5L4 7.5L1.5 5" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        : null}
+                    </span>
+                    <span className="arc-step-label">{step.label}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* CTA + dismiss */}
+          <div className="arc-card-actions">
+            <button className="arc-cta" onClick={() => {
+              if (arcStep === 4) {
+                setInitialModalType('team-dues');
+                setTypePickerOpen(true);
+              } else {
+                router.push(arcCtaHref);
+              }
+            }}>
+              {arcCtaLabel} →
+            </button>
+            <button className="arc-dismiss" onClick={() => setArcDismissed(true)} aria-label="Dismiss">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
+      <ProgramsTable programs={allPrograms} onDeleteProgram={handleDeleteProgram} onEditProgram={() => setTypePickerOpen(true)} />
 
       {/* Scoped only to ellipsis + dropdown — no layout class names that could collide */}
       <style jsx>{`
@@ -184,6 +280,155 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
         .prog-dropdown-item:hover {
           background: var(--u-color-background-canvas, #eff0f0);
           color: var(--u-color-base-foreground-contrast, #071c31);
+        }
+
+        /* ── Season arc card ── */
+        .arc-card {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          padding: 12px 16px;
+          background: var(--u-color-background-container, #fefefe);
+          border: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          border-left: 3px solid var(--u-color-emphasis-background-contrast, #0273e3);
+          border-radius: 8px;
+        }
+
+        .arc-card-left {
+          display: flex;
+          flex-direction: column;
+          gap: 1px;
+          flex-shrink: 0;
+          min-width: 120px;
+        }
+
+        .arc-card-eyebrow {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.07em;
+          text-transform: uppercase;
+          color: var(--u-color-emphasis-background-contrast, #0273e3);
+        }
+
+        .arc-card-title {
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--u-color-base-foreground-contrast, #071c31);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 180px;
+        }
+
+        .arc-steps {
+          display: flex;
+          align-items: center;
+          flex: 1;
+          justify-content: center;
+        }
+
+        .arc-step-wrap {
+          display: flex;
+          align-items: center;
+        }
+
+        .arc-connector {
+          width: 40px;
+          height: 2px;
+          background: var(--u-color-line-subtle, #e0e1e1);
+          flex-shrink: 0;
+        }
+        .arc-connector--done {
+          background: var(--u-color-emphasis-background-contrast, #0273e3);
+        }
+
+        .arc-step {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+        }
+
+        .arc-step-dot {
+          width: 20px;
+          height: 20px;
+          border-radius: 9999px;
+          border: 2px solid var(--u-color-line-subtle, #c4c6c8);
+          background: var(--u-color-background-container, #fefefe);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .arc-step--done .arc-step-dot {
+          background: var(--u-color-emphasis-background-contrast, #0273e3);
+          border-color: var(--u-color-emphasis-background-contrast, #0273e3);
+        }
+        .arc-step--active .arc-step-dot {
+          border-color: var(--u-color-emphasis-background-contrast, #0273e3);
+          border-width: 2.5px;
+          background: #e8f2ff;
+        }
+        .arc-step--active .arc-step-dot::after {
+          content: '';
+          width: 7px;
+          height: 7px;
+          border-radius: 9999px;
+          background: var(--u-color-emphasis-background-contrast, #0273e3);
+        }
+
+        .arc-step-label {
+          font-size: 13px;
+          font-weight: 400;
+          color: var(--u-color-base-foreground-subtle, #8a96a3);
+          white-space: nowrap;
+        }
+        .arc-step--done .arc-step-label {
+          color: var(--u-color-base-foreground, #36485c);
+        }
+        .arc-step--active .arc-step-label {
+          font-weight: 600;
+          color: var(--u-color-base-foreground-contrast, #071c31);
+        }
+
+        .arc-card-actions {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-shrink: 0;
+        }
+
+        .arc-cta {
+          height: 30px;
+          padding: 0 14px;
+          background: var(--u-color-emphasis-background-contrast, #0273e3);
+          color: #fff;
+          border: none;
+          border-radius: 4px;
+          font-family: var(--u-font-body);
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: background 0.15s;
+        }
+        .arc-cta:hover { background: #0261c2; }
+
+        .arc-dismiss {
+          width: 26px;
+          height: 26px;
+          border: none;
+          background: transparent;
+          border-radius: 4px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--u-color-base-foreground-subtle, #8a96a3);
+          transition: background 0.1s, color 0.1s;
+        }
+        .arc-dismiss:hover {
+          background: var(--u-color-background-canvas, #eff0f0);
+          color: var(--u-color-base-foreground, #36485c);
         }
       `}</style>
     </div>

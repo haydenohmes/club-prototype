@@ -892,6 +892,8 @@ const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
           ageMax: null,
         };
         setLocalTeams(prev => [...prev, newTeam]);
+        // Signal to Programs page arc that teams have been built
+        try { localStorage.setItem('arcTeamsBuilt', 'true'); } catch { /* ignore */ }
         showToast(`Successfully created team "${result.team.title}"`, 'success');
       }
     } catch {

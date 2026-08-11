@@ -77,7 +77,7 @@ function MoreOptionsIcon() {
   );
 }
 
-function RowActions({ onDelete }: { onDelete: () => void }) {
+function RowActions({ onDelete, onEdit }: { onDelete: () => void; onEdit?: () => void }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -120,6 +120,17 @@ function RowActions({ onDelete }: { onDelete: () => void }) {
       </button>
       {open && createPortal(
         <div ref={menuRef} className="row-menu" style={{ position: 'fixed', top: pos.top, left: pos.left }}>
+          {onEdit && (
+            <button
+              className="row-menu-item"
+              onClick={(e) => { e.stopPropagation(); setOpen(false); onEdit(); }}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Edit program
+            </button>
+          )}
           <button
             className="row-menu-item row-menu-item--danger"
             onClick={(e) => { e.stopPropagation(); setOpen(false); onDelete(); }}
@@ -256,7 +267,7 @@ function CreatorAvatar({ creator }: { creator: ProgramWithStats['createdBy'] }) 
   );
 }
 
-function TableContent({ programs, onRequestDelete, onRowClick }: { programs: ProgramWithStats[]; onRequestDelete: (program: ProgramWithStats) => void; onRowClick: (program: ProgramWithStats) => void }) {
+function TableContent({ programs, onRequestDelete, onRowClick, onEditProgram }: { programs: ProgramWithStats[]; onRequestDelete: (program: ProgramWithStats) => void; onRowClick: (program: ProgramWithStats) => void; onEditProgram?: (id: string) => void }) {
   return (
     <div className="programs-table">
       {/* Header Row */}
@@ -318,7 +329,7 @@ function TableContent({ programs, onRequestDelete, onRowClick }: { programs: Pro
             {formatCurrency(program.programValue)}
           </div>
           <div className="table-cell cell-actions">
-            <RowActions onDelete={() => onRequestDelete(program)} />
+            <RowActions onDelete={() => onRequestDelete(program)} onEdit={onEditProgram ? () => onEditProgram(program.id) : undefined} />
           </div>
         </div>
       ))}
@@ -465,7 +476,7 @@ function TableContent({ programs, onRequestDelete, onRowClick }: { programs: Pro
   );
 }
 
-export default function ProgramsTable({ programs, onDeleteProgram }: { programs: ProgramWithStats[]; onDeleteProgram?: (id: string) => void }) {
+export default function ProgramsTable({ programs, onDeleteProgram, onEditProgram }: { programs: ProgramWithStats[]; onDeleteProgram?: (id: string) => void; onEditProgram?: (id: string) => void }) {
   const router = useRouter();
   const [statusFilter, setStatusFilter] = useState('published');
   const [searchQuery, setSearchQuery] = useState('');
@@ -532,6 +543,7 @@ export default function ProgramsTable({ programs, onDeleteProgram }: { programs:
             programs={filteredPrograms}
             onRequestDelete={setPendingDelete}
             onRowClick={(program) => router.push(`/programs/${program.id}`)}
+            onEditProgram={onEditProgram}
           />
         </div>
       ) : (

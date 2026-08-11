@@ -242,7 +242,7 @@ export default function ConfirmTeamsDrawer({
                         <div className="ctd-team-info">
                           <div className="ctd-team-name-row">
                             <span className="ctd-team-name">{team.title}</span>
-                            <span className={`ctd-status-pill ctd-status-pill--${team.status.toLowerCase()}`}>{team.status}</span>
+                            <span className={`ctd-status-pill ctd-status-pill--${team.status.toLowerCase()}`}>{team.status.charAt(0).toUpperCase() + team.status.slice(1)}</span>
                           </div>
                           <div className="ctd-team-stats">
                             <span>Assigned: <strong>{assigned}</strong></span>
@@ -302,7 +302,7 @@ export default function ConfirmTeamsDrawer({
         .ctd-backdrop {
           position: fixed;
           inset: 0;
-          background: rgba(7, 28, 49, 0.4);
+          background: transparent;
           z-index: 200;
           opacity: 0;
           pointer-events: none;
@@ -463,15 +463,16 @@ export default function ConfirmTeamsDrawer({
         .ctd-status-pill {
           display: inline-flex;
           align-items: center;
-          padding: 2px 8px;
-          border-radius: 9999px;
+          padding: 4px 8px;
+          border-radius: 4px;
           font-family: var(--u-font-body);
           font-size: 12px;
-          font-weight: 700;
+          font-weight: 500;
+          line-height: 1;
           flex-shrink: 0;
           white-space: nowrap;
         }
-        .ctd-status-pill--draft    { background: #fef3c7; color: #92400e; }
+        .ctd-status-pill--draft    { background: #e8eaec; color: #607081; }
         .ctd-status-pill--active   { background: #e3f9e5; color: #1a6831; }
         .ctd-status-pill--pending  { background: #dbeafe; color: #1e40af; }
         .ctd-status-pill--archived { background: #e8eaec; color: #607081; }

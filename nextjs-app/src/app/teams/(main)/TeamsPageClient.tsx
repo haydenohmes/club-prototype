@@ -120,6 +120,7 @@ export default function TeamsPageClient({ teams, seasons, initialSeasonId }: Tea
         if (!teamSeason || !teamFilters.seasons.includes(getAcademicYear(teamSeason.name))) return false;
       }
     }
+    if (teamFilters.programs.length && !teamFilters.programs.includes(team.programId ?? '')) return false;
     return true;
   });
   const filteredTeams = preStatusFiltered.filter(team => {
@@ -136,7 +137,14 @@ export default function TeamsPageClient({ teams, seasons, initialSeasonId }: Tea
         .map(year => ({ value: year, label: year }));
   const sportOptions = uniqueSports.map(s => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) }));
   const genderOptions = uniqueGenders.map(g => ({ value: g, label: formatGender(g) }));
-  const filterOptionSets = { seasonOptions: combinedSeasonOptions, sportOptions, genderOptions };
+  const programOptions = Array.from(
+    new Map(
+      activeTeamPool
+        .filter((t: TeamWithStats) => t.programId && t.programName)
+        .map((t: TeamWithStats) => [t.programId!, { value: t.programId!, label: t.programName! }])
+    ).values()
+  );
+  const filterOptionSets = { seasonOptions: combinedSeasonOptions, programOptions, sportOptions, genderOptions };
   const activeFilterCount = countTeamsFilters(teamFilters, filterOptionSets);
 
   const handleClearSelection = () => {
@@ -198,19 +206,19 @@ export default function TeamsPageClient({ teams, seasons, initialSeasonId }: Tea
             <>
               <Button
                 buttonStyle="standard"
-                buttonType="secondary"
-                size="medium"
-                onClick={() => router.push('/teams/assignments')}
-              >
-                Assign Athletes
-              </Button>
-              <Button
-                buttonStyle="standard"
                 buttonType="primary"
                 size="medium"
                 onClick={() => router.push(`/teams/manage?season=${selectedSeasonId}`)}
               >
                 Add Teams
+              </Button>
+              <Button
+                buttonStyle="standard"
+                buttonType="secondary"
+                size="medium"
+                onClick={() => router.push('/teams/assignments')}
+              >
+                Assign Athletes
               </Button>
             </>
           )}
@@ -367,8 +375,7 @@ export default function TeamsPageClient({ teams, seasons, initialSeasonId }: Tea
                 </svg>
               </span>
               <div>
-                You have {draftTeams.length} {draftTeams.length === 1 ? 'team' : 'teams'} in draft status.{' '}
-                Review and confirm {draftTeams.length === 1 ? 'it' : 'them'} to begin the season.
+                You have teams in draft status. Confirm teams to begin the season.
               </div>
             </div>
             <Button
@@ -380,7 +387,7 @@ export default function TeamsPageClient({ teams, seasons, initialSeasonId }: Tea
                 setIsConfirmDrawerOpen(true);
               }}
             >
-              Confirm {draftTeams.length} {draftTeams.length === 1 ? 'Team' : 'Teams'}
+              Confirm Teams
             </Button>
           </div>
         )}
@@ -390,7 +397,12 @@ export default function TeamsPageClient({ teams, seasons, initialSeasonId }: Tea
             seasons={seasons}
             onTeamClick={(teamId) => {
               const team = filteredTeams.find(t => t.id === teamId);
-              router.push(team?.status === 'draft' ? '/teams/assignments' : `/teams/${teamId}`);
+              if (team?.status === 'draft') {
+                setSelectedTeamIds(draftTeams.map(t => t.id));
+                setIsConfirmDrawerOpen(true);
+              } else {
+                router.push(`/teams/${teamId}`);
+              }
             }}
           />
         ) : (
@@ -404,7 +416,12 @@ export default function TeamsPageClient({ teams, seasons, initialSeasonId }: Tea
             copyMode={false}
             onTeamClick={(teamId) => {
               const team = filteredTeams.find(t => t.id === teamId);
-              router.push(team?.status === 'draft' ? '/teams/assignments' : `/teams/${teamId}`);
+              if (team?.status === 'draft') {
+                setSelectedTeamIds(draftTeams.map(t => t.id));
+                setIsConfirmDrawerOpen(true);
+              } else {
+                router.push(`/teams/${teamId}`);
+              }
             }}
           />
         )}
@@ -426,6 +443,7 @@ export default function TeamsPageClient({ teams, seasons, initialSeasonId }: Tea
             filters={teamFilters}
             setFilters={setTeamFilters}
             seasonOptions={combinedSeasonOptions}
+            programOptions={programOptions}
             sportOptions={sportOptions}
             genderOptions={genderOptions}
             onClose={() => setFiltersOpen(false)}
