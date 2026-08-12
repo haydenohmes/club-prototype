@@ -691,14 +691,13 @@ function TableContent({
           display: inline-flex;
           align-items: center;
           gap: 3px;
-          padding: 2px 6px;
+          padding: 4px 8px;
           border-radius: 4px;
-          font-size: var(--u-font-size-100, 12px);
+          font-size: 12px;
           line-height: 1;
           cursor: default;
-          background: var(--u-color-background-canvas, #eff0f0);
-          color: var(--u-color-base-foreground, #36485c);
-          border: 1px solid var(--u-color-line-subtle, #e0e1e1);
+          background: var(--u-color-background-default, #e8eaec);
+          color: var(--u-color-base-foreground-subtle, #607081);
         }
         .roster-pill-abbr {
           font-weight: var(--u-font-weight-medium, 500);
