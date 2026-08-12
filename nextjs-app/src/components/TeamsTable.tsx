@@ -679,12 +679,12 @@ function TableContent({
         .cell-coaches      { flex: 1 1 0; }
         .cell-athletes     { flex: 1 1 0; padding: 8px 8px; justify-content: flex-end; }
         .cell-stat         { flex: 1 1 0; padding: 8px 8px; justify-content: flex-end; }
-        .cell-roster       { flex: 3 1 0; min-width: 0; }
+        .cell-roster       { flex: 1.6 1 0; min-width: 0; }
 
         .roster-pills {
           display: flex;
           align-items: center;
-          flex-wrap: nowrap;
+          flex-wrap: wrap;
           gap: 4px;
           min-width: 0;
         }
