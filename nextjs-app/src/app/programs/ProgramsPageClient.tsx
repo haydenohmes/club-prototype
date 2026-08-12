@@ -447,12 +447,11 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
         /* ── Responsive (container-based, so it reacts to the card's own
               width rather than the viewport — the sidebar changes how much
               room the card actually has) ── */
-        /* Not enough room for a comfortable one-row layout: use a two-row grid
-           so the label and the CTA are always visible together on top, and give
-           the step tracker its own full-width row below (scrollable if it still
-           doesn't fit). Threshold is generous because the four-step tracker
-           alone needs ~880px, so it stacks before the single row gets cramped. */
-        @container (max-width: 1280px) {
+        /* Stays a single inline row (label · steps · CTA) while there's room.
+           Once the card gets too narrow, switch to a two-row grid so the label
+           and CTA stay inline together on top and the step tracker stacks onto
+           its own full-width row below (scrollable if it still doesn't fit). */
+        @container (max-width: 1000px) {
           .arc-card {
             display: grid;
             grid-template-columns: 1fr auto;
