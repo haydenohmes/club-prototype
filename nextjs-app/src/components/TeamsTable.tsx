@@ -514,10 +514,6 @@ function TableContent({
           <span className="header-label">Program</span>
           <SortIcon />
         </div>
-        <div className="table-cell cell-registration">
-          <span className="header-label">Registration</span>
-          <SortIcon />
-        </div>
         <div className="table-cell cell-gender">
           <span className="header-label">Gender</span>
           <SortIcon />
@@ -530,8 +526,8 @@ function TableContent({
           <span className="header-label">Coaches</span>
           <SortIcon />
         </div>
-        <div className="table-cell cell-athletes">
-          <span className="header-label">Athletes</span>
+        <div className="table-cell cell-roster">
+          <span className="header-label">Roster Status</span>
           <SortIcon />
         </div>
         {onDeleteTeam && <div className="table-cell cell-actions" />}
@@ -572,13 +568,33 @@ function TableContent({
                 </a>
               ) : '—'}
             </div>
-            <div className="table-cell cell-registration">
-              {team.registrationName ?? '—'}
-            </div>
             <div className="table-cell cell-gender">{formatGender(team.gender)}</div>
             <div className="table-cell cell-sport">{team.sport ? formatSport(team.sport) : '—'}</div>
             <div className="table-cell cell-coaches">{team.coachCount}</div>
-            <div className="table-cell cell-athletes">{team.rosterCount}</div>
+            <div className="table-cell cell-roster">
+              {(() => {
+                const parts = [
+                  { key: 'assigned', label: 'Assigned', count: team.assignedCount },
+                  { key: 'invited',  label: 'Invited',  count: team.invitedCount },
+                  { key: 'accepted', label: 'Accepted', count: team.acceptedCount },
+                  { key: 'declined', label: 'Declined', count: team.declinedCount },
+                ].filter(p => p.count > 0);
+
+                if (parts.length === 0) {
+                  return <span className="roster-empty">—</span>;
+                }
+
+                return (
+                  <div className="roster-pills">
+                    {parts.map(p => (
+                      <span key={p.key} className={`roster-pill roster-pill--${p.key}`}>
+                        {p.count} {p.label}
+                      </span>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
             {onDeleteTeam && (
               <div className="table-cell cell-actions">
                 {team.status === 'draft' && (
@@ -658,12 +674,38 @@ function TableContent({
         .cell-year,
         .cell-season       { flex: 1 1 0; }
         .cell-program      { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-        .cell-registration { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
         .cell-gender       { flex: 1 1 0; }
         .cell-sport        { flex: 1 1 0; }
-        .cell-coaches,
+        .cell-coaches      { flex: 1 1 0; }
         .cell-athletes     { flex: 1 1 0; padding: 8px 8px; justify-content: flex-end; }
         .cell-stat         { flex: 1 1 0; padding: 8px 8px; justify-content: flex-end; }
+        .cell-roster       { flex: 1.6 1 0; min-width: 0; }
+
+        .roster-pills {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 4px;
+          min-width: 0;
+        }
+        .roster-empty {
+          font-size: 14px;
+          color: var(--u-color-base-foreground-subtle, #607081);
+        }
+        .roster-pill {
+          display: inline-flex;
+          align-items: center;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: var(--u-font-weight-medium, 500);
+          line-height: 1;
+          white-space: nowrap;
+        }
+        .roster-pill--assigned { background: #e8f3fe; color: #0273e3; }
+        .roster-pill--invited  { background: #fff3e0; color: #e65100; }
+        .roster-pill--accepted { background: #e8f5e9; color: #2e7d32; }
+        .roster-pill--declined { background: #ffebee; color: #c62828; }
 
         .cell-actions {
           width: 48px;

@@ -36,6 +36,7 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
   const [allPrograms, setAllPrograms] = useState<ProgramWithStats[]>(programs);
   const [arcDismissed, setArcDismissed] = useState(false);
   const [arcTeamsBuilt, setArcTeamsBuilt] = useState(false);
+  const [arcHostTryouts, setArcHostTryouts] = useState(false);
 
   useEffect(() => {
     try {
@@ -50,8 +51,19 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
   useEffect(() => {
     try {
       setArcTeamsBuilt(localStorage.getItem('arcTeamsBuilt') === 'true');
+      setArcHostTryouts(localStorage.getItem('arcHostTryouts') === 'true');
     } catch { /* ignore */ }
   }, []);
+
+  const handleToggleHostTryouts = () => {
+    setArcHostTryouts(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('arcHostTryouts', next ? 'true' : 'false');
+      } catch { /* ignore */ }
+      return next;
+    });
+  };
 
   const handleDeleteProgram = (id: string) => {
     const target = allPrograms.find(p => p.id === id);
@@ -86,17 +98,45 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
   const hasDuesProgram = allPrograms.some(p =>
     ['club dues', 'team-dues', 'team dues'].includes((p.type ?? '').toLowerCase())
   );
-  const arcStep = hasDuesProgram ? 4 : arcTeamsBuilt ? 4 : 3;
-  const showArc = !!tryoutProgram && !arcDismissed && !hasDuesProgram;
-  const arcCtaHref = arcStep === 3 ? '/teams/manage' : '/programs?add=team-dues';
-  const arcCtaLabel = arcStep === 3 ? 'Build teams & assign athletes' : 'Create Club Dues';
+  // A club can start from a tryout (full arc) or go straight to Club Dues
+  // (dues-first arc). Show the shorter arc when there's a dues program and no tryout.
+  const duesFirst = hasDuesProgram && !tryoutProgram;
+  // Persist the season arc banner on the programs page regardless of state.
+  const showArc = !arcDismissed;
+  const arcTitle = tryoutProgram?.title ?? '2026 Fall Season';
 
-  const ARC_STEPS = [
-    { label: 'Create tryout program' },
-    { label: 'Host tryouts' },
-    { label: 'Build teams' },
-    { label: 'Create Club Dues' },
+  const goToClubDues = () => {
+    setInitialModalType('team-dues');
+    setTypePickerOpen(true);
+  };
+  const goToTryout = () => {
+    setInitialModalType('tryout');
+    setTypePickerOpen(true);
+  };
+  const goToTeams = () => router.push('/teams');
+  const goToSendInvitations = () => router.push('/teams/send-invitations');
+
+  const TRYOUT_ARC_STEPS = [
+    { label: 'Create tryout program', onClick: goToTryout },
+    { label: 'Host tryouts',          onClick: handleToggleHostTryouts },
+    { label: 'Build teams',           onClick: goToTeams },
+    { label: 'Create Club Dues',      onClick: goToClubDues },
+    { label: 'Send Invitations',      onClick: goToSendInvitations },
   ];
+  const DUES_ARC_STEPS = [
+    { label: 'Create Club Dues', onClick: goToClubDues },
+    { label: 'Build teams',      onClick: goToTeams },
+    { label: 'Send Invitations', onClick: goToSendInvitations },
+  ];
+
+  const ARC_STEPS = duesFirst ? DUES_ARC_STEPS : TRYOUT_ARC_STEPS;
+  // Current (active) step, 1-indexed.
+  const arcStep = duesFirst
+    ? 2 // Club Dues created → Build teams is next
+    : hasDuesProgram ? 5 : arcTeamsBuilt ? 4 : arcHostTryouts ? 3 : 2;
+  const arcCtaLabel = duesFirst
+    ? 'Build teams & assign athletes'
+    : hasDuesProgram ? 'Send invitations' : arcStep === 4 ? 'Create Club Dues' : 'Build teams & assign athletes';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
@@ -179,7 +219,7 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           {/* Left label */}
           <div className="arc-card-left">
             <span className="arc-card-eyebrow">Season in progress</span>
-            <span className="arc-card-title">{tryoutProgram!.title}</span>
+            <span className="arc-card-title">{arcTitle}</span>
           </div>
 
           {/* Steps */}
@@ -191,7 +231,18 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
               return (
                 <div key={step.label} className="arc-step-wrap">
                   {i > 0 && <span className={`arc-connector${isDone ? ' arc-connector--done' : ''}`} />}
-                  <div className={`arc-step${isDone ? ' arc-step--done' : isActive ? ' arc-step--active' : ' arc-step--pending'}`}>
+                  <div
+                    className={`arc-step arc-step--clickable${isDone ? ' arc-step--done' : isActive ? ' arc-step--active' : ' arc-step--pending'}`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={step.onClick}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        step.onClick();
+                      }
+                    }}
+                  >
                     <span className="arc-step-dot">
                       {isDone
                         ? <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M8.5 2.5L4 7.5L1.5 5" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -207,11 +258,13 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           {/* CTA + dismiss */}
           <div className="arc-card-actions">
             <button className="arc-cta" onClick={() => {
-              if (arcStep === 4) {
+              if (!duesFirst && arcStep === 4) {
                 setInitialModalType('team-dues');
                 setTypePickerOpen(true);
+              } else if (arcCtaLabel.toLowerCase().startsWith('send')) {
+                router.push('/teams/send-invitations');
               } else {
-                router.push(arcCtaHref);
+                router.push('/teams');
               }
             }}>
               {arcCtaLabel} →
@@ -286,12 +339,13 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
         .arc-card {
           display: flex;
           align-items: center;
-          gap: 20px;
+          gap: 16px;
           padding: 12px 16px;
           background: var(--u-color-background-container, #fefefe);
           border: 1px solid var(--u-color-line-subtle, #c4c6c8);
           border-left: 3px solid var(--u-color-emphasis-background-contrast, #0273e3);
           border-radius: 8px;
+          flex-wrap: nowrap;
         }
 
         .arc-card-left {
@@ -325,6 +379,8 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           align-items: center;
           flex: 1;
           justify-content: center;
+          flex-wrap: nowrap;
+          min-width: 0;
         }
 
         .arc-step-wrap {
@@ -332,11 +388,27 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           align-items: center;
         }
 
+        .arc-step--clickable {
+          cursor: pointer;
+          border-radius: 6px;
+          padding: 4px 6px;
+          margin: -4px -6px;
+          transition: background 0.12s ease;
+        }
+        .arc-step--clickable:hover {
+          background: var(--u-color-background-canvas, #eff0f0);
+        }
+        .arc-step--clickable:focus-visible {
+          outline: 2px solid var(--u-color-emphasis-background-contrast, #0273e3);
+          outline-offset: 1px;
+        }
+
         .arc-connector {
-          width: 40px;
+          width: 16px;
+          min-width: 12px;
           height: 2px;
           background: var(--u-color-line-subtle, #e0e1e1);
-          flex-shrink: 0;
+          flex-shrink: 1;
         }
         .arc-connector--done {
           background: var(--u-color-emphasis-background-contrast, #0273e3);
@@ -429,6 +501,42 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
         .arc-dismiss:hover {
           background: var(--u-color-background-canvas, #eff0f0);
           color: var(--u-color-base-foreground, #36485c);
+        }
+
+        /* ── Responsive: stack banner sections on narrow screens ── */
+        @media (max-width: 900px) {
+          .arc-steps {
+            justify-content: flex-start;
+            order: 3;
+            flex-basis: 100%;
+            flex-wrap: wrap;
+            gap: 8px 0;
+          }
+          .arc-card-actions {
+            margin-left: auto;
+          }
+        }
+
+        @media (max-width: 560px) {
+          .arc-card {
+            gap: 12px;
+          }
+          .arc-card-left {
+            flex-basis: 100%;
+          }
+          .arc-card-title {
+            max-width: none;
+          }
+          .arc-connector {
+            width: 20px;
+          }
+          .arc-card-actions {
+            flex-basis: 100%;
+            margin-left: 0;
+          }
+          .arc-cta {
+            flex: 1;
+          }
         }
       `}</style>
     </div>

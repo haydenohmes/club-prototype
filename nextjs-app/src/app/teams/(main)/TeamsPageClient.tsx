@@ -331,7 +331,7 @@ export default function TeamsPageClient({ teams, seasons, initialSeasonId }: Tea
         isOpen={isConfirmDrawerOpen}
         onClose={() => setIsConfirmDrawerOpen(false)}
         onConfirm={async (ids) => {
-          setLocalTeams(prev => prev.map(t => ids.includes(t.id) && t.status === 'draft' ? { ...t, status: 'pending' } : t));
+          setLocalTeams(prev => prev.map(t => ids.includes(t.id) && t.status === 'draft' ? { ...t, status: 'active' } : t));
           setIsConfirmDrawerOpen(false);
           const seasonLabel = selectedSeason ? getAcademicYear(selectedSeason.name) : '';
           showToast(`${ids.length} ${ids.length === 1 ? 'team' : 'teams'} confirmed${seasonLabel ? ` for the ${seasonLabel} season` : ''}`, 'success');

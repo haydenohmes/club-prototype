@@ -60,7 +60,7 @@ function formatCurrency(cents: number): string {
 }
 
 function formatVisibility(visibility: string): string {
-  return visibility === 'public' ? 'Public' : 'Private';
+  return visibility === 'public' ? 'Public' : 'Invite Only';
 }
 
 function formatRegistrationStatus(status: string): string {
@@ -199,6 +199,7 @@ function StatusBadge({ status, type }: { status: string; type: 'visibility' | 'r
           font-size: var(--u-font-size-150, 12px);
           font-weight: var(--u-font-weight-medium, 500);
           line-height: 1.4;
+          white-space: nowrap;
         }
         
         .positive {
@@ -426,7 +427,7 @@ function TableContent({ programs, onRequestDelete, onRowClick, onEditProgram }: 
         }
 
         .cell-visibility {
-          width: 100px;
+          width: 120px;
           flex-shrink: 0;
         }
 

@@ -734,7 +734,6 @@ export default function ManageTeamsPageClient({
   const router = useRouter();
   const { showToast } = useToast();
   const [selectedSeasonId, setSelectedSeasonId] = useState(initialSeasonId);
-  const [selectedProgramId, setSelectedProgramId] = useState('');
   // Merge in builder-created programs (prototype: localStorage), matching Programs & Assign Athletes
   const [allPrograms, setAllPrograms] = useState<ProgramWithStats[]>(programs);
   useEffect(() => {
@@ -941,8 +940,6 @@ const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     };
   });
 
-  const programOptions = allPrograms.map(p => ({ value: p.id, label: p.title, status: p.status }));
-
   // Handle team selection
   const handleTeamSelectionChange = (teamId: string, checked: boolean, index: number, shiftKey: boolean) => {
     if (shiftKey && lastClickedIndex !== null) {
@@ -1012,7 +1009,7 @@ const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   return (
     <div className="manage-teams-page-wrapper">
       <ViewHeader
-        title={tryoutContext ? 'New Tryout Program Teams' : 'Manage Teams'}
+        title={tryoutContext ? 'New Tryout Program Teams' : 'Add Teams'}
         actionLabel="Done"
         onBack={() => router.push(`/teams?season=${selectedSeasonId}`)}
         onAction={() => router.push(`/teams?season=${selectedSeasonId}`)}
@@ -1072,20 +1069,12 @@ const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
           <div className="manage-teams-controls">
         <div className="controls-left">
           {!tryoutContext && (
-            <>
-              <Select
-                options={seasonOptions}
-                value={selectedSeasonId}
-                onChange={setSelectedSeasonId}
-                placeholder="Select season"
-              />
-              <Select
-                options={programOptions}
-                value={selectedProgramId}
-                onChange={setSelectedProgramId}
-                placeholder="Select program"
-              />
-            </>
+            <Select
+              options={seasonOptions}
+              value={selectedSeasonId}
+              onChange={setSelectedSeasonId}
+              placeholder="Select season"
+            />
           )}
         </div>
         <div className="controls-right">
@@ -1163,8 +1152,6 @@ const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
                 <th className="cell-sport">Sport</th>
                 <th className="cell-gender">Gender</th>
                 <th className="cell-grade">Grade</th>
-                <th className="cell-birthdate">Birthdate From</th>
-                <th className="cell-birthdate">Birthdate To</th>
               </tr>
             </thead>
             <tbody>
@@ -1213,18 +1200,6 @@ const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
                       options={gradeOptions}
                       placeholder="Select grades..."
                       onSave={(values) => handleUpdateTeam(team.id, { grades: values.length > 0 ? values.join(',') : null })}
-                    />
-                  </td>
-                  <td className="cell-birthdate">
-                    <EditableDateCell
-                      age={team.ageMin}
-                      onSave={(age) => handleUpdateTeam(team.id, { ageMin: age })}
-                    />
-                  </td>
-                  <td className="cell-birthdate">
-                    <EditableDateCell
-                      age={team.ageMax}
-                      onSave={(age) => handleUpdateTeam(team.id, { ageMax: age })}
                     />
                   </td>
                 </tr>
