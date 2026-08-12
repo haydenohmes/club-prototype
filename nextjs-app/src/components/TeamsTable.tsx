@@ -573,23 +573,16 @@ function TableContent({
             <div className="table-cell cell-coaches">{team.coachCount}</div>
             <div className="table-cell cell-roster">
               {(() => {
-                const assigned = team.assignedCount;
-                const accepted = team.acceptedCount;
-                const declined = team.declinedCount;
-                // Every assigned athlete sits in exactly one current status.
-                const pending = Math.max(0, team.invitedCount - accepted - declined);
-                const notInvited = Math.max(0, assigned - team.invitedCount);
+                const parts = [
+                  { key: 'assigned', label: 'Assigned', count: team.assignedCount },
+                  { key: 'invited',  label: 'Invited',  count: team.invitedCount },
+                  { key: 'accepted', label: 'Accepted', count: team.acceptedCount },
+                  { key: 'declined', label: 'Declined', count: team.declinedCount },
+                ].filter(p => p.count > 0);
 
-                if (assigned === 0) {
+                if (parts.length === 0) {
                   return <span className="roster-empty">—</span>;
                 }
-
-                const parts = [
-                  { key: 'accepted',   label: 'Accepted',    count: accepted },
-                  { key: 'pending',    label: 'Pending',     count: pending },
-                  { key: 'notInvited', label: 'Not invited', count: notInvited },
-                  { key: 'declined',   label: 'Declined',    count: declined },
-                ].filter(p => p.count > 0);
 
                 return (
                   <div className="roster-pills">
@@ -709,10 +702,10 @@ function TableContent({
           line-height: 1;
           white-space: nowrap;
         }
-        .roster-pill--accepted   { background: #e8f5e9; color: #2e7d32; }
-        .roster-pill--pending    { background: #fff3e0; color: #e65100; }
-        .roster-pill--notInvited { background: #eceff1; color: #546e7a; }
-        .roster-pill--declined   { background: #ffebee; color: #c62828; }
+        .roster-pill--assigned { background: #e8f3fe; color: #0273e3; }
+        .roster-pill--invited  { background: #fff3e0; color: #e65100; }
+        .roster-pill--accepted { background: #e8f5e9; color: #2e7d32; }
+        .roster-pill--declined { background: #ffebee; color: #c62828; }
 
         .cell-actions {
           width: 48px;
