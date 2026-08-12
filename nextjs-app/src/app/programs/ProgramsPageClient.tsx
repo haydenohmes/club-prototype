@@ -430,6 +430,50 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           background: var(--u-color-background-canvas, #eff0f0);
           color: var(--u-color-base-foreground, #36485c);
         }
+
+        /* ── Responsive ── */
+        /* Tablet: stack the three sections and let the step tracker scroll */
+        @media (max-width: 860px) {
+          .arc-card {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 14px;
+          }
+          .arc-card-left {
+            min-width: 0;
+          }
+          .arc-card-title {
+            max-width: none;
+          }
+          .arc-steps {
+            justify-content: flex-start;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            -webkit-overflow-scrolling: touch;
+          }
+          .arc-card-actions {
+            justify-content: flex-end;
+          }
+          .arc-cta {
+            flex: 1;
+          }
+        }
+
+        /* Mobile: tighten the connectors so the tracker needs less scrolling */
+        @media (max-width: 520px) {
+          .arc-card {
+            padding: 12px;
+          }
+          .arc-connector {
+            width: 20px;
+          }
+          .arc-step {
+            gap: 5px;
+          }
+          .arc-step-label {
+            font-size: 12px;
+          }
+        }
       `}</style>
     </div>
   );
