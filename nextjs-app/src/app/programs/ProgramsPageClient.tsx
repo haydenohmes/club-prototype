@@ -339,13 +339,13 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
         .arc-card {
           display: flex;
           align-items: center;
-          gap: 20px;
+          gap: 16px;
           padding: 12px 16px;
           background: var(--u-color-background-container, #fefefe);
           border: 1px solid var(--u-color-line-subtle, #c4c6c8);
           border-left: 3px solid var(--u-color-emphasis-background-contrast, #0273e3);
           border-radius: 8px;
-          flex-wrap: wrap;
+          flex-wrap: nowrap;
         }
 
         .arc-card-left {
@@ -404,10 +404,11 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
         }
 
         .arc-connector {
-          width: 28px;
+          width: 16px;
+          min-width: 12px;
           height: 2px;
           background: var(--u-color-line-subtle, #e0e1e1);
-          flex-shrink: 0;
+          flex-shrink: 1;
         }
         .arc-connector--done {
           background: var(--u-color-emphasis-background-contrast, #0273e3);
