@@ -585,19 +585,17 @@ function TableContent({
                 }
 
                 const parts = [
-                  { key: 'accepted',   label: 'accepted',    count: accepted },
-                  { key: 'pending',    label: 'pending',     count: pending },
-                  { key: 'notInvited', label: 'not invited', count: notInvited },
-                  { key: 'declined',   label: 'declined',    count: declined },
+                  { key: 'accepted',   label: 'Accepted',    count: accepted },
+                  { key: 'pending',    label: 'Pending',     count: pending },
+                  { key: 'notInvited', label: 'Not invited', count: notInvited },
+                  { key: 'declined',   label: 'Declined',    count: declined },
                 ].filter(p => p.count > 0);
 
                 return (
-                  <div className="roster-text">
-                    {parts.map((p, i) => (
-                      <span key={p.key} className={`roster-stat roster-stat--${p.key}`}>
-                        <span className="roster-stat-dot" />
+                  <div className="roster-pills">
+                    {parts.map(p => (
+                      <span key={p.key} className={`roster-pill roster-pill--${p.key}`}>
                         {p.count} {p.label}
-                        {i < parts.length - 1 && <span className="roster-stat-sep">·</span>}
                       </span>
                     ))}
                   </div>
@@ -690,39 +688,31 @@ function TableContent({
         .cell-stat         { flex: 1 1 0; padding: 8px 8px; justify-content: flex-end; }
         .cell-roster       { flex: 1.4 1 0; min-width: 0; }
 
-        .roster-text {
+        .roster-pills {
           display: flex;
           align-items: center;
           flex-wrap: wrap;
-          gap: 4px 8px;
+          gap: 4px;
           min-width: 0;
         }
         .roster-empty {
           font-size: 14px;
           color: var(--u-color-base-foreground-subtle, #607081);
         }
-        .roster-stat {
+        .roster-pill {
           display: inline-flex;
           align-items: center;
-          gap: 5px;
-          font-size: 13px;
-          color: var(--u-color-base-foreground, #36485c);
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: var(--u-font-weight-medium, 500);
+          line-height: 1;
           white-space: nowrap;
         }
-        .roster-stat-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          flex-shrink: 0;
-        }
-        .roster-stat--accepted   .roster-stat-dot { background: #2e7d32; }
-        .roster-stat--pending    .roster-stat-dot { background: #e65100; }
-        .roster-stat--notInvited .roster-stat-dot { background: #b6c2cf; }
-        .roster-stat--declined   .roster-stat-dot { background: #c62828; }
-        .roster-stat-sep {
-          margin-left: 8px;
-          color: var(--u-color-line, #c4c6c8);
-        }
+        .roster-pill--accepted   { background: #e8f5e9; color: #2e7d32; }
+        .roster-pill--pending    { background: #fff3e0; color: #e65100; }
+        .roster-pill--notInvited { background: #eceff1; color: #546e7a; }
+        .roster-pill--declined   { background: #ffebee; color: #c62828; }
 
         .cell-actions {
           width: 48px;
