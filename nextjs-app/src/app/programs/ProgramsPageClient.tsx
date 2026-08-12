@@ -100,13 +100,7 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
   );
   const arcStep = hasDuesProgram ? 4 : arcTeamsBuilt ? 4 : arcHostTryouts ? 3 : 2;
   const showArc = !!tryoutProgram && !arcDismissed && !hasDuesProgram;
-  const arcCtaHref = arcStep === 3 ? '/teams' : '/programs?add=team-dues';
-  const arcCtaLabel =
-    arcStep === 2
-      ? 'Host tryouts'
-      : arcStep === 3
-        ? 'Build teams & assign athletes'
-        : 'Create Club Dues';
+  const arcCtaLabel = arcStep === 4 ? 'Create Club Dues' : 'Build teams & assign athletes';
 
   const ARC_STEPS = [
     { label: 'Create tryout program' },
@@ -242,13 +236,11 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           {/* CTA + dismiss */}
           <div className="arc-card-actions">
             <button className="arc-cta" onClick={() => {
-              if (arcStep === 2) {
-                handleToggleHostTryouts();
-              } else if (arcStep === 4) {
+              if (arcStep === 4) {
                 setInitialModalType('team-dues');
                 setTypePickerOpen(true);
               } else {
-                router.push(arcCtaHref);
+                router.push('/teams');
               }
             }}>
               {arcCtaLabel} →
