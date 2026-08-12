@@ -175,6 +175,7 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
 
       {/* ── Season arc card ─────────────────────────────────────────── */}
       {showArc && (
+        <div className="arc-card-container">
         <div className="arc-card">
           {/* Left label */}
           <div className="arc-card-left">
@@ -222,6 +223,7 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
               </svg>
             </button>
           </div>
+        </div>
         </div>
       )}
 
@@ -283,6 +285,9 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
         }
 
         /* ── Season arc card ── */
+        .arc-card-container {
+          container-type: inline-size;
+        }
         .arc-card {
           display: flex;
           align-items: center;
@@ -324,7 +329,15 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           display: flex;
           align-items: center;
           flex: 1;
-          justify-content: center;
+          min-width: 0;
+          /* Centered when there's room; falls back to start-aligned (no clipping)
+             and scrolls when the tracker is wider than the available space. */
+          justify-content: safe center;
+          overflow-x: auto;
+          scrollbar-width: none;
+        }
+        .arc-steps::-webkit-scrollbar {
+          display: none;
         }
 
         .arc-step-wrap {
@@ -431,9 +444,12 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           color: var(--u-color-base-foreground, #36485c);
         }
 
-        /* ── Responsive ── */
-        /* Tablet: stack the three sections and let the step tracker scroll */
-        @media (max-width: 860px) {
+        /* ── Responsive (container-based, so it reacts to the card's own
+              width rather than the viewport — the sidebar changes how much
+              room the card actually has) ── */
+        /* Not enough room for one row: stack the three sections and let the
+           step tracker scroll if needed. */
+        @container (max-width: 1000px) {
           .arc-card {
             flex-direction: column;
             align-items: stretch;
@@ -459,8 +475,8 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           }
         }
 
-        /* Mobile: tighten the connectors so the tracker needs less scrolling */
-        @media (max-width: 520px) {
+        /* Tight: tighten the connectors so the tracker needs less scrolling */
+        @container (max-width: 560px) {
           .arc-card {
             padding: 12px;
           }
