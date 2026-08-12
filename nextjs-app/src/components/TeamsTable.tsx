@@ -526,8 +526,8 @@ function TableContent({
           <span className="header-label">Coaches</span>
           <SortIcon />
         </div>
-        <div className="table-cell cell-athletes">
-          <span className="header-label">Athletes</span>
+        <div className="table-cell cell-roster">
+          <span className="header-label">Roster</span>
           <SortIcon />
         </div>
         {onDeleteTeam && <div className="table-cell cell-actions" />}
@@ -571,7 +571,28 @@ function TableContent({
             <div className="table-cell cell-gender">{formatGender(team.gender)}</div>
             <div className="table-cell cell-sport">{team.sport ? formatSport(team.sport) : '—'}</div>
             <div className="table-cell cell-coaches">{team.coachCount}</div>
-            <div className="table-cell cell-athletes">{team.rosterCount}</div>
+            <div className="table-cell cell-roster">
+              {(() => {
+                const isDraft = team.status === 'draft';
+                const current = isDraft ? team.rosterCount : team.acceptedCount;
+                const total = isDraft ? (team.maxRosterSize || team.rosterCount) : team.rosterCount;
+                const pct = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
+                return (
+                  <div className="roster-progress">
+                    <div className="roster-progress-meta">
+                      <span className="roster-progress-count">{current}/{total}</span>
+                      <span className="roster-progress-label">{isDraft ? 'assigned' : 'confirmed'}</span>
+                    </div>
+                    <div className="roster-progress-track">
+                      <div
+                        className={`roster-progress-fill ${isDraft ? 'roster-progress-fill--draft' : 'roster-progress-fill--active'}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
             {onDeleteTeam && (
               <div className="table-cell cell-actions">
                 {team.status === 'draft' && (
@@ -656,6 +677,48 @@ function TableContent({
         .cell-coaches,
         .cell-athletes     { flex: 1 1 0; padding: 8px 8px; justify-content: flex-end; }
         .cell-stat         { flex: 1 1 0; padding: 8px 8px; justify-content: flex-end; }
+        .cell-roster       { flex: 1.4 1 0; min-width: 0; padding: 8px 8px; }
+        .table-header .cell-roster { justify-content: flex-start; }
+
+        .roster-progress {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          width: 100%;
+          min-width: 0;
+        }
+        .roster-progress-meta {
+          display: flex;
+          align-items: baseline;
+          gap: 6px;
+        }
+        .roster-progress-count {
+          font-size: var(--u-font-size-sm, 13px);
+          font-weight: var(--u-font-weight-bold, 700);
+          color: var(--u-color-base-foreground-contrast, #071c31);
+        }
+        .roster-progress-label {
+          font-size: var(--u-font-size-xs, 11px);
+          color: var(--u-color-base-foreground-subtle, #6b7785);
+        }
+        .roster-progress-track {
+          width: 100%;
+          height: 5px;
+          border-radius: 999px;
+          background: var(--u-color-line-subtle, #e0e1e1);
+          overflow: hidden;
+        }
+        .roster-progress-fill {
+          height: 100%;
+          border-radius: 999px;
+          transition: width 0.3s ease;
+        }
+        .roster-progress-fill--draft {
+          background: var(--u-color-base-foreground-subtle, #6b7785);
+        }
+        .roster-progress-fill--active {
+          background: var(--u-color-success-background-contrast, #12864e);
+        }
 
         .cell-actions {
           width: 48px;
