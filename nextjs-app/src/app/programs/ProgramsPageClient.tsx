@@ -448,36 +448,32 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
               width rather than the viewport — the sidebar changes how much
               room the card actually has) ── */
         /* Stays a single inline row (label · steps · CTA) while there's room.
-           Once the card gets too narrow, switch to a two-row grid so the label
-           and CTA stay inline together on top and the step tracker stacks onto
-           its own full-width row below (scrollable if it still doesn't fit). */
+           Once the card gets too narrow, stack everything into a single column:
+           the label on top, the step tracker below it, and the CTA on its own
+           full-width row underneath (tracker scrolls if it still doesn't fit). */
         @container (max-width: 1000px) {
           .arc-card {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            grid-template-areas:
-              "left actions"
-              "steps steps";
-            align-items: center;
-            gap: 14px 12px;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 14px;
           }
           .arc-card-left {
-            grid-area: left;
             min-width: 0;
           }
           .arc-card-title {
             max-width: none;
           }
-          .arc-card-actions {
-            grid-area: actions;
-            justify-content: flex-end;
-          }
           .arc-steps {
-            grid-area: steps;
             justify-content: flex-start;
             overflow-x: auto;
             padding-bottom: 4px;
             -webkit-overflow-scrolling: touch;
+          }
+          .arc-card-actions {
+            justify-content: flex-end;
+          }
+          .arc-cta {
+            flex: 1;
           }
         }
 
