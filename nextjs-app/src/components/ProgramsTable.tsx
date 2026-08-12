@@ -60,7 +60,7 @@ function formatCurrency(cents: number): string {
 }
 
 function formatVisibility(visibility: string): string {
-  return visibility === 'public' ? 'Public' : 'Private';
+  return visibility === 'public' ? 'Public' : 'Invite Only';
 }
 
 function formatRegistrationStatus(status: string): string {
