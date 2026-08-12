@@ -702,6 +702,10 @@ function TableContent({
           background: var(--u-color-background-default, #e8eaec);
           color: var(--u-color-base-foreground-subtle, #607081);
         }
+        .roster-pill--assigned { background: #e8f3fe; color: #0273e3; }
+        .roster-pill--invited  { background: #fff3e0; color: #e65100; }
+        .roster-pill--accepted { background: #e8f5e9; color: #2e7d32; }
+        .roster-pill--declined { background: #ffebee; color: #c62828; }
 
         .roster-pill-tooltip {
           position: absolute;
