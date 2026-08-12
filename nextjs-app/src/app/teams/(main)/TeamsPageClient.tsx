@@ -16,7 +16,7 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import NewSeasonModal from '@/components/NewSeasonModal';
 import type { TeamWithStats, Season, StaffUser, RosterAthlete } from '@/lib/actions/teams';
 import ConfirmTeamsDrawer from '@/components/ConfirmTeamsDrawer';
-import { deleteTeams, archiveTeams } from '@/lib/actions/teams';
+import { deleteTeams, archiveTeams, updateTeam } from '@/lib/actions/teams';
 import { maryvilleTeams } from '@/lib/mockHighSchoolData';
 import { type EmptyStateVariant } from '@/components/EmptyState';
 import TeamsFilterPanel, { type TeamsFilters, createDefaultTeamsFilters, countTeamsFilters } from '@/components/TeamsFilterPanel';
@@ -331,7 +331,8 @@ export default function TeamsPageClient({ teams, seasons, initialSeasonId }: Tea
         isOpen={isConfirmDrawerOpen}
         onClose={() => setIsConfirmDrawerOpen(false)}
         onConfirm={async (ids) => {
-          setLocalTeams(prev => prev.map(t => ids.includes(t.id) && t.status === 'draft' ? { ...t, status: 'pending' } : t));
+          setLocalTeams(prev => prev.map(t => ids.includes(t.id) && t.status === 'draft' ? { ...t, status: 'active' } : t));
+          await Promise.all(ids.map(id => updateTeam({ id, status: 'active' })));
           setIsConfirmDrawerOpen(false);
           const seasonLabel = selectedSeason ? getAcademicYear(selectedSeason.name) : '';
           showToast(`${ids.length} ${ids.length === 1 ? 'team' : 'teams'} confirmed${seasonLabel ? ` for the ${seasonLabel} season` : ''}`, 'success');
