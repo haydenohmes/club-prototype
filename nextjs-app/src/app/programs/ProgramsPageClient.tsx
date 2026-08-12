@@ -36,6 +36,7 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
   const [allPrograms, setAllPrograms] = useState<ProgramWithStats[]>(programs);
   const [arcDismissed, setArcDismissed] = useState(false);
   const [arcTeamsBuilt, setArcTeamsBuilt] = useState(false);
+  const [arcHostTryouts, setArcHostTryouts] = useState(false);
 
   useEffect(() => {
     try {
@@ -50,8 +51,19 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
   useEffect(() => {
     try {
       setArcTeamsBuilt(localStorage.getItem('arcTeamsBuilt') === 'true');
+      setArcHostTryouts(localStorage.getItem('arcHostTryouts') === 'true');
     } catch { /* ignore */ }
   }, []);
+
+  const handleToggleHostTryouts = () => {
+    setArcHostTryouts(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('arcHostTryouts', next ? 'true' : 'false');
+      } catch { /* ignore */ }
+      return next;
+    });
+  };
 
   const handleDeleteProgram = (id: string) => {
     const target = allPrograms.find(p => p.id === id);
@@ -86,10 +98,15 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
   const hasDuesProgram = allPrograms.some(p =>
     ['club dues', 'team-dues', 'team dues'].includes((p.type ?? '').toLowerCase())
   );
-  const arcStep = hasDuesProgram ? 4 : arcTeamsBuilt ? 4 : 3;
+  const arcStep = hasDuesProgram ? 4 : arcTeamsBuilt ? 4 : arcHostTryouts ? 3 : 2;
   const showArc = !!tryoutProgram && !arcDismissed && !hasDuesProgram;
-  const arcCtaHref = arcStep === 3 ? '/teams/manage' : '/programs?add=team-dues';
-  const arcCtaLabel = arcStep === 3 ? 'Build teams & assign athletes' : 'Create Club Dues';
+  const arcCtaHref = arcStep === 3 ? '/teams' : '/programs?add=team-dues';
+  const arcCtaLabel =
+    arcStep === 2
+      ? 'Host tryouts'
+      : arcStep === 3
+        ? 'Build teams & assign athletes'
+        : 'Create Club Dues';
 
   const ARC_STEPS = [
     { label: 'Create tryout program' },
@@ -188,10 +205,28 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
               const stepNum  = i + 1;
               const isDone   = stepNum < arcStep;
               const isActive = stepNum === arcStep;
+              // The "Host tryouts" step can be toggled on/off by the user.
+              const isToggleable = i === 1 && (isActive || arcHostTryouts) && !arcTeamsBuilt && !hasDuesProgram;
               return (
                 <div key={step.label} className="arc-step-wrap">
                   {i > 0 && <span className={`arc-connector${isDone ? ' arc-connector--done' : ''}`} />}
-                  <div className={`arc-step${isDone ? ' arc-step--done' : isActive ? ' arc-step--active' : ' arc-step--pending'}`}>
+                  <div
+                    className={`arc-step${isDone ? ' arc-step--done' : isActive ? ' arc-step--active' : ' arc-step--pending'}${isToggleable ? ' arc-step--toggleable' : ''}`}
+                    role={isToggleable ? 'button' : undefined}
+                    tabIndex={isToggleable ? 0 : undefined}
+                    aria-pressed={isToggleable ? arcHostTryouts : undefined}
+                    onClick={isToggleable ? handleToggleHostTryouts : undefined}
+                    onKeyDown={
+                      isToggleable
+                        ? (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleToggleHostTryouts();
+                            }
+                          }
+                        : undefined
+                    }
+                  >
                     <span className="arc-step-dot">
                       {isDone
                         ? <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M8.5 2.5L4 7.5L1.5 5" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -207,7 +242,9 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           {/* CTA + dismiss */}
           <div className="arc-card-actions">
             <button className="arc-cta" onClick={() => {
-              if (arcStep === 4) {
+              if (arcStep === 2) {
+                handleToggleHostTryouts();
+              } else if (arcStep === 4) {
                 setInitialModalType('team-dues');
                 setTypePickerOpen(true);
               } else {
@@ -292,6 +329,7 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           border: 1px solid var(--u-color-line-subtle, #c4c6c8);
           border-left: 3px solid var(--u-color-emphasis-background-contrast, #0273e3);
           border-radius: 8px;
+          flex-wrap: wrap;
         }
 
         .arc-card-left {
@@ -325,6 +363,8 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           align-items: center;
           flex: 1;
           justify-content: center;
+          flex-wrap: nowrap;
+          min-width: 0;
         }
 
         .arc-step-wrap {
@@ -332,8 +372,23 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           align-items: center;
         }
 
+        .arc-step--toggleable {
+          cursor: pointer;
+          border-radius: 6px;
+          padding: 4px 6px;
+          margin: -4px -6px;
+          transition: background 0.12s ease;
+        }
+        .arc-step--toggleable:hover {
+          background: var(--u-color-background-canvas, #eff0f0);
+        }
+        .arc-step--toggleable:focus-visible {
+          outline: 2px solid var(--u-color-emphasis-background-contrast, #0273e3);
+          outline-offset: 1px;
+        }
+
         .arc-connector {
-          width: 40px;
+          width: 28px;
           height: 2px;
           background: var(--u-color-line-subtle, #e0e1e1);
           flex-shrink: 0;
@@ -429,6 +484,42 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
         .arc-dismiss:hover {
           background: var(--u-color-background-canvas, #eff0f0);
           color: var(--u-color-base-foreground, #36485c);
+        }
+
+        /* ── Responsive: stack banner sections on narrow screens ── */
+        @media (max-width: 900px) {
+          .arc-steps {
+            justify-content: flex-start;
+            order: 3;
+            flex-basis: 100%;
+            flex-wrap: wrap;
+            gap: 8px 0;
+          }
+          .arc-card-actions {
+            margin-left: auto;
+          }
+        }
+
+        @media (max-width: 560px) {
+          .arc-card {
+            gap: 12px;
+          }
+          .arc-card-left {
+            flex-basis: 100%;
+          }
+          .arc-card-title {
+            max-width: none;
+          }
+          .arc-connector {
+            width: 20px;
+          }
+          .arc-card-actions {
+            flex-basis: 100%;
+            margin-left: 0;
+          }
+          .arc-cta {
+            flex: 1;
+          }
         }
       `}</style>
     </div>
