@@ -99,14 +99,25 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
     ['club dues', 'team-dues', 'team dues'].includes((p.type ?? '').toLowerCase())
   );
   const arcStep = hasDuesProgram ? 4 : arcTeamsBuilt ? 4 : arcHostTryouts ? 3 : 2;
-  const showArc = !!tryoutProgram && !arcDismissed && !hasDuesProgram;
+  // Persist the season arc banner on the programs page regardless of state.
+  const showArc = !arcDismissed;
+  const arcTitle = tryoutProgram?.title ?? '2026 Fall Season';
   const arcCtaLabel = arcStep === 4 ? 'Create Club Dues' : 'Build teams & assign athletes';
 
+  const goToClubDues = () => {
+    setInitialModalType('team-dues');
+    setTypePickerOpen(true);
+  };
+  const goToTryout = () => {
+    setInitialModalType('tryout');
+    setTypePickerOpen(true);
+  };
+
   const ARC_STEPS = [
-    { label: 'Create tryout program' },
-    { label: 'Host tryouts' },
-    { label: 'Build teams' },
-    { label: 'Create Club Dues' },
+    { label: 'Create tryout program', onClick: goToTryout },
+    { label: 'Host tryouts',          onClick: handleToggleHostTryouts },
+    { label: 'Build teams',           onClick: () => router.push('/teams') },
+    { label: 'Create Club Dues',      onClick: goToClubDues },
   ];
 
   return (
@@ -190,7 +201,7 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           {/* Left label */}
           <div className="arc-card-left">
             <span className="arc-card-eyebrow">Season in progress</span>
-            <span className="arc-card-title">{tryoutProgram!.title}</span>
+            <span className="arc-card-title">{arcTitle}</span>
           </div>
 
           {/* Steps */}
@@ -199,27 +210,20 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
               const stepNum  = i + 1;
               const isDone   = stepNum < arcStep;
               const isActive = stepNum === arcStep;
-              // The "Host tryouts" step can be toggled on/off by the user.
-              const isToggleable = i === 1 && (isActive || arcHostTryouts) && !arcTeamsBuilt && !hasDuesProgram;
               return (
                 <div key={step.label} className="arc-step-wrap">
                   {i > 0 && <span className={`arc-connector${isDone ? ' arc-connector--done' : ''}`} />}
                   <div
-                    className={`arc-step${isDone ? ' arc-step--done' : isActive ? ' arc-step--active' : ' arc-step--pending'}${isToggleable ? ' arc-step--toggleable' : ''}`}
-                    role={isToggleable ? 'button' : undefined}
-                    tabIndex={isToggleable ? 0 : undefined}
-                    aria-pressed={isToggleable ? arcHostTryouts : undefined}
-                    onClick={isToggleable ? handleToggleHostTryouts : undefined}
-                    onKeyDown={
-                      isToggleable
-                        ? (e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              handleToggleHostTryouts();
-                            }
-                          }
-                        : undefined
-                    }
+                    className={`arc-step arc-step--clickable${isDone ? ' arc-step--done' : isActive ? ' arc-step--active' : ' arc-step--pending'}`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={step.onClick}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        step.onClick();
+                      }
+                    }}
                   >
                     <span className="arc-step-dot">
                       {isDone
@@ -364,17 +368,17 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           align-items: center;
         }
 
-        .arc-step--toggleable {
+        .arc-step--clickable {
           cursor: pointer;
           border-radius: 6px;
           padding: 4px 6px;
           margin: -4px -6px;
           transition: background 0.12s ease;
         }
-        .arc-step--toggleable:hover {
+        .arc-step--clickable:hover {
           background: var(--u-color-background-canvas, #eff0f0);
         }
-        .arc-step--toggleable:focus-visible {
+        .arc-step--clickable:focus-visible {
           outline: 2px solid var(--u-color-emphasis-background-contrast, #0273e3);
           outline-offset: 1px;
         }
