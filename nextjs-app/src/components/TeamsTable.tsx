@@ -573,25 +573,36 @@ function TableContent({
             <div className="table-cell cell-coaches">{team.coachCount}</div>
             <div className="table-cell cell-roster">
               {(() => {
-                const pills = [
-                  { abbr: 'A',  label: 'Assigned', count: team.assignedCount, variant: 'assigned' },
-                  { abbr: 'I',  label: 'Invited',  count: team.invitedCount,  variant: 'invited' },
-                  { abbr: 'Ac', label: 'Accepted', count: team.acceptedCount, variant: 'accepted' },
-                  { abbr: 'D',  label: 'Declined', count: team.declinedCount, variant: 'declined' },
-                ].filter(p => p.count > 0);
-                if (pills.length === 0) {
+                const assigned = team.assignedCount;
+                const accepted = team.acceptedCount;
+                const declined = team.declinedCount;
+                // Mutually-exclusive funnel segments that sum to the assigned pool.
+                const pending = Math.max(0, team.invitedCount - accepted - declined);
+                const notInvited = Math.max(0, assigned - team.invitedCount);
+                const total = assigned;
+
+                if (total === 0) {
                   return <span className="roster-empty">—</span>;
                 }
+
+                const segments = [
+                  { key: 'notInvited', label: 'Not invited', count: notInvited },
+                  { key: 'pending',    label: 'Invited',     count: pending },
+                  { key: 'accepted',   label: 'Accepted',    count: accepted },
+                  { key: 'declined',   label: 'Declined',    count: declined },
+                ].filter(s => s.count > 0);
+
                 return (
-                  <div className="roster-pills">
-                    {pills.map(p => (
-                      <span key={p.abbr} className="roster-pill-wrapper">
-                        <span className={`roster-pill roster-pill--${p.variant}`}>
-                          {p.abbr}: {p.count}
+                  <div className="roster-funnel">
+                    <div className="roster-bar">
+                      {segments.map(s => (
+                        <span key={s.key} className="roster-seg-wrapper" style={{ flexGrow: s.count }}>
+                          <span className={`roster-seg roster-seg--${s.key}`} />
+                          <span className="roster-pill-tooltip">{`${s.count} ${s.label}`}</span>
                         </span>
-                        <span className="roster-pill-tooltip">{`${p.count} ${p.label}`}</span>
-                      </span>
-                    ))}
+                      ))}
+                    </div>
+                    <span className="roster-summary">{accepted}/{total} accepted</span>
                   </div>
                 );
               })()}
@@ -680,39 +691,45 @@ function TableContent({
         .cell-coaches      { flex: 1 1 0; }
         .cell-athletes     { flex: 1 1 0; padding: 8px 8px; justify-content: flex-end; }
         .cell-stat         { flex: 1 1 0; padding: 8px 8px; justify-content: flex-end; }
-        .cell-roster       { flex: 2.2 1 0; min-width: 0; }
+        .cell-roster       { flex: 2 1 0; min-width: 0; }
 
-        .roster-pills {
+        .roster-funnel {
           display: flex;
-          align-items: center;
-          gap: 4px;
-          flex-wrap: nowrap;
+          flex-direction: column;
+          gap: 5px;
+          width: 100%;
+          min-width: 0;
+          max-width: 200px;
         }
         .roster-empty {
           font-size: 12px;
           color: var(--u-color-base-foreground-subtle, #607081);
         }
-        .roster-pill-wrapper {
-          position: relative;
-          display: inline-flex;
+        .roster-bar {
+          display: flex;
+          align-items: stretch;
+          gap: 2px;
+          width: 100%;
+          height: 8px;
         }
-        .roster-pill {
-          display: inline-flex;
-          align-items: center;
-          gap: 3px;
-          padding: 4px 8px;
-          border-radius: 4px;
+        .roster-seg-wrapper {
+          position: relative;
+          display: flex;
+          min-width: 6px;
+          flex-basis: 0;
+        }
+        .roster-seg {
+          flex: 1 1 auto;
+          border-radius: 2px;
+        }
+        .roster-seg--notInvited { background: #b6c2cf; }
+        .roster-seg--pending    { background: #f59245; }
+        .roster-seg--accepted   { background: #2e9d4f; }
+        .roster-seg--declined   { background: #e05656; }
+        .roster-summary {
           font-size: 12px;
-          font-weight: var(--u-font-weight-medium, 500);
-          line-height: 1;
-          cursor: default;
-          background: var(--u-color-background-default, #e8eaec);
           color: var(--u-color-base-foreground-subtle, #607081);
         }
-        .roster-pill--assigned { background: #e8f3fe; color: #0273e3; }
-        .roster-pill--invited  { background: #fff3e0; color: #e65100; }
-        .roster-pill--accepted { background: #e8f5e9; color: #2e7d32; }
-        .roster-pill--declined { background: #ffebee; color: #c62828; }
 
         .roster-pill-tooltip {
           position: absolute;
@@ -743,7 +760,7 @@ function TableContent({
           border: 4px solid transparent;
           border-top-color: #191F24;
         }
-        .roster-pill-wrapper:hover .roster-pill-tooltip {
+        .roster-seg-wrapper:hover .roster-pill-tooltip {
           opacity: 1;
           visibility: visible;
         }
