@@ -36,6 +36,7 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
   const [allPrograms, setAllPrograms] = useState<ProgramWithStats[]>(programs);
   const [arcDismissed, setArcDismissed] = useState(false);
   const [arcTeamsBuilt, setArcTeamsBuilt] = useState(false);
+  const [arcHosted, setArcHosted] = useState(false);
 
   useEffect(() => {
     try {
@@ -50,8 +51,17 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
   useEffect(() => {
     try {
       setArcTeamsBuilt(localStorage.getItem('arcTeamsBuilt') === 'true');
+      setArcHosted(localStorage.getItem('arcHosted') === 'true');
     } catch { /* ignore */ }
   }, []);
+
+  const toggleHosted = () => {
+    setArcHosted(prev => {
+      const next = !prev;
+      try { localStorage.setItem('arcHosted', String(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
 
   const handleDeleteProgram = (id: string) => {
     const target = allPrograms.find(p => p.id === id);
@@ -86,10 +96,14 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
   const hasDuesProgram = allPrograms.some(p =>
     ['club dues', 'team-dues', 'team dues'].includes((p.type ?? '').toLowerCase())
   );
-  const arcStep = hasDuesProgram ? 4 : arcTeamsBuilt ? 4 : 3;
+  // Step 1 (Create tryout program) is done as soon as the arc shows. Step 2
+  // (Host tryouts) stays pending until the user clicks it. Then Build teams (3)
+  // and Create Club Dues (4).
+  const arcStep = hasDuesProgram || arcTeamsBuilt ? 4 : arcHosted ? 3 : 2;
   const showArc = !!tryoutProgram && !arcDismissed && !hasDuesProgram;
-  const arcCtaHref = arcStep === 3 ? '/teams' : '/programs?add=team-dues';
-  const arcCtaLabel = arcStep === 3 ? 'Build teams & assign athletes' : 'Create Club Dues';
+  const isDuesStep = arcStep === 4;
+  const arcCtaHref = isDuesStep ? '/programs?add=team-dues' : '/teams';
+  const arcCtaLabel = isDuesStep ? 'Create Club Dues' : 'Build teams & assign athletes';
 
   const ARC_STEPS = [
     { label: 'Create tryout program' },
@@ -189,17 +203,35 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
               const stepNum  = i + 1;
               const isDone   = stepNum < arcStep;
               const isActive = stepNum === arcStep;
+              const isHostStep = i === 1; // "Host tryouts" — user can toggle it
+              const stateClass = isDone ? ' arc-step--done' : isActive ? ' arc-step--active' : ' arc-step--pending';
+              const dot = (
+                <span className="arc-step-dot">
+                  {isDone
+                    ? <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M8.5 2.5L4 7.5L1.5 5" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    : null}
+                </span>
+              );
               return (
                 <div key={step.label} className="arc-step-wrap">
                   {i > 0 && <span className={`arc-connector${isDone ? ' arc-connector--done' : ''}`} />}
-                  <div className={`arc-step${isDone ? ' arc-step--done' : isActive ? ' arc-step--active' : ' arc-step--pending'}`}>
-                    <span className="arc-step-dot">
-                      {isDone
-                        ? <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M8.5 2.5L4 7.5L1.5 5" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                        : null}
-                    </span>
-                    <span className="arc-step-label">{step.label}</span>
-                  </div>
+                  {isHostStep ? (
+                    <button
+                      type="button"
+                      className={`arc-step arc-step--clickable${stateClass}`}
+                      onClick={toggleHosted}
+                      aria-pressed={arcHosted}
+                      title={arcHosted ? 'Mark host tryouts as not done' : 'Mark host tryouts as done'}
+                    >
+                      {dot}
+                      <span className="arc-step-label">{step.label}</span>
+                    </button>
+                  ) : (
+                    <div className={`arc-step${stateClass}`}>
+                      {dot}
+                      <span className="arc-step-label">{step.label}</span>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -359,6 +391,23 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           display: flex;
           align-items: center;
           gap: 7px;
+        }
+        .arc-step--clickable {
+          border: none;
+          background: transparent;
+          padding: 4px 6px;
+          margin: -4px -6px;
+          border-radius: 6px;
+          font-family: var(--u-font-body);
+          cursor: pointer;
+          transition: background 0.1s;
+        }
+        .arc-step--clickable:hover {
+          background: var(--u-color-background-canvas, #eff0f0);
+        }
+        .arc-step--clickable:focus-visible {
+          outline: 2px solid var(--u-color-emphasis-background-contrast, #0273e3);
+          outline-offset: 1px;
         }
 
         .arc-step-dot {
