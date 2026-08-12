@@ -692,37 +692,23 @@ function TableContent({
           align-items: center;
           gap: 3px;
           padding: 2px 6px;
-          border-radius: 999px;
+          border-radius: 4px;
           font-size: var(--u-font-size-100, 12px);
           line-height: 1;
           cursor: default;
-          border: 1px solid transparent;
+          background: var(--u-color-background-canvas, #eff0f0);
+          color: var(--u-color-base-foreground, #36485c);
+          border: 1px solid var(--u-color-line-subtle, #e0e1e1);
         }
         .roster-pill-abbr {
-          font-weight: var(--u-font-weight-bold, 700);
+          font-weight: var(--u-font-weight-medium, 500);
         }
         .roster-pill-count {
           font-weight: var(--u-font-weight-medium, 500);
+          display: none;
         }
-        .roster-pill--assigned {
-          background: var(--u-color-emphasis-background, #e6f2fd);
-          color: var(--u-color-emphasis-foreground-contrast, #0a4d8c);
-          border-color: var(--u-color-emphasis-line, #b9dcfb);
-        }
-        .roster-pill--invited {
-          background: var(--u-color-warning-background, #fdf3e6);
-          color: var(--u-color-warning-foreground-contrast, #8a5200);
-          border-color: var(--u-color-warning-line, #f5d9a8);
-        }
-        .roster-pill--accepted {
-          background: var(--u-color-success-background, #e4f6ec);
-          color: var(--u-color-success-foreground-contrast, #0d6b3d);
-          border-color: var(--u-color-success-line, #b3e2c6);
-        }
-        .roster-pill--declined {
-          background: var(--u-color-danger-background, #fdeaea);
-          color: var(--u-color-danger-foreground-contrast, #a11212);
-          border-color: var(--u-color-danger-line, #f5c2c2);
+        .roster-pill:hover .roster-pill-count {
+          display: inline;
         }
 
         .cell-actions {
