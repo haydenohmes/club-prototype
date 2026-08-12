@@ -576,33 +576,19 @@ function TableContent({
                 const assigned = team.assignedCount;
                 const accepted = team.acceptedCount;
                 const declined = team.declinedCount;
-                // Mutually-exclusive funnel segments that sum to the assigned pool.
-                const pending = Math.max(0, team.invitedCount - accepted - declined);
-                const notInvited = Math.max(0, assigned - team.invitedCount);
-                const total = assigned;
 
-                if (total === 0) {
+                if (assigned === 0) {
                   return <span className="roster-empty">—</span>;
                 }
 
-                const segments = [
-                  { key: 'notInvited', label: 'Not invited', count: notInvited },
-                  { key: 'pending',    label: 'Invited',     count: pending },
-                  { key: 'accepted',   label: 'Accepted',    count: accepted },
-                  { key: 'declined',   label: 'Declined',    count: declined },
-                ].filter(s => s.count > 0);
-
                 return (
-                  <div className="roster-funnel">
-                    <div className="roster-bar">
-                      {segments.map(s => (
-                        <span key={s.key} className="roster-seg-wrapper" style={{ flexGrow: s.count }}>
-                          <span className={`roster-seg roster-seg--${s.key}`} />
-                          <span className="roster-pill-tooltip">{`${s.count} ${s.label}`}</span>
-                        </span>
-                      ))}
-                    </div>
-                    <span className="roster-summary">{accepted}/{total} accepted</span>
+                  <div className="roster-text">
+                    <span className="roster-text-primary">
+                      {accepted} of {assigned} accepted
+                    </span>
+                    {declined > 0 && (
+                      <span className="roster-text-declined">{declined} declined</span>
+                    )}
                   </div>
                 );
               })()}
@@ -691,78 +677,27 @@ function TableContent({
         .cell-coaches      { flex: 1 1 0; }
         .cell-athletes     { flex: 1 1 0; padding: 8px 8px; justify-content: flex-end; }
         .cell-stat         { flex: 1 1 0; padding: 8px 8px; justify-content: flex-end; }
-        .cell-roster       { flex: 2 1 0; min-width: 0; }
+        .cell-roster       { flex: 1.4 1 0; min-width: 0; }
 
-        .roster-funnel {
+        .roster-text {
           display: flex;
-          flex-direction: column;
-          gap: 5px;
-          width: 100%;
+          align-items: baseline;
+          gap: 8px;
           min-width: 0;
-          max-width: 200px;
         }
         .roster-empty {
-          font-size: 12px;
+          font-size: 14px;
           color: var(--u-color-base-foreground-subtle, #607081);
         }
-        .roster-bar {
-          display: flex;
-          align-items: stretch;
-          gap: 2px;
-          width: 100%;
-          height: 8px;
-        }
-        .roster-seg-wrapper {
-          position: relative;
-          display: flex;
-          min-width: 6px;
-          flex-basis: 0;
-        }
-        .roster-seg {
-          flex: 1 1 auto;
-          border-radius: 2px;
-        }
-        .roster-seg--notInvited { background: #b6c2cf; }
-        .roster-seg--pending    { background: #f59245; }
-        .roster-seg--accepted   { background: #2e9d4f; }
-        .roster-seg--declined   { background: #e05656; }
-        .roster-summary {
-          font-size: 12px;
-          color: var(--u-color-base-foreground-subtle, #607081);
-        }
-
-        .roster-pill-tooltip {
-          position: absolute;
-          bottom: calc(100% + 8px);
-          left: 50%;
-          transform: translateX(-50%);
-          background-color: #191F24;
-          color: var(--u-color-background-container, #fefefe);
-          padding: var(--u-space-half, 8px) var(--u-space-three-quarter, 12px);
-          border-radius: var(--u-border-radius-medium, 4px);
-          font-family: var(--u-font-body);
-          font-size: var(--u-font-size-200, 14px);
-          font-weight: var(--u-font-weight-medium, 500);
+        .roster-text-primary {
+          font-size: 14px;
+          color: var(--u-color-base-foreground, #36485c);
           white-space: nowrap;
-          pointer-events: none;
-          opacity: 0;
-          visibility: hidden;
-          transition: opacity 0.2s ease, visibility 0.2s ease;
-          z-index: 1000;
-          box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.15), 0px 0px 4px rgba(0, 0, 0, 0.1);
         }
-        .roster-pill-tooltip::after {
-          content: '';
-          position: absolute;
-          top: 100%;
-          left: 50%;
-          transform: translateX(-50%);
-          border: 4px solid transparent;
-          border-top-color: #191F24;
-        }
-        .roster-seg-wrapper:hover .roster-pill-tooltip {
-          opacity: 1;
-          visibility: visible;
+        .roster-text-declined {
+          font-size: 12px;
+          color: #c62828;
+          white-space: nowrap;
         }
 
         .cell-actions {
