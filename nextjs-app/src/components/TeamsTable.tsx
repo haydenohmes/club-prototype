@@ -527,7 +527,7 @@ function TableContent({
           <SortIcon />
         </div>
         <div className="table-cell cell-roster">
-          <span className="header-label">Roster</span>
+          <span className="header-label">Roster Status</span>
           <SortIcon />
         </div>
         {onDeleteTeam && <div className="table-cell cell-actions" />}
@@ -587,8 +587,7 @@ function TableContent({
                         className={`roster-pill roster-pill--${p.variant}`}
                         title={`${p.count} ${p.label}`}
                       >
-                        <span className="roster-pill-abbr">{p.abbr}</span>
-                        <span className="roster-pill-count">{p.count}</span>
+                        {p.abbr}
                       </span>
                     ))}
                   </div>
@@ -699,15 +698,8 @@ function TableContent({
           background: var(--u-color-background-default, #e8eaec);
           color: var(--u-color-base-foreground-subtle, #607081);
         }
-        .roster-pill-abbr {
+        .roster-pill {
           font-weight: var(--u-font-weight-medium, 500);
-        }
-        .roster-pill-count {
-          font-weight: var(--u-font-weight-medium, 500);
-          display: none;
-        }
-        .roster-pill:hover .roster-pill-count {
-          display: inline;
         }
 
         .cell-actions {
