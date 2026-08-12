@@ -98,11 +98,12 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
   const hasDuesProgram = allPrograms.some(p =>
     ['club dues', 'team-dues', 'team dues'].includes((p.type ?? '').toLowerCase())
   );
-  const arcStep = hasDuesProgram ? 4 : arcTeamsBuilt ? 4 : arcHostTryouts ? 3 : 2;
+  // A club can start from a tryout (full arc) or go straight to Club Dues
+  // (dues-first arc). Show the shorter arc when there's a dues program and no tryout.
+  const duesFirst = hasDuesProgram && !tryoutProgram;
   // Persist the season arc banner on the programs page regardless of state.
   const showArc = !arcDismissed;
   const arcTitle = tryoutProgram?.title ?? '2026 Fall Season';
-  const arcCtaLabel = arcStep === 4 ? 'Create Club Dues' : 'Build teams & assign athletes';
 
   const goToClubDues = () => {
     setInitialModalType('team-dues');
@@ -112,13 +113,30 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
     setInitialModalType('tryout');
     setTypePickerOpen(true);
   };
+  const goToTeams = () => router.push('/teams');
+  const goToSendInvitations = () => router.push('/teams/send-invitations');
 
-  const ARC_STEPS = [
+  const TRYOUT_ARC_STEPS = [
     { label: 'Create tryout program', onClick: goToTryout },
     { label: 'Host tryouts',          onClick: handleToggleHostTryouts },
-    { label: 'Build teams',           onClick: () => router.push('/teams') },
+    { label: 'Build teams',           onClick: goToTeams },
     { label: 'Create Club Dues',      onClick: goToClubDues },
+    { label: 'Send Invitations',      onClick: goToSendInvitations },
   ];
+  const DUES_ARC_STEPS = [
+    { label: 'Create Club Dues', onClick: goToClubDues },
+    { label: 'Build teams',      onClick: goToTeams },
+    { label: 'Send Invitations', onClick: goToSendInvitations },
+  ];
+
+  const ARC_STEPS = duesFirst ? DUES_ARC_STEPS : TRYOUT_ARC_STEPS;
+  // Current (active) step, 1-indexed.
+  const arcStep = duesFirst
+    ? 2 // Club Dues created → Build teams is next
+    : hasDuesProgram ? 5 : arcTeamsBuilt ? 4 : arcHostTryouts ? 3 : 2;
+  const arcCtaLabel = duesFirst
+    ? 'Build teams & assign athletes'
+    : hasDuesProgram ? 'Send invitations' : arcStep === 4 ? 'Create Club Dues' : 'Build teams & assign athletes';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
@@ -240,9 +258,11 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           {/* CTA + dismiss */}
           <div className="arc-card-actions">
             <button className="arc-cta" onClick={() => {
-              if (arcStep === 4) {
+              if (!duesFirst && arcStep === 4) {
                 setInitialModalType('team-dues');
                 setTypePickerOpen(true);
+              } else if (arcCtaLabel.toLowerCase().startsWith('send')) {
+                router.push('/teams/send-invitations');
               } else {
                 router.push('/teams');
               }
