@@ -88,7 +88,7 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
   );
   const arcStep = hasDuesProgram ? 4 : arcTeamsBuilt ? 4 : 3;
   const showArc = !!tryoutProgram && !arcDismissed && !hasDuesProgram;
-  const arcCtaHref = arcStep === 3 ? '/teams/manage?context=tryout' : '/programs?add=team-dues';
+  const arcCtaHref = arcStep === 3 ? '/teams' : '/programs?add=team-dues';
   const arcCtaLabel = arcStep === 3 ? 'Build teams & assign athletes' : 'Create Club Dues';
 
   const ARC_STEPS = [
