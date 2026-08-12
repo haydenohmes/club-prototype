@@ -576,19 +576,30 @@ function TableContent({
                 const assigned = team.assignedCount;
                 const accepted = team.acceptedCount;
                 const declined = team.declinedCount;
+                // Every assigned athlete sits in exactly one current status.
+                const pending = Math.max(0, team.invitedCount - accepted - declined);
+                const notInvited = Math.max(0, assigned - team.invitedCount);
 
                 if (assigned === 0) {
                   return <span className="roster-empty">—</span>;
                 }
 
+                const parts = [
+                  { key: 'accepted',   label: 'accepted',    count: accepted },
+                  { key: 'pending',    label: 'pending',     count: pending },
+                  { key: 'notInvited', label: 'not invited', count: notInvited },
+                  { key: 'declined',   label: 'declined',    count: declined },
+                ].filter(p => p.count > 0);
+
                 return (
                   <div className="roster-text">
-                    <span className="roster-text-primary">
-                      {accepted} of {assigned} accepted
-                    </span>
-                    {declined > 0 && (
-                      <span className="roster-text-declined">{declined} declined</span>
-                    )}
+                    {parts.map((p, i) => (
+                      <span key={p.key} className={`roster-stat roster-stat--${p.key}`}>
+                        <span className="roster-stat-dot" />
+                        {p.count} {p.label}
+                        {i < parts.length - 1 && <span className="roster-stat-sep">·</span>}
+                      </span>
+                    ))}
                   </div>
                 );
               })()}
@@ -681,23 +692,36 @@ function TableContent({
 
         .roster-text {
           display: flex;
-          align-items: baseline;
-          gap: 8px;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 4px 8px;
           min-width: 0;
         }
         .roster-empty {
           font-size: 14px;
           color: var(--u-color-base-foreground-subtle, #607081);
         }
-        .roster-text-primary {
-          font-size: 14px;
+        .roster-stat {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 13px;
           color: var(--u-color-base-foreground, #36485c);
           white-space: nowrap;
         }
-        .roster-text-declined {
-          font-size: 12px;
-          color: #c62828;
-          white-space: nowrap;
+        .roster-stat-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          flex-shrink: 0;
+        }
+        .roster-stat--accepted   .roster-stat-dot { background: #2e7d32; }
+        .roster-stat--pending    .roster-stat-dot { background: #e65100; }
+        .roster-stat--notInvited .roster-stat-dot { background: #b6c2cf; }
+        .roster-stat--declined   .roster-stat-dot { background: #c62828; }
+        .roster-stat-sep {
+          margin-left: 8px;
+          color: var(--u-color-line, #c4c6c8);
         }
 
         .cell-actions {
