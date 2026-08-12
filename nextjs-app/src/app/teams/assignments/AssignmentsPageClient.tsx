@@ -558,19 +558,11 @@ export default function AssignmentsPageClient({
                       }));
                       showToast(`${newIds.length} ${newIds.length === 1 ? 'athlete' : 'athletes'} added from ${previousSeason.name} Season`, 'success');
                     } : undefined}
-                    assignedAthletes={(teamAssignments[team.id] || []).map((athleteId, athleteIdx) => {
+                    assignedAthletes={(teamAssignments[team.id] || []).map((athleteId) => {
                       const athlete = allAthletes.find(a => a.submissionId === athleteId);
                       let athleteStatus: 'assigned' | 'invited' | 'accepted' | 'declined' | 'deposit' | 'paid' | 'pending' = 'assigned';
                       if (athleteStatuses[athleteId]) {
                         athleteStatus = athleteStatuses[athleteId];
-                      } else if (mockStats.accepted > 0 && athleteIdx === 0) {
-                        athleteStatus = 'paid';
-                      } else if (mockStats.accepted > 1 && athleteIdx === 1) {
-                        athleteStatus = 'deposit';
-                      } else if (athleteIdx < mockStats.accepted) {
-                        athleteStatus = 'accepted';
-                      } else if (athleteIdx < mockStats.invited) {
-                        athleteStatus = 'invited';
                       }
                       return athlete ? {
                         id: athlete.submissionId,
