@@ -72,7 +72,7 @@ declare global {
 }
 
 // Bump this any time the seed data changes — forces re-init on next hot reload
-  const MOCK_STORE_VERSION = 31;
+  const MOCK_STORE_VERSION = 32;
 
 // Base team shapes — reused across seasons
 const BASE_TEAMS = [
