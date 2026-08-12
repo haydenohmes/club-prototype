@@ -514,10 +514,6 @@ function TableContent({
           <span className="header-label">Program</span>
           <SortIcon />
         </div>
-        <div className="table-cell cell-registration">
-          <span className="header-label">Registration</span>
-          <SortIcon />
-        </div>
         <div className="table-cell cell-gender">
           <span className="header-label">Gender</span>
           <SortIcon />
@@ -571,9 +567,6 @@ function TableContent({
                   {team.programName}
                 </a>
               ) : '—'}
-            </div>
-            <div className="table-cell cell-registration">
-              {team.registrationName ?? '—'}
             </div>
             <div className="table-cell cell-gender">{formatGender(team.gender)}</div>
             <div className="table-cell cell-sport">{team.sport ? formatSport(team.sport) : '—'}</div>
@@ -658,7 +651,6 @@ function TableContent({
         .cell-year,
         .cell-season       { flex: 1 1 0; }
         .cell-program      { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-        .cell-registration { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
         .cell-gender       { flex: 1 1 0; }
         .cell-sport        { flex: 1 1 0; }
         .cell-coaches,
