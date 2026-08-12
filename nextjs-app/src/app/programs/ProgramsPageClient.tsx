@@ -35,8 +35,8 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
   // Merge in programs created through the builder (prototype: stored in localStorage)
   const [allPrograms, setAllPrograms] = useState<ProgramWithStats[]>(programs);
   const [arcDismissed, setArcDismissed] = useState(false);
-  const [arcTeamsBuilt, setArcTeamsBuilt] = useState(false);
-  const [arcHostTryouts, setArcHostTryouts] = useState(false);
+  // Persisted set of completed step labels — each step can be checked/unchecked.
+  const [completedSteps, setCompletedSteps] = useState<string[]>([]);
 
   useEffect(() => {
     try {
@@ -50,16 +50,19 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
 
   useEffect(() => {
     try {
-      setArcTeamsBuilt(localStorage.getItem('arcTeamsBuilt') === 'true');
-      setArcHostTryouts(localStorage.getItem('arcHostTryouts') === 'true');
+      const raw = localStorage.getItem('arcCompletedSteps');
+      const saved = raw ? (JSON.parse(raw) as string[]) : [];
+      if (Array.isArray(saved)) setCompletedSteps(saved);
     } catch { /* ignore */ }
   }, []);
 
-  const handleToggleHostTryouts = () => {
-    setArcHostTryouts(prev => {
-      const next = !prev;
+  const toggleStep = (label: string) => {
+    setCompletedSteps(prev => {
+      const next = prev.includes(label)
+        ? prev.filter(l => l !== label)
+        : [...prev, label];
       try {
-        localStorage.setItem('arcHostTryouts', next ? 'true' : 'false');
+        localStorage.setItem('arcCompletedSteps', JSON.stringify(next));
       } catch { /* ignore */ }
       return next;
     });
@@ -118,7 +121,7 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
 
   const TRYOUT_ARC_STEPS = [
     { label: 'Create tryout program', onClick: goToTryout },
-    { label: 'Host tryouts',          onClick: handleToggleHostTryouts },
+    { label: 'Host tryouts',          onClick: goToTryout },
     { label: 'Build teams',           onClick: goToTeams },
     { label: 'Create Club Dues',      onClick: goToClubDues },
     { label: 'Send Invitations',      onClick: goToSendInvitations },
@@ -130,13 +133,11 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
   ];
 
   const ARC_STEPS = duesFirst ? DUES_ARC_STEPS : TRYOUT_ARC_STEPS;
-  // Current (active) step, 1-indexed.
-  const arcStep = duesFirst
-    ? 2 // Club Dues created → Build teams is next
-    : hasDuesProgram ? 5 : arcTeamsBuilt ? 4 : arcHostTryouts ? 3 : 2;
-  const arcCtaLabel = duesFirst
-    ? 'Build teams & assign athletes'
-    : hasDuesProgram ? 'Send invitations' : arcStep === 4 ? 'Create Club Dues' : 'Build teams & assign athletes';
+  // Active step = first step not yet checked off.
+  const firstIncomplete = ARC_STEPS.findIndex(s => !completedSteps.includes(s.label));
+  const arcStep = firstIncomplete === -1 ? ARC_STEPS.length + 1 : firstIncomplete + 1;
+  const activeStepLabel = firstIncomplete === -1 ? null : ARC_STEPS[firstIncomplete].label;
+  const arcCtaLabel = activeStepLabel ?? 'Season complete';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
@@ -225,30 +226,31 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           {/* Steps */}
           <div className="arc-steps">
             {ARC_STEPS.map((step, i) => {
-              const stepNum  = i + 1;
-              const isDone   = stepNum < arcStep;
-              const isActive = stepNum === arcStep;
+              const isDone   = completedSteps.includes(step.label);
+              const isActive = step.label === activeStepLabel;
               return (
                 <div key={step.label} className="arc-step-wrap">
-                  {i > 0 && <span className={`arc-connector${isDone ? ' arc-connector--done' : ''}`} />}
-                  <div
-                    className={`arc-step arc-step--clickable${isDone ? ' arc-step--done' : isActive ? ' arc-step--active' : ' arc-step--pending'}`}
-                    role="button"
-                    tabIndex={0}
-                    onClick={step.onClick}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        step.onClick();
-                      }
-                    }}
-                  >
-                    <span className="arc-step-dot">
+                  {i > 0 && <span className={`arc-connector${completedSteps.includes(ARC_STEPS[i - 1].label) ? ' arc-connector--done' : ''}`} />}
+                  <div className={`arc-step${isDone ? ' arc-step--done' : isActive ? ' arc-step--active' : ' arc-step--pending'}`}>
+                    <button
+                      type="button"
+                      className="arc-step-dot"
+                      role="checkbox"
+                      aria-checked={isDone}
+                      aria-label={`Mark "${step.label}" ${isDone ? 'incomplete' : 'complete'}`}
+                      onClick={() => toggleStep(step.label)}
+                    >
                       {isDone
                         ? <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M8.5 2.5L4 7.5L1.5 5" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         : null}
-                    </span>
-                    <span className="arc-step-label">{step.label}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="arc-step-label arc-step-label--clickable"
+                      onClick={step.onClick}
+                    >
+                      {step.label}
+                    </button>
                   </div>
                 </div>
               );
@@ -257,17 +259,15 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
 
           {/* CTA + dismiss */}
           <div className="arc-card-actions">
-            <button className="arc-cta" onClick={() => {
-              if (!duesFirst && arcStep === 4) {
-                setInitialModalType('team-dues');
-                setTypePickerOpen(true);
-              } else if (arcCtaLabel.toLowerCase().startsWith('send')) {
-                router.push('/teams/send-invitations');
-              } else {
-                router.push('/teams');
-              }
-            }}>
-              {arcCtaLabel} →
+            <button
+              className="arc-cta"
+              disabled={!activeStepLabel}
+              onClick={() => {
+                const active = ARC_STEPS.find(s => s.label === activeStepLabel);
+                active?.onClick();
+              }}
+            >
+              {arcCtaLabel}{activeStepLabel ? ' →' : ''}
             </button>
             <button className="arc-dismiss" onClick={() => setArcDismissed(true)} aria-label="Dismiss">
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
@@ -388,21 +388,6 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           align-items: center;
         }
 
-        .arc-step--clickable {
-          cursor: pointer;
-          border-radius: 6px;
-          padding: 4px 6px;
-          margin: -4px -6px;
-          transition: background 0.12s ease;
-        }
-        .arc-step--clickable:hover {
-          background: var(--u-color-background-canvas, #eff0f0);
-        }
-        .arc-step--clickable:focus-visible {
-          outline: 2px solid var(--u-color-emphasis-background-contrast, #0273e3);
-          outline-offset: 1px;
-        }
-
         .arc-connector {
           width: 16px;
           min-width: 12px;
@@ -423,6 +408,7 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
         .arc-step-dot {
           width: 20px;
           height: 20px;
+          padding: 0;
           border-radius: 9999px;
           border: 2px solid var(--u-color-line-subtle, #c4c6c8);
           background: var(--u-color-background-container, #fefefe);
@@ -430,6 +416,15 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
+          cursor: pointer;
+          transition: border-color 0.12s ease, background 0.12s ease;
+        }
+        .arc-step-dot:hover {
+          border-color: var(--u-color-emphasis-background-contrast, #0273e3);
+        }
+        .arc-step-dot:focus-visible {
+          outline: 2px solid var(--u-color-emphasis-background-contrast, #0273e3);
+          outline-offset: 2px;
         }
         .arc-step--done .arc-step-dot {
           background: var(--u-color-emphasis-background-contrast, #0273e3);
@@ -453,6 +448,22 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           font-weight: 400;
           color: var(--u-color-base-foreground-subtle, #8a96a3);
           white-space: nowrap;
+        }
+        .arc-step-label--clickable {
+          padding: 0;
+          border: none;
+          background: none;
+          font-family: var(--u-font-body);
+          cursor: pointer;
+        }
+        .arc-step-label--clickable:hover {
+          text-decoration: underline;
+          color: var(--u-color-base-foreground, #36485c);
+        }
+        .arc-step-label--clickable:focus-visible {
+          outline: 2px solid var(--u-color-emphasis-background-contrast, #0273e3);
+          outline-offset: 2px;
+          border-radius: 3px;
         }
         .arc-step--done .arc-step-label {
           color: var(--u-color-base-foreground, #36485c);
@@ -484,6 +495,11 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           transition: background 0.15s;
         }
         .arc-cta:hover { background: #0261c2; }
+        .arc-cta:disabled {
+          background: var(--u-color-background-default, #e8eaec);
+          color: var(--u-color-base-foreground-subtle, #8a96a3);
+          cursor: default;
+        }
 
         .arc-dismiss {
           width: 26px;
