@@ -578,7 +578,10 @@ function TableContent({
                   { abbr: 'I',  label: 'Invited',  count: team.invitedCount,  variant: 'invited' },
                   { abbr: 'Ac', label: 'Accepted', count: team.acceptedCount, variant: 'accepted' },
                   { abbr: 'D',  label: 'Declined', count: team.declinedCount, variant: 'declined' },
-                ];
+                ].filter(p => p.count > 0);
+                if (pills.length === 0) {
+                  return <span className="roster-empty">—</span>;
+                }
                 return (
                   <div className="roster-pills">
                     {pills.map(p => (
@@ -684,6 +687,10 @@ function TableContent({
           align-items: center;
           gap: 4px;
           flex-wrap: nowrap;
+        }
+        .roster-empty {
+          font-size: 12px;
+          color: var(--u-color-base-foreground-subtle, #607081);
         }
         .roster-pill-wrapper {
           position: relative;
