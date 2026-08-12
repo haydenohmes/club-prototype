@@ -582,12 +582,11 @@ function TableContent({
                 return (
                   <div className="roster-pills">
                     {pills.map(p => (
-                      <span
-                        key={p.abbr}
-                        className={`roster-pill roster-pill--${p.variant}`}
-                        title={`${p.count} ${p.label}`}
-                      >
-                        {p.abbr}
+                      <span key={p.abbr} className="roster-pill-wrapper">
+                        <span className={`roster-pill roster-pill--${p.variant}`}>
+                          {p.abbr}
+                        </span>
+                        <span className="roster-pill-tooltip">{`${p.count} ${p.label}`}</span>
                       </span>
                     ))}
                   </div>
@@ -686,6 +685,10 @@ function TableContent({
           gap: 4px;
           flex-wrap: wrap;
         }
+        .roster-pill-wrapper {
+          position: relative;
+          display: inline-flex;
+        }
         .roster-pill {
           display: inline-flex;
           align-items: center;
@@ -693,13 +696,45 @@ function TableContent({
           padding: 4px 8px;
           border-radius: 4px;
           font-size: 12px;
+          font-weight: var(--u-font-weight-medium, 500);
           line-height: 1;
           cursor: default;
           background: var(--u-color-background-default, #e8eaec);
           color: var(--u-color-base-foreground-subtle, #607081);
         }
-        .roster-pill {
+
+        .roster-pill-tooltip {
+          position: absolute;
+          bottom: calc(100% + 8px);
+          left: 50%;
+          transform: translateX(-50%);
+          background-color: #191F24;
+          color: var(--u-color-background-container, #fefefe);
+          padding: var(--u-space-half, 8px) var(--u-space-three-quarter, 12px);
+          border-radius: var(--u-border-radius-medium, 4px);
+          font-family: var(--u-font-body);
+          font-size: var(--u-font-size-200, 14px);
           font-weight: var(--u-font-weight-medium, 500);
+          white-space: nowrap;
+          pointer-events: none;
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 0.2s ease, visibility 0.2s ease;
+          z-index: 1000;
+          box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.15), 0px 0px 4px rgba(0, 0, 0, 0.1);
+        }
+        .roster-pill-tooltip::after {
+          content: '';
+          position: absolute;
+          top: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          border: 4px solid transparent;
+          border-top-color: #191F24;
+        }
+        .roster-pill-wrapper:hover .roster-pill-tooltip {
+          opacity: 1;
+          visibility: visible;
         }
 
         .cell-actions {
