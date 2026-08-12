@@ -1152,8 +1152,6 @@ const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
                 <th className="cell-sport">Sport</th>
                 <th className="cell-gender">Gender</th>
                 <th className="cell-grade">Grade</th>
-                <th className="cell-birthdate">Birthdate From</th>
-                <th className="cell-birthdate">Birthdate To</th>
               </tr>
             </thead>
             <tbody>
@@ -1202,18 +1200,6 @@ const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
                       options={gradeOptions}
                       placeholder="Select grades..."
                       onSave={(values) => handleUpdateTeam(team.id, { grades: values.length > 0 ? values.join(',') : null })}
-                    />
-                  </td>
-                  <td className="cell-birthdate">
-                    <EditableDateCell
-                      age={team.ageMin}
-                      onSave={(age) => handleUpdateTeam(team.id, { ageMin: age })}
-                    />
-                  </td>
-                  <td className="cell-birthdate">
-                    <EditableDateCell
-                      age={team.ageMax}
-                      onSave={(age) => handleUpdateTeam(team.id, { ageMax: age })}
                     />
                   </td>
                 </tr>
