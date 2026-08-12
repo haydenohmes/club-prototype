@@ -425,6 +425,14 @@ export default function ProgramDetailPageClient({
   const isTryout = (program?.type ?? '').toLowerCase() === 'tryout';
   const isClubDues = ['club dues', 'team-dues', 'team dues'].includes((program?.type ?? '').toLowerCase());
 
+  // Season arc banner for Club Dues programs — same steps as the Programs list,
+  // minus the final "Create Club Dues" step (this program IS the club dues).
+  const CLUB_DUES_ARC_STEPS = [
+    { label: 'Create tryout program', onClick: () => router.push('/programs') },
+    { label: 'Host tryouts',          onClick: () => router.push('/programs') },
+    { label: 'Build teams',           onClick: () => router.push('/teams') },
+  ];
+
   const regOptions = [
     {
       id: 'r1',
@@ -510,6 +518,47 @@ export default function ProgramDetailPageClient({
           </button>
         </div>
       </div>
+
+      {/* Season arc banner (Club Dues only) — all prior steps complete */}
+      {isClubDues && (
+        <div className="arc-card">
+          <div className="arc-card-left">
+            <span className="arc-card-eyebrow">Season in progress</span>
+            <span className="arc-card-title">{title}</span>
+          </div>
+
+          <div className="arc-steps">
+            {CLUB_DUES_ARC_STEPS.map((step, i) => (
+              <div key={step.label} className="arc-step-wrap">
+                {i > 0 && <span className="arc-connector arc-connector--done" />}
+                <div
+                  className="arc-step arc-step--clickable arc-step--done"
+                  role="button"
+                  tabIndex={0}
+                  onClick={step.onClick}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      step.onClick();
+                    }
+                  }}
+                >
+                  <span className="arc-step-dot">
+                    <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M8.5 2.5L4 7.5L1.5 5" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </span>
+                  <span className="arc-step-label">{step.label}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="arc-card-actions">
+            <button className="arc-cta" onClick={() => router.push('/teams')}>
+              Manage teams &amp; athletes →
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="pd-tabs-row">
@@ -896,6 +945,137 @@ export default function ProgramDetailPageClient({
         }
         .pd-crumb:hover { color: var(--u-color-base-foreground-contrast, #071c31); }
         .pd-crumb-sep { color: var(--u-color-base-foreground-subtle, #607081); font-weight: 400; }
+
+        /* ── Season arc banner (Club Dues) ── */
+        .arc-card {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          padding: 12px 16px;
+          background: var(--u-color-background-container, #fefefe);
+          border: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          border-left: 3px solid var(--u-color-emphasis-background-contrast, #0273e3);
+          border-radius: 8px;
+          flex-wrap: wrap;
+        }
+        .arc-card-left {
+          display: flex;
+          flex-direction: column;
+          gap: 1px;
+          flex-shrink: 0;
+          min-width: 120px;
+        }
+        .arc-card-eyebrow {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.07em;
+          text-transform: uppercase;
+          color: var(--u-color-emphasis-background-contrast, #0273e3);
+        }
+        .arc-card-title {
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--u-color-base-foreground-contrast, #071c31);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 180px;
+        }
+        .arc-steps {
+          display: flex;
+          align-items: center;
+          flex: 1;
+          justify-content: center;
+          flex-wrap: nowrap;
+          min-width: 0;
+        }
+        .arc-step-wrap {
+          display: flex;
+          align-items: center;
+        }
+        .arc-step--clickable {
+          cursor: pointer;
+          border-radius: 6px;
+          padding: 4px 6px;
+          margin: -4px -6px;
+          transition: background 0.12s ease;
+        }
+        .arc-step--clickable:hover {
+          background: var(--u-color-background-canvas, #eff0f0);
+        }
+        .arc-step--clickable:focus-visible {
+          outline: 2px solid var(--u-color-emphasis-background-contrast, #0273e3);
+          outline-offset: 1px;
+        }
+        .arc-connector {
+          width: 28px;
+          height: 2px;
+          background: var(--u-color-line-subtle, #e0e1e1);
+          flex-shrink: 0;
+        }
+        .arc-connector--done {
+          background: var(--u-color-emphasis-background-contrast, #0273e3);
+        }
+        .arc-step {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+        }
+        .arc-step-dot {
+          width: 20px;
+          height: 20px;
+          border-radius: 9999px;
+          border: 2px solid var(--u-color-line-subtle, #c4c6c8);
+          background: var(--u-color-background-container, #fefefe);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .arc-step--done .arc-step-dot {
+          background: var(--u-color-emphasis-background-contrast, #0273e3);
+          border-color: var(--u-color-emphasis-background-contrast, #0273e3);
+        }
+        .arc-step-label {
+          font-size: 13px;
+          font-weight: 400;
+          color: var(--u-color-base-foreground-subtle, #8a96a3);
+          white-space: nowrap;
+        }
+        .arc-step--done .arc-step-label {
+          color: var(--u-color-base-foreground, #36485c);
+        }
+        .arc-card-actions {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-shrink: 0;
+        }
+        .arc-cta {
+          height: 30px;
+          padding: 0 14px;
+          background: var(--u-color-emphasis-background-contrast, #0273e3);
+          color: #fff;
+          border: none;
+          border-radius: 4px;
+          font-family: var(--u-font-body);
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: background 0.15s;
+        }
+        .arc-cta:hover { background: #0261c2; }
+        @media (max-width: 900px) {
+          .arc-steps {
+            justify-content: flex-start;
+            order: 3;
+            flex-basis: 100%;
+            flex-wrap: wrap;
+            gap: 8px 0;
+          }
+          .arc-card-actions { margin-left: auto; }
+        }
 
         /* Header */
         .pd-header {

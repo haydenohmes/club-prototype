@@ -163,6 +163,18 @@ const mockPrograms: ProgramWithStats[] = [
     programValue: 0,
     createdBy: { id: 'user-1', firstName: 'Admin', lastName: 'User', avatar: null },
   },
+  {
+    id: 'prog-dues-1',
+    title: '2026 Fall Club Dues',
+    type: 'team-dues',
+    eventDates: { start: '2026-09-01', end: '2026-11-22' },
+    visibility: 'private',
+    registrationStatus: 'open',
+    status: 'published',
+    registrantCount: 116,
+    programValue: 522000,
+    createdBy: { id: 'user-1', firstName: 'Admin', lastName: 'User', avatar: null },
+  },
 ];
 
 export async function getPrograms(_organizationId: string): Promise<ProgramWithStats[]> {
@@ -483,7 +495,7 @@ const mockAthletes: RegisteredAthlete[] = [
   { submissionId: 's-187', registrationId: 'reg-1',  programId: 'prog-1', athleteId: 'a-187', firstName: 'Lane',     lastName: 'Cummings',  gender: 'Male',   birthdate: '2016-07-03', grade: 3,  gradYear: 2035, registrationStatus: 'active', paymentMethod: 'card', assignmentStatus: 'unassigned', teamAssignments: [], previousTeamTitle: 'Sharks', parentId: 'p-187', parentFirstName: 'Noel',    parentLastName: 'Cummings',  parentEmail: 'noel.cummings@email.com' },
   { submissionId: 's-188', registrationId: 'reg-3',  programId: 'prog-2', athleteId: 'a-188', firstName: 'Mack',     lastName: 'Osborne',   gender: 'Male',   birthdate: '2015-12-11', grade: 4,  gradYear: 2034, registrationStatus: 'active', paymentMethod: 'card', assignmentStatus: 'unassigned', teamAssignments: [], previousTeamTitle: 'Sharks', parentId: 'p-188', parentFirstName: 'Opal',    parentLastName: 'Osborne',   parentEmail: 'opal.osborne@email.com' },
 
-  // ── BRONCOS (grades 5–6, performance) ─────────────────────────────────────
+  // ─��� BRONCOS (grades 5–6, performance) ─────────────────────────────────────
   { submissionId: 's-189', registrationId: 'reg-2',  programId: 'prog-1', athleteId: 'a-189', firstName: 'Alex',     lastName: 'Dillon',    gender: 'Male',   birthdate: '2014-03-18', grade: 5,  gradYear: 2033, registrationStatus: 'active', paymentMethod: 'card', assignmentStatus: 'unassigned', teamAssignments: [], previousTeamTitle: 'Broncos', parentId: 'p-189', parentFirstName: 'Paula',   parentLastName: 'Dillon',    parentEmail: 'paula.dillon@email.com' },
   { submissionId: 's-190', registrationId: 'reg-2',  programId: 'prog-1', athleteId: 'a-190', firstName: 'Ben',      lastName: 'Crane',     gender: 'Male',   birthdate: '2013-10-05', grade: 6,  gradYear: 2032, registrationStatus: 'active', paymentMethod: 'card', assignmentStatus: 'unassigned', teamAssignments: [], previousTeamTitle: 'Broncos', parentId: 'p-190', parentFirstName: 'Quinn',   parentLastName: 'Crane',     parentEmail: 'quinn.crane@email.com' },
   { submissionId: 's-191', registrationId: 'reg-2',  programId: 'prog-1', athleteId: 'a-191', firstName: 'Chase',    lastName: 'Hogan',     gender: 'Male',   birthdate: '2014-07-23', grade: 5,  gradYear: 2033, registrationStatus: 'active', paymentMethod: 'cash', assignmentStatus: 'unassigned', teamAssignments: [], previousTeamTitle: 'Broncos', parentId: 'p-191', parentFirstName: 'Rhea',    parentLastName: 'Hogan',     parentEmail: 'rhea.hogan@email.com' },
