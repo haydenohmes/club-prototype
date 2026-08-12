@@ -584,7 +584,7 @@ function TableContent({
                     {pills.map(p => (
                       <span key={p.abbr} className="roster-pill-wrapper">
                         <span className={`roster-pill roster-pill--${p.variant}`}>
-                          {p.abbr}
+                          {p.abbr}: {p.count}
                         </span>
                         <span className="roster-pill-tooltip">{`${p.count} ${p.label}`}</span>
                       </span>
