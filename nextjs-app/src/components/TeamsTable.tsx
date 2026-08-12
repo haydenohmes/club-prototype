@@ -573,30 +573,24 @@ function TableContent({
             <div className="table-cell cell-coaches">{team.coachCount}</div>
             <div className="table-cell cell-roster">
               {(() => {
-                const isDraft = team.status === 'draft';
-                // A capped progress bar needs a real denominator. Draft only has
-                // one when a capacity is set; the active/confirmation phase always
-                // uses the roster itself as the total.
-                const current = isDraft ? team.rosterCount : team.acceptedCount;
-                const total = isDraft ? team.maxRosterSize : team.rosterCount;
-                const hasBar = !!total && total > 0;
-                const pct = hasBar ? Math.min(100, Math.round((current / total!) * 100)) : 0;
+                const pills = [
+                  { abbr: 'A',  label: 'Assigned', count: team.assignedCount, variant: 'assigned' },
+                  { abbr: 'I',  label: 'Invited',  count: team.invitedCount,  variant: 'invited' },
+                  { abbr: 'Ac', label: 'Accepted', count: team.acceptedCount, variant: 'accepted' },
+                  { abbr: 'D',  label: 'Declined', count: team.declinedCount, variant: 'declined' },
+                ];
                 return (
-                  <div className="roster-progress">
-                    <div className="roster-progress-meta">
-                      <span className="roster-progress-count">
-                        {hasBar ? `${current}/${total}` : current}
+                  <div className="roster-pills">
+                    {pills.map(p => (
+                      <span
+                        key={p.abbr}
+                        className={`roster-pill roster-pill--${p.variant}`}
+                        title={`${p.count} ${p.label}`}
+                      >
+                        <span className="roster-pill-abbr">{p.abbr}</span>
+                        <span className="roster-pill-count">{p.count}</span>
                       </span>
-                      <span className="roster-progress-label">{isDraft ? 'assigned' : 'confirmed'}</span>
-                    </div>
-                    {hasBar && (
-                      <div className="roster-progress-track">
-                        <div
-                          className={`roster-progress-fill ${isDraft ? 'roster-progress-fill--draft' : 'roster-progress-fill--active'}`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    )}
+                    ))}
                   </div>
                 );
               })()}
@@ -687,45 +681,48 @@ function TableContent({
         .cell-stat         { flex: 1 1 0; padding: 8px 8px; justify-content: flex-end; }
         .cell-roster       { flex: 1 1 0; min-width: 0; }
 
-        .roster-progress {
+        .roster-pills {
           display: flex;
-          flex-direction: column;
+          align-items: center;
           gap: 4px;
-          width: 100%;
-          min-width: 0;
+          flex-wrap: wrap;
         }
-        .roster-progress-meta {
-          display: flex;
-          align-items: baseline;
-          gap: 6px;
+        .roster-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 3px;
+          padding: 2px 6px;
+          border-radius: 999px;
+          font-size: var(--u-font-size-100, 12px);
+          line-height: 1;
+          cursor: default;
+          border: 1px solid transparent;
         }
-        .roster-progress-count {
-          font-size: var(--u-font-size-200, 14px);
+        .roster-pill-abbr {
+          font-weight: var(--u-font-weight-bold, 700);
+        }
+        .roster-pill-count {
           font-weight: var(--u-font-weight-medium, 500);
-          color: var(--u-color-base-foreground, #36485c);
         }
-        .roster-progress-label {
-          font-size: var(--u-font-size-200, 14px);
-          text-transform: capitalize;
-          color: var(--u-color-base-foreground-subtle, #6b7785);
+        .roster-pill--assigned {
+          background: var(--u-color-emphasis-background, #e6f2fd);
+          color: var(--u-color-emphasis-foreground-contrast, #0a4d8c);
+          border-color: var(--u-color-emphasis-line, #b9dcfb);
         }
-        .roster-progress-track {
-          width: 100%;
-          height: 5px;
-          border-radius: 999px;
-          background: var(--u-color-line-subtle, #e0e1e1);
-          overflow: hidden;
+        .roster-pill--invited {
+          background: var(--u-color-warning-background, #fdf3e6);
+          color: var(--u-color-warning-foreground-contrast, #8a5200);
+          border-color: var(--u-color-warning-line, #f5d9a8);
         }
-        .roster-progress-fill {
-          height: 100%;
-          border-radius: 999px;
-          transition: width 0.3s ease;
+        .roster-pill--accepted {
+          background: var(--u-color-success-background, #e4f6ec);
+          color: var(--u-color-success-foreground-contrast, #0d6b3d);
+          border-color: var(--u-color-success-line, #b3e2c6);
         }
-        .roster-progress-fill--draft {
-          background: var(--u-color-base-foreground-subtle, #6b7785);
-        }
-        .roster-progress-fill--active {
-          background: var(--u-color-success-background-contrast, #12864e);
+        .roster-pill--declined {
+          background: var(--u-color-danger-background, #fdeaea);
+          color: var(--u-color-danger-foreground-contrast, #a11212);
+          border-color: var(--u-color-danger-line, #f5c2c2);
         }
 
         .cell-actions {
