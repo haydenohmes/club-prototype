@@ -447,31 +447,36 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
         /* ── Responsive (container-based, so it reacts to the card's own
               width rather than the viewport — the sidebar changes how much
               room the card actually has) ── */
-        /* Not enough room for one row: stack the three sections and let the
-           step tracker scroll if needed. */
+        /* Not enough room for one row: use a two-row grid so the label and the
+           CTA are always visible together on top, and give the step tracker its
+           own full-width row below (scrollable if it still doesn't fit). */
         @container (max-width: 1000px) {
           .arc-card {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 14px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            grid-template-areas:
+              "left actions"
+              "steps steps";
+            align-items: center;
+            gap: 14px 12px;
           }
           .arc-card-left {
+            grid-area: left;
             min-width: 0;
           }
           .arc-card-title {
             max-width: none;
           }
+          .arc-card-actions {
+            grid-area: actions;
+            justify-content: flex-end;
+          }
           .arc-steps {
+            grid-area: steps;
             justify-content: flex-start;
             overflow-x: auto;
             padding-bottom: 4px;
             -webkit-overflow-scrolling: touch;
-          }
-          .arc-card-actions {
-            justify-content: flex-end;
-          }
-          .arc-cta {
-            flex: 1;
           }
         }
 
