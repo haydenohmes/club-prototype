@@ -574,21 +574,29 @@ function TableContent({
             <div className="table-cell cell-roster">
               {(() => {
                 const isDraft = team.status === 'draft';
+                // A capped progress bar needs a real denominator. Draft only has
+                // one when a capacity is set; the active/confirmation phase always
+                // uses the roster itself as the total.
                 const current = isDraft ? team.rosterCount : team.acceptedCount;
-                const total = isDraft ? (team.maxRosterSize || team.rosterCount) : team.rosterCount;
-                const pct = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
+                const total = isDraft ? team.maxRosterSize : team.rosterCount;
+                const hasBar = !!total && total > 0;
+                const pct = hasBar ? Math.min(100, Math.round((current / total!) * 100)) : 0;
                 return (
                   <div className="roster-progress">
                     <div className="roster-progress-meta">
-                      <span className="roster-progress-count">{current}/{total}</span>
+                      <span className="roster-progress-count">
+                        {hasBar ? `${current}/${total}` : current}
+                      </span>
                       <span className="roster-progress-label">{isDraft ? 'assigned' : 'confirmed'}</span>
                     </div>
-                    <div className="roster-progress-track">
-                      <div
-                        className={`roster-progress-fill ${isDraft ? 'roster-progress-fill--draft' : 'roster-progress-fill--active'}`}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
+                    {hasBar && (
+                      <div className="roster-progress-track">
+                        <div
+                          className={`roster-progress-fill ${isDraft ? 'roster-progress-fill--draft' : 'roster-progress-fill--active'}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    )}
                   </div>
                 );
               })()}
