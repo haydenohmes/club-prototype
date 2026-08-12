@@ -553,20 +553,7 @@ function TableContent({
             )}
             <div className="table-cell cell-team-name" style={{ gap: '8px' }}>
               <SportIcon sport={team.sport} />
-              <div className="team-name-block">
-                <span className="team-name-text">{team.title}</span>
-                {team.registrationName && (
-                  <span className="team-registration-link">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                    </svg>
-                    <span className="team-registration-text">
-                      Linked to <strong>{team.registrationName}</strong>
-                    </span>
-                  </span>
-                )}
-              </div>
+              <span className="team-name-text">{team.title}</span>
             </div>
             <div className="table-cell cell-status"><StatusBadge status={team.status} /></div>
             <div className="table-cell cell-year">{yearLabel}</div>
@@ -659,7 +646,7 @@ function TableContent({
         }
 
         /* All columns share space evenly */
-        .cell-team-name    { flex: 2 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+        .cell-team-name    { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
         .cell-status       { flex: 1 1 0; }
         .cell-year,
         .cell-season       { flex: 1 1 0; }
@@ -709,41 +696,6 @@ function TableContent({
 
         .table-data:hover .team-name-text {
           text-decoration-color: var(--u-color-line-subtle, #c4c6c8);
-        }
-
-        .team-name-block {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-          min-width: 0;
-          overflow: hidden;
-        }
-
-        .team-registration-link {
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          min-width: 0;
-          font-size: var(--u-font-size-sm, 13px);
-          font-weight: var(--u-font-weight-regular, 400);
-          color: var(--u-color-base-foreground, #36485c);
-        }
-
-        .team-registration-link svg {
-          flex-shrink: 0;
-          color: var(--u-color-base-foreground-subtle, #6b7785);
-        }
-
-        .team-registration-text {
-          min-width: 0;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .team-registration-text strong {
-          font-weight: var(--u-font-weight-bold, 700);
-          color: var(--u-color-base-foreground-contrast, #071c31);
         }
 
         .cell-checkbox {
