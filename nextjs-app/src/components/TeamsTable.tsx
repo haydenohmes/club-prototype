@@ -682,11 +682,10 @@ function TableContent({
         .cell-program      { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
         .cell-gender       { flex: 1 1 0; }
         .cell-sport        { flex: 1 1 0; }
-        .cell-coaches,
+        .cell-coaches      { flex: 1 1 0; }
         .cell-athletes     { flex: 1 1 0; padding: 8px 8px; justify-content: flex-end; }
         .cell-stat         { flex: 1 1 0; padding: 8px 8px; justify-content: flex-end; }
-        .cell-roster       { flex: 1.4 1 0; min-width: 0; padding: 8px 8px; }
-        .table-header .cell-roster { justify-content: flex-start; }
+        .cell-roster       { flex: 1 1 0; min-width: 0; }
 
         .roster-progress {
           display: flex;
@@ -701,12 +700,13 @@ function TableContent({
           gap: 6px;
         }
         .roster-progress-count {
-          font-size: var(--u-font-size-sm, 13px);
-          font-weight: var(--u-font-weight-bold, 700);
-          color: var(--u-color-base-foreground-contrast, #071c31);
+          font-size: var(--u-font-size-200, 14px);
+          font-weight: var(--u-font-weight-medium, 500);
+          color: var(--u-color-base-foreground, #36485c);
         }
         .roster-progress-label {
-          font-size: var(--u-font-size-xs, 11px);
+          font-size: var(--u-font-size-200, 14px);
+          text-transform: capitalize;
           color: var(--u-color-base-foreground-subtle, #6b7785);
         }
         .roster-progress-track {
