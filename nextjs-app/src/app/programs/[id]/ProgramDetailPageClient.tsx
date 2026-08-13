@@ -759,6 +759,7 @@ export default function ProgramDetailPageClient({
                 <th className="pd-tl-cell-flex">Gender</th>
                 <th className="pd-tl-cell-num">Athletes</th>
                 <th className="pd-tl-cell-num">Coaches</th>
+                <th className="pd-tl-cell-roster">Roster Status</th>
               </tr>
             </thead>
             <tbody>
@@ -789,6 +790,26 @@ export default function ProgramDetailPageClient({
                   <td className="pd-tl-cell-flex">{team.gender}</td>
                   <td className="pd-tl-cell-num">{team.athletes}</td>
                   <td className="pd-tl-cell-num">{team.coaches}</td>
+                  <td className="pd-tl-cell-roster">
+                    {(() => {
+                      const parts = [
+                        { key: 'assigned', label: 'Assigned', count: team.assigned },
+                        { key: 'invited',  label: 'Invited',  count: team.invited },
+                        { key: 'accepted', label: 'Accepted', count: team.accepted },
+                        { key: 'declined', label: 'Declined', count: team.declined },
+                      ].filter(p => p.count > 0);
+                      if (parts.length === 0) return <span className="pd-roster-empty">—</span>;
+                      return (
+                        <div className="pd-roster-pills">
+                          {parts.map(p => (
+                            <span key={p.key} className={`pd-roster-pill pd-roster-pill--${p.key}`}>
+                              {p.count} {p.label}
+                            </span>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -1501,6 +1522,28 @@ export default function ProgramDetailPageClient({
         .pd-tl-cell-status { min-width: 100px; }
         .pd-tl-cell-flex { min-width: 124px; }
         .pd-tl-cell-num { min-width: 80px; }
+        .pd-tl-cell-roster { min-width: 200px; }
+        .pd-roster-empty { color: var(--u-color-base-foreground-subtle, #607081); }
+        .pd-roster-pills {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 4px;
+        }
+        .pd-roster-pill {
+          display: inline-flex;
+          align-items: center;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: 500;
+          line-height: 1;
+          white-space: nowrap;
+        }
+        .pd-roster-pill--assigned { background: #e8f3fe; color: #0273e3; }
+        .pd-roster-pill--invited  { background: #fff3e0; color: #e65100; }
+        .pd-roster-pill--accepted { background: #e8f5e9; color: #2e7d32; }
+        .pd-roster-pill--declined { background: #ffebee; color: #c62828; }
         .pd-tl-av {
           width: 32px;
           height: 32px;
