@@ -1697,7 +1697,7 @@ function AddRegistrationDrawer({
           {/* Card 4: Invite Teams — only for Club Dues program type */}
           {showLinkedTeams && (
             <SectionCard
-              title="Invite Teams"
+              title="Link Teams"
               optional
               description="Create new teams or link this registration to one or more teams to collect club dues."
             >
