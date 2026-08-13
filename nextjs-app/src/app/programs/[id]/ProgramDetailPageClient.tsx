@@ -110,6 +110,7 @@ function NameTooltip({ count, names, items }: { count: number; names?: string[];
     invited:  '#60a5fa',
     assigned: '#94a3b8',
     paid:     '#86efac',
+    rostered: '#22c55e',
   };
 
   return (
@@ -825,6 +826,7 @@ export default function ProgramDetailPageClient({
                 <div className="pd-tt-cell pd-tt-flex"><span>Season</span></div>
                 <div className="pd-tt-cell pd-tt-flex"><span>Gender</span></div>
                 <div className="pd-tt-cell pd-tt-num"><span>Players Assigned</span></div>
+                <div className="pd-tt-cell pd-tt-num"><span>Rostered</span></div>
               </div>
               {programTeams.map(team => (
                 <div
@@ -839,6 +841,7 @@ export default function ProgramDetailPageClient({
                   <div className="pd-tt-cell pd-tt-flex">{team.season}</div>
                   <div className="pd-tt-cell pd-tt-flex">{team.gender}</div>
                   <div className="pd-tt-cell pd-tt-num"><NameTooltip count={team.athletes} items={[...team.acceptedNames.map((n: string) => ({ name: n, status: 'Accepted' })), ...team.declinedNames.map((n: string) => ({ name: n, status: 'Declined' }))]} /></div>
+                  <div className="pd-tt-cell pd-tt-num"><NameTooltip count={team.accepted} items={team.acceptedNames.map((n: string) => ({ name: n, status: 'Rostered' }))} /></div>
                 </div>
               ))}
             </div></div>
