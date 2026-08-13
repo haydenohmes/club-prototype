@@ -520,7 +520,7 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
         }
 
         /* ── Responsive: stack banner sections on narrow screens ── */
-        @media (max-width: 900px) {
+        @media (max-width: 1400px) {
           .arc-card {
             flex-wrap: wrap;
             row-gap: 12px;
