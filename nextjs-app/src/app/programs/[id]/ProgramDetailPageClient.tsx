@@ -848,6 +848,7 @@ export default function ProgramDetailPageClient({
                 <div className="pd-tt-cell pd-tt-flex"><span>Gender</span></div>
                 <div className="pd-tt-cell pd-tt-num"><span>Players Assigned</span></div>
                 <div className="pd-tt-cell pd-tt-num"><span>Rostered</span></div>
+                <div className="pd-tt-cell pd-tt-roster"><span>Roster Status</span></div>
               </div>
               {programTeams.map(team => (
                 <div
@@ -863,6 +864,26 @@ export default function ProgramDetailPageClient({
                   <div className="pd-tt-cell pd-tt-flex">{team.gender}</div>
                   <div className="pd-tt-cell pd-tt-num"><NameTooltip count={team.athletes} items={[...team.acceptedNames.map((n: string) => ({ name: n, status: 'Accepted' })), ...team.declinedNames.map((n: string) => ({ name: n, status: 'Declined' }))]} /></div>
                   <div className="pd-tt-cell pd-tt-num"><NameTooltip count={team.accepted} items={team.acceptedNames.map((n: string) => ({ name: n, status: 'Rostered' }))} /></div>
+                  <div className="pd-tt-cell pd-tt-roster">
+                    {(() => {
+                      const parts = [
+                        { key: 'assigned', label: 'Assigned', count: team.assigned },
+                        { key: 'invited',  label: 'Invited',  count: team.invited },
+                        { key: 'accepted', label: 'Accepted', count: team.accepted },
+                        { key: 'declined', label: 'Declined', count: team.declined },
+                      ].filter(p => p.count > 0);
+                      if (parts.length === 0) return <span className="pd-roster-empty">—</span>;
+                      return (
+                        <div className="pd-roster-pills">
+                          {parts.map(p => (
+                            <span key={p.key} className={`pd-roster-pill pd-roster-pill--${p.key}`}>
+                              {p.count} {p.label}
+                            </span>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
               ))}
             </div></div>
@@ -1704,6 +1725,7 @@ export default function ProgramDetailPageClient({
         .pd-tt-data:hover .pd-tt-emph { text-decoration-color: var(--u-color-line-subtle, #c4c6c8); }
         .pd-tt-status { width: 130px; flex-shrink: 0; }
         .pd-tt-num { width: 100px; flex-shrink: 0; justify-content: flex-end; text-align: right; font-variant-numeric: tabular-nums; }
+  .pd-tt-roster { width: 200px; flex-shrink: 0; align-items: flex-start; }
         .pd-tt-num-sm { width: 72px; flex-shrink: 0; justify-content: flex-end; text-align: right; font-variant-numeric: tabular-nums; }
         .pd-tt-chev { width: 44px; flex-shrink: 0; justify-content: center; color: var(--u-color-base-foreground-subtle, #607081); }
         .pd-team-card {
