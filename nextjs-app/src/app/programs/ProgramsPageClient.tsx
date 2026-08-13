@@ -133,10 +133,9 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
 
   const ARC_STEPS = duesFirst ? DUES_ARC_STEPS : TRYOUT_ARC_STEPS;
   // Steps that are automatically complete based on real state — creating the
-  // tryout/dues program checks off its step without needing a manual toggle.
+  // tryout program checks off its step without needing a manual toggle.
   const autoCompletedSteps = [
     ...(tryoutProgram ? ['Create tryout program'] : []),
-    ...(hasDuesProgram ? ['Create Club Dues'] : []),
   ];
   const isStepDone = (label: string) =>
     completedSteps.includes(label) || autoCompletedSteps.includes(label);
