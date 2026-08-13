@@ -1522,7 +1522,7 @@ export default function ProgramDetailPageClient({
         .pd-tl-cell-status { min-width: 100px; }
         .pd-tl-cell-flex { min-width: 124px; }
         .pd-tl-cell-num { min-width: 80px; }
-        .pd-tl-cell-roster { min-width: 200px; }
+        .pd-tl-cell-roster { width: 200px; max-width: 200px; }
         .pd-roster-empty { color: var(--u-color-base-foreground-subtle, #607081); }
         .pd-roster-pills {
           display: flex;
@@ -1574,8 +1574,8 @@ export default function ProgramDetailPageClient({
           font-size: 11px;
           font-weight: 600;
           font-family: var(--u-font-body);
-          background: #fef3c7;
-          color: #92400e;
+          background: var(--u-color-background-default, #e8eaec);
+          color: var(--u-color-base-foreground-subtle, #607081);
         }
 
         .pd-teams-head {
