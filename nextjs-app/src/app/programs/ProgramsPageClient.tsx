@@ -104,8 +104,8 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
   // A club can start from a tryout (full arc) or go straight to Club Dues
   // (dues-first arc). Show the shorter arc when there's a dues program and no tryout.
   const duesFirst = hasDuesProgram && !tryoutProgram;
-  // Persist the season arc banner on the programs page regardless of state.
-  const showArc = !arcDismissed;
+  // Only surface the season arc once the club has built a tryout program.
+  const showArc = !arcDismissed && !!tryoutProgram;
   const arcTitle = tryoutProgram?.title ?? '2026 Fall Season';
 
   const goToClubDues = () => {
