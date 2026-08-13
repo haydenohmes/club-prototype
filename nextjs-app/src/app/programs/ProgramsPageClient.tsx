@@ -121,7 +121,6 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
 
   const TRYOUT_ARC_STEPS = [
     { label: 'Create tryout program', onClick: goToTryout },
-    { label: 'Host tryouts',          onClick: goToTryout },
     { label: 'Build teams',           onClick: goToTeams },
     { label: 'Create Club Dues',      onClick: goToClubDues },
     { label: 'Send Invitations',      onClick: goToSendInvitations },
