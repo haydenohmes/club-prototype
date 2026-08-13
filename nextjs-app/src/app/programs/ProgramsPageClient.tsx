@@ -132,8 +132,16 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
   ];
 
   const ARC_STEPS = duesFirst ? DUES_ARC_STEPS : TRYOUT_ARC_STEPS;
+  // Steps that are automatically complete based on real state — creating the
+  // tryout/dues program checks off its step without needing a manual toggle.
+  const autoCompletedSteps = [
+    ...(tryoutProgram ? ['Create tryout program'] : []),
+    ...(hasDuesProgram ? ['Create Club Dues'] : []),
+  ];
+  const isStepDone = (label: string) =>
+    completedSteps.includes(label) || autoCompletedSteps.includes(label);
   // Active step = first step not yet checked off.
-  const firstIncomplete = ARC_STEPS.findIndex(s => !completedSteps.includes(s.label));
+  const firstIncomplete = ARC_STEPS.findIndex(s => !isStepDone(s.label));
   const arcStep = firstIncomplete === -1 ? ARC_STEPS.length + 1 : firstIncomplete + 1;
   const activeStepLabel = firstIncomplete === -1 ? null : ARC_STEPS[firstIncomplete].label;
   const arcCtaLabel = activeStepLabel ?? 'Season complete';
@@ -225,11 +233,11 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           {/* Steps */}
           <div className="arc-steps">
             {ARC_STEPS.map((step, i) => {
-              const isDone   = completedSteps.includes(step.label);
+              const isDone   = isStepDone(step.label);
               const isActive = step.label === activeStepLabel;
               return (
                 <div key={step.label} className="arc-step-wrap">
-                  {i > 0 && <span className={`arc-connector${completedSteps.includes(ARC_STEPS[i - 1].label) ? ' arc-connector--done' : ''}`} />}
+                  {i > 0 && <span className={`arc-connector${isStepDone(ARC_STEPS[i - 1].label) ? ' arc-connector--done' : ''}`} />}
                   <div className={`arc-step${isDone ? ' arc-step--done' : isActive ? ' arc-step--active' : ' arc-step--pending'}`}>
                     <button
                       type="button"
