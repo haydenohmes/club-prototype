@@ -521,21 +521,29 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
 
         /* ── Responsive: stack banner sections on narrow screens ── */
         @media (max-width: 900px) {
-          .arc-steps {
-            justify-content: flex-start;
-            order: 3;
-            flex-basis: 100%;
+          .arc-card {
             flex-wrap: wrap;
-            gap: 8px 0;
+            row-gap: 12px;
+          }
+          .arc-card-left {
+            flex: 1 1 auto;
           }
           .arc-card-actions {
+            order: 2;
             margin-left: auto;
+          }
+          .arc-steps {
+            order: 3;
+            flex-basis: 100%;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+            row-gap: 10px;
           }
         }
 
         @media (max-width: 560px) {
           .arc-card {
-            gap: 12px;
+            gap: 12px 8px;
           }
           .arc-card-left {
             flex-basis: 100%;
@@ -544,9 +552,10 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
             max-width: none;
           }
           .arc-connector {
-            width: 20px;
+            width: 16px;
           }
           .arc-card-actions {
+            order: 4;
             flex-basis: 100%;
             margin-left: 0;
           }
