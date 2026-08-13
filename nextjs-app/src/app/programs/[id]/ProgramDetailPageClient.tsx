@@ -425,13 +425,17 @@ export default function ProgramDetailPageClient({
   const isTryout = (program?.type ?? '').toLowerCase() === 'tryout';
   const isClubDues = ['club dues', 'team-dues', 'team dues'].includes((program?.type ?? '').toLowerCase());
 
-  // Season arc banner for Club Dues programs — same steps as the Programs list,
-  // minus the final "Create Club Dues" step (this program IS the club dues).
-  const CLUB_DUES_ARC_STEPS = [
-    { label: 'Create tryout program', onClick: () => router.push('/programs') },
-    { label: 'Host tryouts',          onClick: () => router.push('/programs') },
-    { label: 'Build teams',           onClick: () => router.push('/teams') },
+  // Registrations that teams can be linked to (mock data for the Teams tab).
+  const REGISTRATION_OPTIONS = [
+    '2026 Fall Club Dues',
+    '2026 Competitive Team Dues',
+    '2026 Recreational Registration',
+    '2026 Winter Season Dues',
   ];
+  const getRegistration = (teamId: string) => {
+    const n = parseInt(teamId.replace(/\D/g, ''), 10) || 0;
+    return REGISTRATION_OPTIONS[n % REGISTRATION_OPTIONS.length];
+  };
 
   const regOptions = [
     {
@@ -518,47 +522,6 @@ export default function ProgramDetailPageClient({
           </button>
         </div>
       </div>
-
-      {/* Season arc banner (Club Dues only) — all prior steps complete */}
-      {isClubDues && (
-        <div className="arc-card">
-          <div className="arc-card-left">
-            <span className="arc-card-eyebrow">Season in progress</span>
-            <span className="arc-card-title">{title}</span>
-          </div>
-
-          <div className="arc-steps">
-            {CLUB_DUES_ARC_STEPS.map((step, i) => (
-              <div key={step.label} className="arc-step-wrap">
-                {i > 0 && <span className="arc-connector arc-connector--done" />}
-                <div
-                  className="arc-step arc-step--clickable arc-step--done"
-                  role="button"
-                  tabIndex={0}
-                  onClick={step.onClick}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      step.onClick();
-                    }
-                  }}
-                >
-                  <span className="arc-step-dot">
-                    <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M8.5 2.5L4 7.5L1.5 5" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </span>
-                  <span className="arc-step-label">{step.label}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="arc-card-actions">
-            <button className="arc-cta" onClick={() => router.push('/teams')}>
-              Manage teams &amp; athletes →
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Tabs */}
       <div className="pd-tabs-row">
@@ -790,6 +753,7 @@ export default function ProgramDetailPageClient({
               <tr>
                 <th className="pd-tl-cell-title">Title</th>
                 <th className="pd-tl-cell-status">Status</th>
+                <th className="pd-tl-cell-flex">Registration</th>
                 <th className="pd-tl-cell-flex">Sport</th>
                 <th className="pd-tl-cell-flex">Gender</th>
                 <th className="pd-tl-cell-num">Athletes</th>
@@ -810,6 +774,15 @@ export default function ProgramDetailPageClient({
                   </td>
                   <td className="pd-tl-cell-status">
                     {team.status && <span className="pd-tl-draft-badge">{team.status}</span>}
+                  </td>
+                  <td className="pd-tl-cell-flex">
+                    <a
+                      className="pd-reg-link"
+                      href={`/programs/${programId}`}
+                      onClick={(e) => { e.stopPropagation(); e.preventDefault(); router.push(`/programs/${programId}`); }}
+                    >
+                      {getRegistration(team.id)}
+                    </a>
                   </td>
                   <td className="pd-tl-cell-flex">{team.sport}</td>
                   <td className="pd-tl-cell-flex">{team.gender}</td>
@@ -1668,6 +1641,12 @@ export default function ProgramDetailPageClient({
         }
         .pd-tt-name { flex: 1; min-width: 160px; }
         .pd-tt-flex { flex: 1; min-width: 80px; white-space: nowrap; }
+        .pd-reg-link {
+          color: var(--u-color-emphasis-background-contrast, #0273e3);
+          font-weight: 500;
+          text-decoration: none;
+        }
+        .pd-reg-link:hover { text-decoration: underline; }
         .pd-tt-emph { font-weight: 700; color: var(--u-color-base-foreground-contrast, #071c31); }
         .pd-tt-data .pd-tt-emph {
           text-decoration: underline;
