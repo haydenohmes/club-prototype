@@ -116,12 +116,11 @@ function mapTeam(t: TeamWithStats): Team {
 
 // ─── Steps ─────────────────────────────────────────────────────────────────
 
-const STEPS_WITH_NEXT = ['Program Details', 'Questions', 'Registrations', 'Summary', 'Next Steps'];
-const STEPS_NO_NEXT   = ['Program Details', 'Questions', 'Registrations', 'Summary'];
+const STEPS_NO_NEXT = ['Program Details', 'Questions', 'Registrations', 'Summary'];
 
 // ─── StepIndicator ─────────────────────────────────────────────────────────
 
-function StepIndicator({ currentStep, steps = STEPS }: { currentStep: number; steps?: string[] }) {
+function StepIndicator({ currentStep, steps = STEPS_NO_NEXT }: { currentStep: number; steps?: string[] }) {
   return (
     <div className="steps-row">
       {steps.map((label, i) => {
@@ -2391,204 +2390,6 @@ function SummaryView({
   );
 }
 
-// ─── Next Steps stage (full-page) ───────────────────────────────────────────
-
-interface NextStep {
-  title: string;
-  desc: string;
-  done?: boolean;
-  action?: { label: string; href: string };
-}
-
-const NEXT_STEPS: NextStep[] = [
-  { title: 'Tryout registration created', desc: 'Athletes can now register for your tryouts on your tryout dates.', done: true },
-  { title: 'Host your tryouts', desc: "Evaluate athletes during your tryout dates. Registrant info will be waiting in Hudl when you're ready." },
-  { title: 'Build your teams', desc: 'Once you know your roster, head to the Teams tab to create teams and assign athletes.', action: { label: 'Go to Teams tab', href: '/teams' } },
-  { title: 'Create your Club Dues program', desc: 'Set up your season registration and link it to your teams. Athletes will get accept/decline invitations.', action: { label: 'Create Club Dues program', href: '/programs?add=team-dues' } },
-];
-
-const NextStepsView = ({ program }: { program: ProgramDetails | null }) => {
-  const router = useRouter();
-  return (
-    <div className="nsv-wrap">
-      <div className="nsv-confirm">
-        <div className="nsv-check">
-          <svg width="28" height="28" viewBox="0 0 16 16" fill="none">
-            <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
-        <h2 className="nsv-title">{program?.title || 'Your program'} is published</h2>
-        <p className="nsv-sub">
-          We&apos;ll remind you when it&apos;s time based on your tryout dates.
-        </p>
-      </div>
-
-      <ol className="nsv-steps">
-        {NEXT_STEPS.map((step, i) => {
-          const done = 'done' in step && step.done;
-          const action = 'action' in step ? step.action : undefined;
-          return (
-            <li key={i} className="nsv-step">
-              <div className="nsv-marker">
-                <span className={`nsv-num${done ? ' nsv-num--done' : ''}`}>
-                  {done ? (
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                      <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  ) : (
-                    i + 1
-                  )}
-                </span>
-                {i < NEXT_STEPS.length - 1 && <span className={`nsv-line${done ? ' nsv-line--done' : ''}`} />}
-              </div>
-              <div className="nsv-body">
-                <span className="nsv-step-title">{step.title}</span>
-                <span className="nsv-step-desc">{step.desc}</span>
-                {action && (
-                  <button className="nsv-action-btn" onClick={() => router.push(action.href)}>
-                    {action.label} →
-                  </button>
-                )}
-              </div>
-            </li>
-          );
-        })}
-      </ol>
-
-      <style jsx>{`
-        .nsv-wrap {
-          width: 100%;
-          max-width: 560px;
-          margin: 0 auto;
-          padding: 24px 0 48px;
-          display: flex;
-          flex-direction: column;
-          gap: 40px;
-        }
-        .nsv-confirm {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          gap: 12px;
-        }
-        .nsv-check {
-          width: 56px;
-          height: 56px;
-          border-radius: 9999px;
-          background: var(--u-color-success-background, #edf7ed);
-          color: var(--u-color-success-foreground, #2e7d32);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-        .nsv-title {
-          font-family: var(--u-font-body);
-          font-size: 24px;
-          font-weight: 700;
-          color: var(--u-color-base-foreground-contrast, #071c31);
-          margin: 0;
-        }
-        .nsv-sub {
-          font-family: var(--u-font-body);
-          font-size: 15px;
-          color: var(--u-color-base-foreground-subtle, #607081);
-          line-height: 1.5;
-          margin: 0;
-          max-width: 440px;
-        }
-        .nsv-steps {
-          list-style: none;
-          margin: 0;
-          padding: 0;
-          display: flex;
-          flex-direction: column;
-        }
-        .nsv-step {
-          display: flex;
-          gap: 16px;
-        }
-        .nsv-marker {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          flex-shrink: 0;
-        }
-        .nsv-num {
-          width: 28px;
-          height: 28px;
-          border-radius: 9999px;
-          background: var(--u-color-background-container, #fefefe);
-          border: 1.5px solid var(--u-color-emphasis-background-contrast, #0273e3);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-family: var(--u-font-body);
-          font-size: 13px;
-          font-weight: 700;
-          color: var(--u-color-emphasis-background-contrast, #0273e3);
-          flex-shrink: 0;
-        }
-        .nsv-num--done {
-          background: var(--u-color-emphasis-background-contrast, #0273e3);
-          border-color: var(--u-color-emphasis-background-contrast, #0273e3);
-          color: #fff;
-        }
-        .nsv-line {
-          flex: 1;
-          width: 2px;
-          min-height: 20px;
-          background: var(--u-color-line-subtle, #c4c6c8);
-          margin: 4px 0;
-        }
-        .nsv-line--done {
-          background: var(--u-color-emphasis-background-contrast, #0273e3);
-        }
-
-        .nsv-action-btn {
-          display: inline-flex;
-          align-items: center;
-          margin-top: 10px;
-          padding: 7px 14px;
-          background: none;
-          border: 1px solid var(--u-color-line-subtle, #c4c6c8);
-          border-radius: 6px;
-          font-family: var(--u-font-body);
-          font-size: 14px;
-          font-weight: 500;
-          color: var(--u-color-base-foreground-contrast, #071c31);
-          cursor: pointer;
-          transition: border-color 0.15s ease, background 0.15s ease;
-          align-self: flex-start;
-        }
-        .nsv-action-btn:hover {
-          border-color: var(--u-color-base-foreground-subtle, #607081);
-          background: var(--u-color-background-canvas, #eff0f0);
-        }
-        .nsv-body {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-          padding-bottom: 24px;
-        }
-        .nsv-step-title {
-          font-family: var(--u-font-body);
-          font-size: 16px;
-          font-weight: 600;
-          color: var(--u-color-base-foreground-contrast, #071c31);
-        }
-        .nsv-step-desc {
-          font-family: var(--u-font-body);
-          font-size: 14px;
-          color: var(--u-color-base-foreground-subtle, #607081);
-          line-height: 1.5;
-        }
-      `}</style>
-    </div>
-  );
-};
-
 // ─── Main page ─────────────────────────────────────────────────────────────
 
 export default function RegistrationsPageClient({ initialTeams = [] }: { initialTeams?: TeamWithStats[] }) {
@@ -2597,11 +2398,10 @@ export default function RegistrationsPageClient({ initialTeams = [] }: { initial
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [teamsModalOpen, setTeamsModalOpen] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
-  const [showNextSteps, setShowNextSteps] = useState(false);
   const programType = typeof window !== 'undefined' ? sessionStorage.getItem('programType') ?? '' : '';
   const showLinkedTeams = programType === 'team-dues';
   const isClubDues = programType === 'team-dues';
-  const steps = isClubDues ? STEPS_NO_NEXT : STEPS_WITH_NEXT;
+  const steps = STEPS_NO_NEXT;
   const [programDetails] = useState<ProgramDetails | null>(() => {
     if (typeof window === 'undefined') return null;
     try {
@@ -2638,20 +2438,16 @@ export default function RegistrationsPageClient({ initialTeams = [] }: { initial
 
       {/* Stepper — Club Dues has no "Next Steps" stage */}
       <div className="stepper-bar">
-        <StepIndicator currentStep={showNextSteps ? 4 : showSummary ? 3 : 2} steps={steps} />
+        <StepIndicator currentStep={showSummary ? 3 : 2} steps={steps} />
       </div>
 
       {/* Content */}
       <div className="page-content">
         <div className="content-inner">
-          {!showNextSteps && (
-            <h1 className="page-title">{showSummary ? 'Summary' : 'Registration Options'}</h1>
-          )}
+          <h1 className="page-title">{showSummary ? 'Summary' : 'Registration Options'}</h1>
 
           <div className="form-scroll">
-            {showNextSteps ? (
-              <NextStepsView program={programDetails} />
-            ) : showSummary ? (
+            {showSummary ? (
               <SummaryView
                 program={programDetails}
                 registrations={registrations}
@@ -2710,58 +2506,43 @@ export default function RegistrationsPageClient({ initialTeams = [] }: { initial
           buttonType="secondary"
           size="medium"
           onClick={() => {
-            if (showNextSteps) setShowNextSteps(false);
-            else if (showSummary) setShowSummary(false);
+            if (showSummary) setShowSummary(false);
             else router.push('/programs/new');
           }}
         >
           Back
         </Button>
         <div className="footer-right">
-          {showNextSteps ? (
+          <Button
+            buttonStyle="minimal"
+            buttonType="secondary"
+            size="medium"
+            onClick={() => router.push('/programs')}
+          >
+            Done
+          </Button>
+          {showSummary ? (
             <Button
               buttonStyle="standard"
               buttonType="primary"
               size="medium"
-              onClick={() => router.push('/programs')}
+              onClick={() => {
+                persistCreatedProgram(programDetails, registrations, linkedTeams);
+                showToast('Program published successfully', 'success');
+                router.push('/programs?published=1');
+              }}
             >
-              Done
+              Publish
             </Button>
           ) : (
-            <>
-              <Button
-                buttonStyle="minimal"
-                buttonType="secondary"
-                size="medium"
-                onClick={() => router.push('/programs')}
-              >
-                Done
-              </Button>
-              {showSummary ? (
-                <Button
-                  buttonStyle="standard"
-                  buttonType="primary"
-                  size="medium"
-                  onClick={() => {
-                    persistCreatedProgram(programDetails, registrations, linkedTeams);
-                    showToast('Program published successfully', 'success');
-                    if (isClubDues) router.push('/programs');
-                    else setShowNextSteps(true);
-                  }}
-                >
-                  Publish
-                </Button>
-              ) : (
-                <Button
-                  buttonStyle="standard"
-                  buttonType="primary"
-                  size="medium"
-                  onClick={() => setShowSummary(true)}
-                >
-                  Continue
-                </Button>
-              )}
-            </>
+            <Button
+              buttonStyle="standard"
+              buttonType="primary"
+              size="medium"
+              onClick={() => setShowSummary(true)}
+            >
+              Continue
+            </Button>
           )}
         </div>
       </footer>

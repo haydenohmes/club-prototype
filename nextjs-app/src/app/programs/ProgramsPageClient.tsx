@@ -37,6 +37,19 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
   const [arcDismissed, setArcDismissed] = useState(false);
   // Persisted set of completed step labels — each step can be checked/unchecked.
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
+  // Program tasks drawer — auto-opens once right after a program is published.
+  const [tasksDrawerOpen, setTasksDrawerOpen] = useState(false);
+
+  // When we arrive from the builder with ?published=1, celebrate + open tasks.
+  useEffect(() => {
+    if (searchParams.get('published')) {
+      setTasksDrawerOpen(true);
+      showToast('Program published successfully', 'success');
+      // Clean the flag from the URL so it doesn't re-open on refresh/back.
+      router.replace('/programs');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   useEffect(() => {
     try {
@@ -144,6 +157,14 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
   const arcStep = firstIncomplete === -1 ? ARC_STEPS.length + 1 : firstIncomplete + 1;
   const activeStepLabel = firstIncomplete === -1 ? null : ARC_STEPS[firstIncomplete].label;
   const arcCtaLabel = activeStepLabel ?? 'Season complete';
+
+  // Human-readable descriptions shown in the tasks drawer.
+  const STEP_DESCRIPTIONS: Record<string, string> = {
+    'Create tryout program': 'Athletes can now register for your tryouts on your tryout dates.',
+    'Build teams': 'Once you know your roster, head to the Teams tab to create teams and assign athletes.',
+    'Create Club Dues': 'Set up your season registration and link it to your teams. Athletes will get accept/decline invitations.',
+    'Send Invitations': 'Send accept/decline invitations to athletes on each linked team from the Teams tab.',
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
@@ -265,6 +286,9 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
 
           {/* CTA + dismiss */}
           <div className="arc-card-actions">
+            <button className="arc-view-tasks" onClick={() => setTasksDrawerOpen(true)}>
+              View tasks
+            </button>
             <button
               className="arc-cta"
               disabled={!activeStepLabel}
@@ -285,6 +309,194 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
       )}
 
       <ProgramsTable programs={allPrograms} onDeleteProgram={handleDeleteProgram} onEditProgram={() => setTypePickerOpen(true)} />
+
+      {/* ── Program tasks drawer ─────────────────────────────────────── */}
+      {tasksDrawerOpen && (
+        <div className="tasks-drawer-root">
+          <div className="tasks-scrim" onClick={() => setTasksDrawerOpen(false)} />
+          <aside className="tasks-drawer" role="dialog" aria-label="Program tasks">
+            <header className="tasks-head">
+              <div className="tasks-head-text">
+                <span className="tasks-head-eyebrow">{arcTitle} is published</span>
+                <h2 className="tasks-head-title">Program tasks</h2>
+              </div>
+              <button className="tasks-close" onClick={() => setTasksDrawerOpen(false)} aria-label="Close">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </header>
+
+            <ol className="tasks-list">
+              {ARC_STEPS.map((step, i) => {
+                const done = isStepDone(step.label);
+                const isLast = i === ARC_STEPS.length - 1;
+                return (
+                  <li key={step.label} className="tasks-item">
+                    <div className="tasks-marker">
+                      <button
+                        type="button"
+                        className={`tasks-check${done ? ' tasks-check--done' : ''}`}
+                        role="checkbox"
+                        aria-checked={done}
+                        aria-label={`Mark "${step.label}" ${done ? 'incomplete' : 'complete'}`}
+                        onClick={() => toggleStep(step.label)}
+                      >
+                        {done && (
+                          <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                            <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </button>
+                      {!isLast && <span className={`tasks-line${done ? ' tasks-line--done' : ''}`} />}
+                    </div>
+                    <div className="tasks-body">
+                      <span className={`tasks-item-title${done ? ' tasks-item-title--done' : ''}`}>{step.label}</span>
+                      <span className="tasks-item-desc">{STEP_DESCRIPTIONS[step.label]}</span>
+                      {!done && (
+                        <button
+                          className="tasks-action"
+                          onClick={() => { setTasksDrawerOpen(false); step.onClick(); }}
+                        >
+                          {step.label} →
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          </aside>
+
+          <style jsx>{`
+            .tasks-drawer-root { position: fixed; inset: 0; z-index: 9000; }
+            .tasks-scrim {
+              position: absolute;
+              inset: 0;
+              background: rgba(7, 28, 49, 0.4);
+            }
+            .tasks-drawer {
+              position: absolute;
+              top: 0;
+              right: 0;
+              height: 100%;
+              width: 440px;
+              max-width: 90vw;
+              background: var(--u-color-background-container, #fefefe);
+              box-shadow: -8px 0 32px rgba(0, 0, 0, 0.18);
+              display: flex;
+              flex-direction: column;
+            }
+            .tasks-head {
+              display: flex;
+              align-items: flex-start;
+              justify-content: space-between;
+              gap: 16px;
+              padding: 20px 24px;
+              border-bottom: 1px solid var(--u-color-line-subtle, #e0e1e1);
+            }
+            .tasks-head-text { display: flex; flex-direction: column; gap: 3px; }
+            .tasks-head-eyebrow {
+              font-family: var(--u-font-body);
+              font-size: 12px;
+              font-weight: 600;
+              letter-spacing: 0.06em;
+              text-transform: uppercase;
+              color: var(--u-color-success-foreground, #2e7d32);
+            }
+            .tasks-head-title {
+              font-family: var(--u-font-body);
+              font-size: 20px;
+              font-weight: 700;
+              color: var(--u-color-base-foreground-contrast, #071c31);
+              margin: 0;
+            }
+            .tasks-close {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 32px;
+              height: 32px;
+              border: none;
+              background: transparent;
+              border-radius: 6px;
+              cursor: pointer;
+              color: var(--u-color-base-foreground-subtle, #607081);
+              flex-shrink: 0;
+            }
+            .tasks-close:hover { background: var(--u-color-background-canvas, #eff0f0); }
+            .tasks-list {
+              list-style: none;
+              margin: 0;
+              padding: 24px;
+              overflow-y: auto;
+              flex: 1;
+            }
+            .tasks-item { display: flex; gap: 14px; }
+            .tasks-marker { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+            .tasks-check {
+              width: 24px;
+              height: 24px;
+              border-radius: 9999px;
+              border: 2px solid var(--u-color-line-subtle, #c4c6c8);
+              background: var(--u-color-background-container, #fefefe);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+              flex-shrink: 0;
+              transition: border-color 0.12s ease, background 0.12s ease;
+            }
+            .tasks-check:hover { border-color: var(--u-color-emphasis-background-contrast, #0273e3); }
+            .tasks-check--done {
+              background: var(--u-color-emphasis-background-contrast, #0273e3);
+              border-color: var(--u-color-emphasis-background-contrast, #0273e3);
+            }
+            .tasks-line {
+              flex: 1;
+              width: 2px;
+              min-height: 18px;
+              background: var(--u-color-line-subtle, #c4c6c8);
+              margin: 4px 0;
+            }
+            .tasks-line--done { background: var(--u-color-emphasis-background-contrast, #0273e3); }
+            .tasks-body { display: flex; flex-direction: column; gap: 3px; padding-bottom: 22px; }
+            .tasks-item-title {
+              font-family: var(--u-font-body);
+              font-size: 15px;
+              font-weight: 600;
+              color: var(--u-color-base-foreground-contrast, #071c31);
+            }
+            .tasks-item-title--done { text-decoration: line-through; color: var(--u-color-base-foreground-subtle, #607081); }
+            .tasks-item-desc {
+              font-family: var(--u-font-body);
+              font-size: 13px;
+              color: var(--u-color-base-foreground-subtle, #607081);
+              line-height: 1.5;
+            }
+            .tasks-action {
+              display: inline-flex;
+              align-items: center;
+              align-self: flex-start;
+              margin-top: 8px;
+              padding: 6px 12px;
+              background: none;
+              border: 1px solid var(--u-color-line-subtle, #c4c6c8);
+              border-radius: 6px;
+              font-family: var(--u-font-body);
+              font-size: 13px;
+              font-weight: 500;
+              color: var(--u-color-base-foreground-contrast, #071c31);
+              cursor: pointer;
+              transition: border-color 0.15s ease, background 0.15s ease;
+            }
+            .tasks-action:hover {
+              border-color: var(--u-color-base-foreground-subtle, #607081);
+              background: var(--u-color-background-canvas, #eff0f0);
+            }
+          `}</style>
+        </div>
+      )}
 
       {/* Scoped only to ellipsis + dropdown — no layout class names that could collide */}
       <style jsx>{`
@@ -505,6 +717,25 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
           background: var(--u-color-background-default, #e8eaec);
           color: var(--u-color-base-foreground-subtle, #8a96a3);
           cursor: default;
+        }
+
+        .arc-view-tasks {
+          height: 30px;
+          padding: 0 12px;
+          background: transparent;
+          color: var(--u-color-emphasis-background-contrast, #0273e3);
+          border: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          border-radius: 4px;
+          font-family: var(--u-font-body);
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: border-color 0.15s, background 0.15s;
+        }
+        .arc-view-tasks:hover {
+          border-color: var(--u-color-emphasis-background-contrast, #0273e3);
+          background: var(--u-color-background-canvas, #eff0f0);
         }
 
         .arc-dismiss {
