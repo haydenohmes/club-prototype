@@ -367,139 +367,140 @@ export default function ProgramsPageClient({ programs }: ProgramsPageClientProps
               })}
             </ol>
           </aside>
-
-          <style jsx>{`
-            .tasks-drawer-root { position: fixed; inset: 0; z-index: 9000; }
-            .tasks-scrim {
-              position: absolute;
-              inset: 0;
-              background: rgba(7, 28, 49, 0.4);
-            }
-            .tasks-drawer {
-              position: absolute;
-              top: 0;
-              right: 0;
-              height: 100%;
-              width: 440px;
-              max-width: 90vw;
-              background: var(--u-color-background-container, #fefefe);
-              box-shadow: -8px 0 32px rgba(0, 0, 0, 0.18);
-              display: flex;
-              flex-direction: column;
-            }
-            .tasks-head {
-              display: flex;
-              align-items: flex-start;
-              justify-content: space-between;
-              gap: 16px;
-              padding: 20px 24px;
-              border-bottom: 1px solid var(--u-color-line-subtle, #e0e1e1);
-            }
-            .tasks-head-text { display: flex; flex-direction: column; gap: 3px; }
-            .tasks-head-eyebrow {
-              font-family: var(--u-font-body);
-              font-size: 12px;
-              font-weight: 600;
-              letter-spacing: 0.06em;
-              text-transform: uppercase;
-              color: var(--u-color-success-foreground, #2e7d32);
-            }
-            .tasks-head-title {
-              font-family: var(--u-font-body);
-              font-size: 20px;
-              font-weight: 700;
-              color: var(--u-color-base-foreground-contrast, #071c31);
-              margin: 0;
-            }
-            .tasks-close {
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              width: 32px;
-              height: 32px;
-              border: none;
-              background: transparent;
-              border-radius: 6px;
-              cursor: pointer;
-              color: var(--u-color-base-foreground-subtle, #607081);
-              flex-shrink: 0;
-            }
-            .tasks-close:hover { background: var(--u-color-background-canvas, #eff0f0); }
-            .tasks-list {
-              list-style: none;
-              margin: 0;
-              padding: 24px;
-              overflow-y: auto;
-              flex: 1;
-            }
-            .tasks-item { display: flex; gap: 14px; }
-            .tasks-marker { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
-            .tasks-check {
-              width: 24px;
-              height: 24px;
-              border-radius: 9999px;
-              border: 2px solid var(--u-color-line-subtle, #c4c6c8);
-              background: var(--u-color-background-container, #fefefe);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              cursor: pointer;
-              flex-shrink: 0;
-              transition: border-color 0.12s ease, background 0.12s ease;
-            }
-            .tasks-check:hover { border-color: var(--u-color-emphasis-background-contrast, #0273e3); }
-            .tasks-check--done {
-              background: var(--u-color-emphasis-background-contrast, #0273e3);
-              border-color: var(--u-color-emphasis-background-contrast, #0273e3);
-            }
-            .tasks-line {
-              flex: 1;
-              width: 2px;
-              min-height: 18px;
-              background: var(--u-color-line-subtle, #c4c6c8);
-              margin: 4px 0;
-            }
-            .tasks-line--done { background: var(--u-color-emphasis-background-contrast, #0273e3); }
-            .tasks-body { display: flex; flex-direction: column; gap: 3px; padding-bottom: 22px; }
-            .tasks-item-title {
-              font-family: var(--u-font-body);
-              font-size: 15px;
-              font-weight: 600;
-              color: var(--u-color-base-foreground-contrast, #071c31);
-            }
-            .tasks-item-title--done { text-decoration: line-through; color: var(--u-color-base-foreground-subtle, #607081); }
-            .tasks-item-desc {
-              font-family: var(--u-font-body);
-              font-size: 13px;
-              color: var(--u-color-base-foreground-subtle, #607081);
-              line-height: 1.5;
-            }
-            .tasks-action {
-              display: inline-flex;
-              align-items: center;
-              align-self: flex-start;
-              margin-top: 8px;
-              padding: 6px 12px;
-              background: none;
-              border: 1px solid var(--u-color-line-subtle, #c4c6c8);
-              border-radius: 6px;
-              font-family: var(--u-font-body);
-              font-size: 13px;
-              font-weight: 500;
-              color: var(--u-color-base-foreground-contrast, #071c31);
-              cursor: pointer;
-              transition: border-color 0.15s ease, background 0.15s ease;
-            }
-            .tasks-action:hover {
-              border-color: var(--u-color-base-foreground-subtle, #607081);
-              background: var(--u-color-background-canvas, #eff0f0);
-            }
-          `}</style>
         </div>
       )}
 
       {/* Scoped only to ellipsis + dropdown — no layout class names that could collide */}
       <style jsx>{`
+        .tasks-drawer-root { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 9000; }
+        .tasks-scrim {
+          position: absolute;
+          top: 0;
+          right: 0;
+          bottom: 0;
+          left: 0;
+          background: rgba(7, 28, 49, 0.4);
+        }
+        .tasks-drawer {
+          position: absolute;
+          top: 0;
+          right: 0;
+          height: 100%;
+          width: 440px;
+          max-width: 90vw;
+          background: var(--u-color-background-container, #fefefe);
+          box-shadow: -8px 0 32px rgba(0, 0, 0, 0.18);
+          display: flex;
+          flex-direction: column;
+        }
+        .tasks-head {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 20px 24px;
+          border-bottom: 1px solid var(--u-color-line-subtle, #e0e1e1);
+        }
+        .tasks-head-text { display: flex; flex-direction: column; gap: 3px; }
+        .tasks-head-eyebrow {
+          font-family: var(--u-font-body);
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          color: var(--u-color-success-foreground, #2e7d32);
+        }
+        .tasks-head-title {
+          font-family: var(--u-font-body);
+          font-size: 20px;
+          font-weight: 700;
+          color: var(--u-color-base-foreground-contrast, #071c31);
+          margin: 0;
+        }
+        .tasks-close {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border: none;
+          background: transparent;
+          border-radius: 6px;
+          cursor: pointer;
+          color: var(--u-color-base-foreground-subtle, #607081);
+          flex-shrink: 0;
+        }
+        .tasks-close:hover { background: var(--u-color-background-canvas, #eff0f0); }
+        .tasks-list {
+          list-style: none;
+          margin: 0;
+          padding: 24px;
+          overflow-y: auto;
+          flex: 1;
+        }
+        .tasks-item { display: flex; gap: 14px; }
+        .tasks-marker { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+        .tasks-check {
+          width: 24px;
+          height: 24px;
+          border-radius: 9999px;
+          border: 2px solid var(--u-color-line-subtle, #c4c6c8);
+          background: var(--u-color-background-container, #fefefe);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          flex-shrink: 0;
+          transition: border-color 0.12s ease, background 0.12s ease;
+        }
+        .tasks-check:hover { border-color: var(--u-color-emphasis-background-contrast, #0273e3); }
+        .tasks-check--done {
+          background: var(--u-color-emphasis-background-contrast, #0273e3);
+          border-color: var(--u-color-emphasis-background-contrast, #0273e3);
+        }
+        .tasks-line {
+          flex: 1;
+          width: 2px;
+          min-height: 18px;
+          background: var(--u-color-line-subtle, #c4c6c8);
+          margin: 4px 0;
+        }
+        .tasks-line--done { background: var(--u-color-emphasis-background-contrast, #0273e3); }
+        .tasks-body { display: flex; flex-direction: column; gap: 3px; padding-bottom: 22px; }
+        .tasks-item-title {
+          font-family: var(--u-font-body);
+          font-size: 15px;
+          font-weight: 600;
+          color: var(--u-color-base-foreground-contrast, #071c31);
+        }
+        .tasks-item-title--done { text-decoration: line-through; color: var(--u-color-base-foreground-subtle, #607081); }
+        .tasks-item-desc {
+          font-family: var(--u-font-body);
+          font-size: 13px;
+          color: var(--u-color-base-foreground-subtle, #607081);
+          line-height: 1.5;
+        }
+        .tasks-action {
+          display: inline-flex;
+          align-items: center;
+          align-self: flex-start;
+          margin-top: 8px;
+          padding: 6px 12px;
+          background: none;
+          border: 1px solid var(--u-color-line-subtle, #c4c6c8);
+          border-radius: 6px;
+          font-family: var(--u-font-body);
+          font-size: 13px;
+          font-weight: 500;
+          color: var(--u-color-base-foreground-contrast, #071c31);
+          cursor: pointer;
+          transition: border-color 0.15s ease, background 0.15s ease;
+        }
+        .tasks-action:hover {
+          border-color: var(--u-color-base-foreground-subtle, #607081);
+          background: var(--u-color-background-canvas, #eff0f0);
+        }
+
         .prog-ellipsis {
           display: flex;
           align-items: center;
